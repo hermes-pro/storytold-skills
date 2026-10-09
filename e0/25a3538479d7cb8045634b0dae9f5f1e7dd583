@@ -1,0 +1,22 @@
+storytold/SKILL.md
+  s_b9e9bff4731d74::t_75754b61c2c6ce 55-75,77-78
+README.md
+  s_b9e9bff4731d74::t_0b22020e578f1d 17,20,23,36-38,40-45,71,74,77-83
+  s_b9e9bff4731d74::t_a9b01d1b11a749 25-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e025a3538479d7cb8045634b0dae9f5f1e7dd583",
+  "prompts": {},
+  "sessions": {
+    "s_b9e9bff4731d74": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dde7f163-fdfb-4a3f-91b5-4c1c5ce6ec95",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "LZL0 <12474488+LZL0@users.noreply.github.com>"
+    }
+  }
+}
