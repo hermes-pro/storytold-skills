@@ -1,4 +1,4 @@
-# storytold skills for Hermes Agent
+# Storytold skills for Hermes Agent
 
 [Hermes Agent](https://github.com/NousResearch/hermes-agent) skills for the
 [storytold Crafting Apps](https://github.com/storytold): twelve free, open-source creative tools written in Rust.
@@ -22,12 +22,12 @@ hermes skills install hermes-pro/storytold-skills/storytold --yes
 
 Then tell Hermes:
 
-> Install the storytold skills.
+> Install the Storytold skills.
 
 The `storytold` skill tells the agent how to install the other 13 skills. Then start a new session so they load,
 and tell Hermes:
 
-> Set up the storytold Crafting Apps.
+> Set up the Storytold Crafting Apps.
 
 The agent downloads the apps, puts them on PATH, checks that their MCP servers answer, and registers them with
 Hermes. After one more new session (or `/reload-mcp`), the app tools are loaded and the agent picks the right
