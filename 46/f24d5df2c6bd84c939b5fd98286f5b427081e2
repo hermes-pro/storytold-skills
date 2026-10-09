@@ -1,0 +1,21 @@
+storytold-install/scripts/storytold_tools.py
+  s_b9e9bff4731d74::t_0d34998bff015d 1-584
+storytold-install/SKILL.md
+  s_b9e9bff4731d74::t_0d34998bff015d 1-125
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "46f24d5df2c6bd84c939b5fd98286f5b427081e2",
+  "prompts": {},
+  "sessions": {
+    "s_b9e9bff4731d74": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dde7f163-fdfb-4a3f-91b5-4c1c5ce6ec95",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "LZL0 <12474488+LZL0@users.noreply.github.com>"
+    }
+  }
+}
