@@ -12,6 +12,26 @@ The skills give an agent three things:
 - **Knowing how to use it** (one skill per app): the app's mental model, MCP tools, recipes, formats, CLI
   one-shots, pitfalls and how to verify the result.
 
+## Quick start
+
+Install all 14 skills into Hermes with one line.
+
+macOS / Linux:
+
+```bash
+for s in storytold-install storytold vectorcraft photocraft lightcraft effectcraft filmcraft designcraft pdfcraft wordcraft gridcraft deckcraft soundcraft cadcraft; do hermes skills install "hermes-pro/storytold-skills/$s" --yes; done
+```
+
+Windows (PowerShell):
+
+```powershell
+'storytold-install','storytold','vectorcraft','photocraft','lightcraft','effectcraft','filmcraft','designcraft','pdfcraft','wordcraft','gridcraft','deckcraft','soundcraft','cadcraft' | % { hermes skills install "hermes-pro/storytold-skills/$_" --yes }
+```
+
+Then ask Hermes to *"set up the storytold Crafting Apps"*. The `storytold-install` skill downloads the apps,
+puts them on PATH, verifies their MCP servers and registers them. Start a new session (or run `/reload-mcp`),
+and the agent picks the right app for each creative task.
+
 ## Skills
 
 | Skill | App | For |
@@ -36,7 +56,7 @@ from the live MCP server. The skills tell the agent to grep these files rather t
 
 ## Install the skills
 
-Install single skills straight from GitHub:
+The [Quick start](#quick-start) line installs all of them. You can also install single skills straight from GitHub:
 
 ```bash
 hermes skills install hermes-pro/storytold-skills/storytold-install
