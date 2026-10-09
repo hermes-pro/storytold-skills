@@ -329,6 +329,20 @@ def ensure_path() -> dict:
 
 # ---------------------------------------------------------------- MCP verification
 
+def mcp_args(app: str) -> list[str]:
+    """The `<app>-cli` arguments that start a *usable* MCP server (what Hermes is registered with)."""
+    if app == "photocraft":
+        # Without roots it can't open or save any file; MCP paths are then relative to this root.
+        root = os.environ.get("STORYTOLD_PHOTOCRAFT_ROOT") or str(Path.home())
+        return ["mcp", "--automation-read-root", root, "--automation-write-root", root]
+    if app == "lightcraft":
+        # Without a library folder the catalog lives in memory and is lost when the server exits.
+        library = Path(os.environ.get("STORYTOLD_LIGHTCRAFT_LIBRARY") or install_root() / "lightcraft-library")
+        library.parent.mkdir(parents=True, exist_ok=True)
+        return ["mcp", "--library", str(library)]
+    return ["mcp"]
+
+
 def resolve_cli(app: str) -> Path | None:
     ours = bin_dir() / f"{app}-cli{EXE}"
     if ours.exists():
@@ -406,10 +420,10 @@ def verify_app(app: str, timeout: float) -> dict:
     try:
         version = subprocess.run([str(cli), "--version"], capture_output=True, text=True, timeout=timeout)
         result["version"] = version.stdout.strip() or version.stderr.strip()
-        # Exactly the command `register` hands Hermes. The mcp flags differ per app (--headless,
-        # --bridge, --connect, --sample); bare `mcp` is the one form every app accepts, and with no
-        # desktop app listening it runs an in-process engine.
-        session = McpSession([str(cli), "mcp"], timeout)
+        # Exactly the command `register` hands Hermes. With no desktop app listening, each app runs
+        # an in-process engine.
+        result["args"] = mcp_args(app)
+        session = McpSession([str(cli), *result["args"]], timeout)
         init = session.send("initialize", {"protocolVersion": "2025-06-18", "capabilities": {},
                                            "clientInfo": {"name": "hermes-storytold-verify", "version": "1"}})
         session.send("notifications/initialized", notify=True)
@@ -437,7 +451,7 @@ def register_app(app: str, replace: bool) -> dict:
         return {"app": app, "ok": False, "error": f"{app}-cli not installed"}
     if not hermes:
         return {"app": app, "ok": False, "error": "hermes CLI not on PATH",
-                "manual": f"hermes mcp add {app} --command \"{cli}\" --args mcp"}
+                "manual": f"hermes mcp add {app} --command \"{cli}\" --args {subprocess.list2cmdline(mcp_args(app))}"}
     listed = subprocess.run([hermes, "mcp", "list"], capture_output=True, text=True, encoding="utf-8",
                             errors="replace", timeout=120).stdout
     exists = any(line.split()[:1] == [app] for line in listed.splitlines())
@@ -446,7 +460,7 @@ def register_app(app: str, replace: bool) -> dict:
     # `hermes mcp add` probes the server, then asks "overwrite?" (only if it exists) and
     # "Enable all N tools? [Y/n/select]"; answering "y" to each enables every tool.
     answers = ("y\n" if exists else "") + "y\n"
-    done = subprocess.run([hermes, "mcp", "add", app, "--command", str(cli), "--args", "mcp"],
+    done = subprocess.run([hermes, "mcp", "add", app, "--command", str(cli), "--args", *mcp_args(app)],
                           input=answers, capture_output=True, text=True, encoding="utf-8",
                           errors="replace", timeout=300)
     out = (done.stdout + done.stderr).strip()

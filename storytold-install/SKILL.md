@@ -8,7 +8,7 @@ platforms: [windows, linux, macos]
 metadata:
   hermes:
     tags: [Creative, Design, Illustration, Photo, Video, Audio, Office, CAD, MCP]
-    related_skills: []
+    related_skills: [storytold]
 ---
 
 # storytold Crafting Apps
@@ -74,20 +74,29 @@ if the GitHub API rate limit (60 requests an hour without a token) gets in the w
    checks it against the release's `SHA256SUMS.txt`, unpacks it and links `<app>` and `<app>-cli` into the bin
    dir. Then it adds the bin dir to the persistent PATH unless it's already there. Running it again does no
    harm: an up-to-date app is skipped, and a PATH entry that's already there isn't added twice.
-3. **Verify the MCP servers.** Run `verify`. For each CLI it starts `<app>-cli mcp`, the same command Hermes
-   will run, and sends `initialize`, `notifications/initialized` and `tools/list`. It reports the server name and
-   version, the protocol and the number of tools. The exit code is 0 only when every server answers with at
-   least one tool.
+3. **Verify the MCP servers.** Run `verify`. For each CLI it starts the MCP server with the same arguments
+   Hermes will use (below), and sends `initialize`, `notifications/initialized` and `tools/list`. It reports the
+   server name and version, the protocol, the number of tools and the `args`. The exit code is 0 only when every
+   server answers with at least one tool.
 4. **Register with Hermes** (if the user wants the tools in Hermes). Run `register`. It runs
-   `hermes mcp add <app> --command <abs path to bin>/<app>-cli --args mcp` and enables all tools. Hermes
+   `hermes mcp add <app> --command <abs path to bin>/<app>-cli --args <mcp args>` and enables all tools. Hermes
    probes the server before saving, so this is a second end-to-end check. Then tell the user to start a
-   new session or run `/reload-mcp`. `hermes mcp test <app>` re-checks a single server later.
+   new session or run `/reload-mcp`. `hermes mcp test <app>` re-checks a single server later. An entry
+   registered before these args existed is left alone: update it with `register <app> --replace`.
+
+   | App | MCP args | Why |
+   |---|---|---|
+   | most apps | `mcp` | headless in-process engine |
+   | `photocraft` | `mcp --automation-read-root <HOME> --automation-write-root <HOME>` | without roots it can't open or save files. Paths are relative to HOME. Override HOME with `STORYTOLD_PHOTOCRAFT_ROOT` |
+   | `lightcraft` | `mcp --library <install root>/lightcraft-library` | without a library the catalog lives in memory only. Override with `STORYTOLD_LIGHTCRAFT_LIBRARY` |
 5. **Report.** List the installed versions, PATH changes, MCP results and anything that failed, with its
    `error`.
 
 ## Using the apps
 
-- **MCP modes.** Bare `<app>-cli mcp` works for every app and runs an in-process engine (VectorCraft first
+- **App skills.** Each app has its own skill (`vectorcraft`, `photocraft`, …), and the `storytold` skill picks
+  the right app for a task. Load the app's skill before you work in it.
+- **MCP modes.** Bare `<app>-cli mcp` starts every app and runs an in-process engine (VectorCraft first
   tries a desktop app on `127.0.0.1:7979`). To watch a live desktop app instead, start it with
   `<app> --control <port>` and pass the app's own flag. The flags differ from app to app: `--connect`
   (vectorcraft, gridcraft, designcraft, deckcraft) or `--bridge` (photocraft, effectcraft). Check

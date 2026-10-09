@@ -1,0 +1,545 @@
+# GridCraft worksheet functions
+
+Generated from `gridcraft-cli functions --json` (GridCraft 0.3.0, 501 functions). Grep for a name or a word
+from the description. The `category` filter of `list_functions` takes these exact names:
+`Compatibility`, `Cube`, `Database`, `DateTime`, `Engineering`, `Financial`, `Information`, `Logical`, `Lookup`, `MathTrig`, `Statistical`, `Text`, `Web`.
+
+## Compatibility
+
+- `BETADIST(x, alpha, beta, [A], [B])` — Cumulative beta probability.
+- `BETAINV(probability, alpha, beta, [A], [B])` — Inverse of the cumulative beta distribution.
+- `BINOMDIST(number_s, trials, probability_s, cumulative)` — Binomial probability.
+- `CEILING(number, significance)` — Rounds a number up to a multiple of significance.
+- `CHIDIST(x, deg_freedom)` — Right-tailed chi-squared probability.
+- `CHIINV(probability, deg_freedom)` — Inverse of the right-tailed chi-squared distribution.
+- `CHITEST(actual_range, expected_range)` — Chi-squared test of independence.
+- `CONFIDENCE(alpha, standard_dev, size)` — Confidence interval half-width using the normal distribution.
+- `COVAR(array1, array2)` — Population covariance of paired values.
+- `CRITBINOM(trials, probability_s, alpha)` — Smallest success count whose cumulative binomial probability reaches alpha.
+- `EXPONDIST(x, lambda, cumulative)` — Exponential distribution density or probability.
+- `FDIST(x, deg_freedom1, deg_freedom2)` — Right-tailed F probability.
+- `FINV(probability, deg_freedom1, deg_freedom2)` — Inverse of the right-tailed F distribution.
+- `FLOOR(number, significance)` — Rounds a number down to a multiple of significance.
+- `FORECAST(x, known_ys, known_xs)` — Predicts a value along a linear trend.
+- `FTEST(array1, array2)` — Two-tailed probability that two variances do not differ.
+- `GAMMADIST(x, alpha, beta, cumulative)` — Gamma distribution density or probability.
+- `GAMMAINV(probability, alpha, beta)` — Inverse of the gamma cumulative distribution.
+- `HYPGEOMDIST(sample_s, number_sample, population_s, number_pop)` — Hypergeometric probability of an exact count.
+- `LOGINV(probability, mean, standard_dev)` — Inverse of the cumulative lognormal distribution.
+- `LOGNORMDIST(x, mean, standard_dev)` — Cumulative lognormal probability.
+- `MODE(number1, [number2], ...)` — Most frequently occurring number.
+- `NEGBINOMDIST(number_f, number_s, probability_s)` — Negative binomial probability.
+- `NORMDIST(x, mean, standard_dev, cumulative)` — Normal distribution density or cumulative probability.
+- `NORMINV(probability, mean, standard_dev)` — Inverse of the normal cumulative distribution.
+- `NORMSDIST(z)` — Standard normal cumulative probability.
+- `NORMSINV(probability)` — Inverse of the standard normal cumulative distribution.
+- `PERCENTILE(array, k)` — k-th percentile, k from 0 to 1 inclusive.
+- `PERCENTRANK(array, x, [significance])` — Relative standing of a value as a fraction of the data set.
+- `POISSON(x, mean, cumulative)` — Poisson probability.
+- `QUARTILE(array, quart)` — Quartile (0–4) of a data set.
+- `RANK(number, ref, [order])` — Rank of a number within a list.
+- `STDEV(number1, [number2], ...)` — Sample standard deviation.
+- `STDEVP(number1, [number2], ...)` — Population standard deviation.
+- `TDIST(x, deg_freedom, tails)` — One- or two-tailed Student's t probability.
+- `TINV(probability, deg_freedom)` — Two-tailed inverse of Student's t distribution.
+- `TTEST(array1, array2, tails, type)` — Probability from Student's t-test.
+- `VAR(number1, [number2], ...)` — Sample variance.
+- `VARP(number1, [number2], ...)` — Population variance.
+- `WEIBULL(x, alpha, beta, cumulative)` — Weibull density or probability.
+- `ZTEST(array, x, [sigma])` — One-tailed probability of a z-test.
+
+## Cube
+
+- `CUBEKPIMEMBER(connection, kpi_name, kpi_property, [caption])` — Returns a key performance indicator property from a cube (no cube connections; #N/A).
+- `CUBEMEMBER(connection, member_expression, [caption])` — Returns a member or tuple from a cube (no cube connections; #N/A).
+- `CUBEMEMBERPROPERTY(connection, member_expression, property)` — Returns a property of a cube member (no cube connections; #N/A).
+- `CUBERANKEDMEMBER(connection, set_expression, rank, [caption])` — Returns the nth member of a cube set (no cube connections; #N/A).
+- `CUBESET(connection, set_expression, [caption], [sort_order], [sort_by])` — Defines a set of cube members (no cube connections; #N/A).
+- `CUBESETCOUNT(set)` — Counts the items in a cube set (no cube connections; #N/A).
+- `CUBEVALUE(connection, [member_expression1], ...)` — Returns an aggregated value from a cube (no cube connections; #N/A).
+
+## Database
+
+- `DAVERAGE(database, field, criteria)` — Averages the numbers in a field of the records that meet the criteria.
+- `DCOUNT(database, [field], criteria)` — Counts numeric cells in a field of the matching records (or the matching records).
+- `DCOUNTA(database, [field], criteria)` — Counts non-blank cells in a field of the matching records (or the matching records).
+- `DGET(database, field, criteria)` — Returns the field value of the single record that meets the criteria.
+- `DMAX(database, field, criteria)` — Largest number in a field of the matching records.
+- `DMIN(database, field, criteria)` — Smallest number in a field of the matching records.
+- `DPRODUCT(database, field, criteria)` — Multiplies the numbers in a field of the matching records.
+- `DSTDEV(database, field, criteria)` — Sample standard deviation of a field over the matching records.
+- `DSTDEVP(database, field, criteria)` — Population standard deviation of a field over the matching records.
+- `DSUM(database, field, criteria)` — Adds the numbers in a field of the records that meet the criteria.
+- `DVAR(database, field, criteria)` — Sample variance of a field over the matching records.
+- `DVARP(database, field, criteria)` — Population variance of a field over the matching records.
+
+## DateTime
+
+- `DATE(year, month, day)` — Builds a date serial number from a year, month and day.
+- `DATEDIF(start_date, end_date, unit)` — Counts whole years, months or days between two dates.
+- `DATEVALUE(date_text)` — Converts a date written as text into a date serial number.
+- `DAY(serial_number)` — Returns the day of the month of a date.
+- `DAYS(end_date, start_date)` — Returns the number of days between two dates.
+- `DAYS360(start_date, end_date, [method])` — Counts days between two dates on a 360-day year (US or European method).
+- `EDATE(start_date, months)` — Returns the date a number of months before or after a date.
+- `EOMONTH(start_date, months)` — Returns the last day of the month a number of months away.
+- `HOUR(serial_number)` — Returns the hour (0-23) of a time.
+- `ISOWEEKNUM(date)` — Returns the ISO 8601 week number of a date.
+- `MINUTE(serial_number)` — Returns the minute (0-59) of a time.
+- `MONTH(serial_number)` — Returns the month (1-12) of a date.
+- `NETWORKDAYS(start_date, end_date, [holidays])` — Counts working days (Monday to Friday) between two dates, excluding holidays.
+- `NETWORKDAYS.INTL(start_date, end_date, [weekend], [holidays])` — Counts working days between two dates with a custom weekend, excluding holidays.
+- `NOW()` — Returns the current date and time.
+- `SECOND(serial_number)` — Returns the second (0-59) of a time.
+- `TIME(hour, minute, second)` — Builds a time (a fraction of a day) from hours, minutes and seconds.
+- `TIMEVALUE(time_text)` — Converts a time written as text into a fraction of a day.
+- `TODAY()` — Returns the current date.
+- `WEEKDAY(serial_number, [return_type])` — Returns the day of the week of a date as a number.
+- `WEEKNUM(serial_number, [return_type])` — Returns the week number of a date within its year.
+- `WORKDAY(start_date, days, [holidays])` — Returns the date a number of working days before or after a date.
+- `WORKDAY.INTL(start_date, days, [weekend], [holidays])` — Returns the date a number of working days away with a custom weekend.
+- `YEAR(serial_number)` — Returns the year of a date.
+- `YEARFRAC(start_date, end_date, [basis])` — Returns the fraction of a year between two dates under a day-count basis.
+
+## Engineering
+
+- `BESSELI(x, n)` — Modified Bessel function of the first kind, I_n(x).
+- `BESSELJ(x, n)` — Bessel function of the first kind, J_n(x).
+- `BESSELK(x, n)` — Modified Bessel function of the second kind, K_n(x).
+- `BESSELY(x, n)` — Bessel function of the second kind, Y_n(x).
+- `BIN2DEC(number)` — Converts a binary number to decimal.
+- `BIN2HEX(number, [places])` — Converts a binary number to hexadecimal.
+- `BIN2OCT(number, [places])` — Converts a binary number to octal.
+- `BITAND(number1, number2)` — Bitwise AND of two non-negative integers.
+- `BITLSHIFT(number, shift_amount)` — Shifts the bits of a number left (right for negative shifts).
+- `BITOR(number1, number2)` — Bitwise OR of two non-negative integers.
+- `BITRSHIFT(number, shift_amount)` — Shifts the bits of a number right (left for negative shifts).
+- `BITXOR(number1, number2)` — Bitwise exclusive OR of two non-negative integers.
+- `COMPLEX(real_num, i_num, [suffix])` — Builds a complex number as text from real and imaginary parts.
+- `CONVERT(number, from_unit, to_unit)` — Converts a measurement from one unit to another.
+- `DEC2BIN(number, [places])` — Converts a decimal number to binary.
+- `DEC2HEX(number, [places])` — Converts a decimal number to hexadecimal.
+- `DEC2OCT(number, [places])` — Converts a decimal number to octal.
+- `DELTA(number1, [number2])` — Returns 1 when two numbers are equal, otherwise 0.
+- `ERF(lower_limit, [upper_limit])` — Error function integrated from 0 to a limit, or between two limits.
+- `ERF.PRECISE(x)` — Error function integrated from 0 to x.
+- `ERFC(x)` — Complementary error function, 1 - ERF(x).
+- `ERFC.PRECISE(x)` — Complementary error function, 1 - ERF(x).
+- `GESTEP(number, [step])` — Returns 1 when a number is at least the step, otherwise 0.
+- `HEX2BIN(number, [places])` — Converts a hexadecimal number to binary.
+- `HEX2DEC(number)` — Converts a hexadecimal number to decimal.
+- `HEX2OCT(number, [places])` — Converts a hexadecimal number to octal.
+- `IMABS(inumber)` — Absolute value (modulus) of a complex number.
+- `IMAGINARY(inumber)` — Imaginary coefficient of a complex number.
+- `IMARGUMENT(inumber)` — Angle of a complex number in radians.
+- `IMCONJUGATE(inumber)` — Complex conjugate of a complex number.
+- `IMCOS(inumber)` — Cosine of a complex number.
+- `IMCOSH(inumber)` — Hyperbolic cosine of a complex number.
+- `IMCOT(inumber)` — Cotangent of a complex number.
+- `IMCSC(inumber)` — Cosecant of a complex number.
+- `IMCSCH(inumber)` — Hyperbolic cosecant of a complex number.
+- `IMDIV(inumber1, inumber2)` — Quotient of two complex numbers.
+- `IMEXP(inumber)` — Exponential of a complex number.
+- `IMLN(inumber)` — Natural logarithm of a complex number.
+- `IMLOG10(inumber)` — Base-10 logarithm of a complex number.
+- `IMLOG2(inumber)` — Base-2 logarithm of a complex number.
+- `IMPOWER(inumber, number)` — Raises a complex number to a power.
+- `IMPRODUCT(inumber1, [inumber2], ...)` — Product of complex numbers.
+- `IMREAL(inumber)` — Real coefficient of a complex number.
+- `IMSEC(inumber)` — Secant of a complex number.
+- `IMSECH(inumber)` — Hyperbolic secant of a complex number.
+- `IMSIN(inumber)` — Sine of a complex number.
+- `IMSINH(inumber)` — Hyperbolic sine of a complex number.
+- `IMSQRT(inumber)` — Square root of a complex number.
+- `IMSUB(inumber1, inumber2)` — Difference of two complex numbers.
+- `IMSUM(inumber1, [inumber2], ...)` — Sum of complex numbers.
+- `IMTAN(inumber)` — Tangent of a complex number.
+- `OCT2BIN(number, [places])` — Converts an octal number to binary.
+- `OCT2DEC(number)` — Converts an octal number to decimal.
+- `OCT2HEX(number, [places])` — Converts an octal number to hexadecimal.
+
+## Financial
+
+- `ACCRINT(issue, first_interest, settlement, rate, par, frequency, [basis], [calc_method])` — Accrued interest of a security paying periodic interest.
+- `ACCRINTM(issue, settlement, rate, [par], [basis])` — Accrued interest of a security paying interest at maturity.
+- `AMORDEGRC(cost, date_purchased, first_period, salvage, period, rate, [basis])` — French degressive depreciation with a life-based coefficient.
+- `AMORLINC(cost, date_purchased, first_period, salvage, period, rate, [basis])` — French linear depreciation prorated for the first period.
+- `COUPDAYBS(settlement, maturity, frequency, [basis])` — Days from the start of the coupon period to settlement.
+- `COUPDAYS(settlement, maturity, frequency, [basis])` — Days in the coupon period that contains settlement.
+- `COUPDAYSNC(settlement, maturity, frequency, [basis])` — Days from settlement to the next coupon date.
+- `COUPNCD(settlement, maturity, frequency, [basis])` — Next coupon date after settlement.
+- `COUPNUM(settlement, maturity, frequency, [basis])` — Number of coupons payable between settlement and maturity.
+- `COUPPCD(settlement, maturity, frequency, [basis])` — Previous coupon date on or before settlement.
+- `CUMIPMT(rate, nper, pv, start_period, end_period, type)` — Total interest paid between two periods.
+- `CUMPRINC(rate, nper, pv, start_period, end_period, type)` — Total principal repaid between two periods.
+- `DB(cost, salvage, life, period, [month])` — Fixed-declining-balance depreciation for a period.
+- `DDB(cost, salvage, life, period, [factor])` — Double-declining-balance (or other factor) depreciation for a period.
+- `DISC(settlement, maturity, pr, redemption, [basis])` — Discount rate of a security.
+- `DOLLARDE(fractional_dollar, fraction)` — Converts a fractional price notation to a decimal number.
+- `DOLLARFR(decimal_dollar, fraction)` — Converts a decimal price to fractional notation.
+- `DURATION(settlement, maturity, coupon, yld, frequency, [basis])` — Macaulay duration of a security with periodic interest.
+- `EFFECT(nominal_rate, npery)` — Effective annual rate from a nominal rate and compounding periods.
+- `FV(rate, nper, pmt, [pv], [type])` — Future value of an investment with constant payments and rate.
+- `FVSCHEDULE(principal, schedule)` — Future value of a principal after a series of compound rates.
+- `INTRATE(settlement, maturity, investment, redemption, [basis])` — Interest rate of a fully invested security.
+- `IPMT(rate, per, nper, pv, [fv], [type])` — Interest part of a given period's payment.
+- `IRR(values, [guess])` — Internal rate of return of periodic cash flows.
+- `ISPMT(rate, per, nper, pv)` — Interest paid in a period of a loan with even principal payments.
+- `MDURATION(settlement, maturity, coupon, yld, frequency, [basis])` — Modified duration of a security with periodic interest.
+- `MIRR(values, finance_rate, reinvest_rate)` — Modified internal rate of return using separate borrow and reinvest rates.
+- `NOMINAL(effect_rate, npery)` — Nominal annual rate from an effective rate and compounding periods.
+- `NPER(rate, pmt, pv, [fv], [type])` — Number of periods needed to pay off or accumulate an amount.
+- `NPV(rate, value1, [value2], ...)` — Net present value of periodic cash flows at a discount rate.
+- `PDURATION(rate, pv, fv)` — Periods needed for an investment to grow to a target value.
+- `PMT(rate, nper, pv, [fv], [type])` — Periodic payment for a loan or annuity with constant payments and rate.
+- `PPMT(rate, per, nper, pv, [fv], [type])` — Principal part of a given period's payment.
+- `PRICE(settlement, maturity, rate, yld, redemption, frequency, [basis])` — Price per 100 face value of a security paying periodic interest.
+- `PRICEDISC(settlement, maturity, discount, redemption, [basis])` — Price per 100 face value of a discounted security.
+- `PRICEMAT(settlement, maturity, issue, rate, yld, [basis])` — Price per 100 face value of a security paying interest at maturity.
+- `PV(rate, nper, pmt, [fv], [type])` — Present value of a series of equal future payments.
+- `RATE(nper, pmt, pv, [fv], [type], [guess])` — Interest rate per period of an annuity, found iteratively.
+- `RECEIVED(settlement, maturity, investment, discount, [basis])` — Amount received at maturity for a fully invested security.
+- `RRI(nper, pv, fv)` — Equivalent interest rate for the growth of an investment.
+- `SLN(cost, salvage, life)` — Straight-line depreciation for one period.
+- `SYD(cost, salvage, life, per)` — Sum-of-years'-digits depreciation for a period.
+- `TBILLEQ(settlement, maturity, discount)` — Bond-equivalent yield of a Treasury bill.
+- `TBILLPRICE(settlement, maturity, discount)` — Price per 100 face value of a Treasury bill.
+- `TBILLYIELD(settlement, maturity, pr)` — Yield of a Treasury bill.
+- `VDB(cost, salvage, life, start_period, end_period, [factor], [no_switch])` — Declining-balance depreciation over any span of periods, switching to straight line.
+- `XIRR(values, dates, [guess])` — Internal rate of return of cash flows on specific dates.
+- `XNPV(rate, values, dates)` — Net present value of cash flows on specific dates.
+- `YIELD(settlement, maturity, rate, pr, redemption, frequency, [basis])` — Yield of a security paying periodic interest.
+- `YIELDDISC(settlement, maturity, pr, redemption, [basis])` — Annual yield of a discounted security.
+- `YIELDMAT(settlement, maturity, issue, rate, pr, [basis])` — Annual yield of a security paying interest at maturity.
+
+## Information
+
+- `CELL(info_type, [reference])` — Information about a cell.
+- `ERROR.TYPE(error_val)` — Returns the number identifying an error value, or #N/A if it is not an error.
+- `HYPERLINK(link_location, [friendly_name])` — Creates a link; the cell shows the friendly name, or the link itself.
+- `INFO(type_text)` — Returns information about the operating environment.
+- `ISBLANK(value)` — TRUE when the value refers to an empty cell.
+- `ISERR(value)` — TRUE when the value is any error other than #N/A.
+- `ISERROR(value)` — TRUE when the value is any error.
+- `ISEVEN(number)` — TRUE when the integer part of a number is even.
+- `ISFORMULA(reference)` — TRUE when the cell has a formula.
+- `ISLOGICAL(value)` — TRUE when the value is TRUE or FALSE.
+- `ISNA(value)` — TRUE when the value is the #N/A error.
+- `ISNONTEXT(value)` — TRUE when the value is anything other than text.
+- `ISNUMBER(value)` — TRUE when the value is a number.
+- `ISODD(number)` — TRUE when the integer part of a number is odd.
+- `ISOMITTED(argument)` — TRUE when a LAMBDA argument was left out.
+- `ISREF(value)` — TRUE for references.
+- `ISTEXT(value)` — TRUE when the value is text.
+- `N(value)` — Converts a value to a number: numbers stay, TRUE is 1, everything else is 0.
+- `NA()` — Returns the #N/A error value.
+- `SHEET([value])` — Sheet number.
+- `SHEETS([reference])` — Number of sheets.
+- `TYPE(value)` — Returns a code for the kind of value: 1 number, 2 text, 4 logical, 16 error, 64 array.
+
+## Logical
+
+- `AND(logical1, [logical2], ...)` — TRUE when every argument is TRUE.
+- `BYCOL(array, lambda)` — Applies a LAMBDA to each column.
+- `BYROW(array, lambda)` — Applies a LAMBDA to each row.
+- `FALSE()` — Returns the logical value FALSE.
+- `IF(logical_test, [value_if_true], [value_if_false])` — Returns one value when a condition is TRUE and another when it is FALSE.
+- `IFERROR(value, value_if_error)` — Returns a fallback when the value is an error, otherwise the value.
+- `IFNA(value, value_if_na)` — Returns a fallback when the value is #N/A, otherwise the value.
+- `IFS(logical_test1, value_if_true1, ...)` — Returns the value paired with the first condition that is TRUE.
+- `LAMBDA([parameter1, ...], calculation)` — Creates a reusable custom function.
+- `LET(name1, value1, ..., calculation)` — Names intermediate results.
+- `MAKEARRAY(rows, cols, lambda)` — Builds an array from a LAMBDA.
+- `MAP(array1, ..., lambda)` — Applies a LAMBDA to each value.
+- `NOT(logical)` — Reverses a logical value.
+- `OR(logical1, [logical2], ...)` — TRUE when at least one argument is TRUE.
+- `REDUCE(initial_value, array, lambda)` — Accumulates an array into one value.
+- `SCAN(initial_value, array, lambda)` — Running accumulation of an array.
+- `SWITCH(expression, value1, result1, [default_or_value2, result2], ...)` — Compares an expression with a list of values and returns the result paired with the first match.
+- `TRUE()` — Returns the logical value TRUE.
+- `XOR(logical1, [logical2], ...)` — TRUE when an odd number of arguments are TRUE.
+
+## Lookup
+
+- `ADDRESS(row_num, column_num, [abs_num], [a1], [sheet_text])` — Builds a cell address as text from row and column numbers.
+- `AREAS(reference)` — Number of areas in a reference.
+- `CHOOSE(index_num, value1, [value2], ...)` — Picks a value from the list by its position.
+- `CHOOSECOLS(array, col_num1, [col_num2], ...)` — Picks columns of an array by position (negative counts from the end).
+- `CHOOSEROWS(array, row_num1, [row_num2], ...)` — Picks rows of an array by position (negative counts from the end).
+- `COLUMN([reference])` — Column number of a reference.
+- `COLUMNS(array)` — Counts the columns in an array or range.
+- `DROP(array, rows, [columns])` — Removes rows or columns from the start (or end) of an array.
+- `EXPAND(array, rows, [columns], [pad_with])` — Grows an array to the given size, filling new cells with a pad value.
+- `FILTER(array, include, [if_empty])` — Keeps the rows or columns of an array whose include flag is TRUE.
+- `FORMULATEXT(reference)` — The formula of a cell as text.
+- `GROUPBY(row_fields, values, function, [field_headers], [total_depth], [sort_order], [filter_array], [field_relationship])` — Groups rows by key fields and aggregates the values of each group.
+- `HLOOKUP(lookup_value, table_array, row_index_num, [range_lookup])` — Finds a value in the first row of a table and returns the value in the same column of another row.
+- `HSTACK(array1, [array2], ...)` — Places arrays side by side.
+- `INDEX(array, row_num, [column_num], [area_num])` — Returns the element, row or column of an array at the given position.
+- `INDIRECT(ref_text, [a1])` — The reference named by a text string.
+- `LOOKUP(lookup_value, lookup_vector, [result_vector])` — Approximate lookup in a sorted vector or the first row/column of an array.
+- `MATCH(lookup_value, lookup_array, [match_type])` — Returns the 1-based position of a value in a row or column.
+- `OFFSET(reference, rows, cols, [height], [width])` — A reference shifted from a starting point.
+- `PIVOTBY(row_fields, col_fields, values, function, [field_headers], [row_total_depth], [row_sort_order], [col_total_depth], [col_sort_order], [filter_array], [relative_to])` — Builds a summary table grouping values by row and column fields.
+- `ROW([reference])` — Row number of a reference.
+- `ROWS(array)` — Counts the rows in an array or range.
+- `SORT(array, [sort_index], [sort_order], [by_col])` — Sorts the rows (or columns) of an array by one or more of its columns.
+- `SORTBY(array, by_array1, [sort_order1], ...)` — Sorts an array by the values of other arrays of matching size.
+- `TAKE(array, rows, [columns])` — Keeps rows or columns from the start (or end) of an array.
+- `TOCOL(array, [ignore], [scan_by_column])` — Flattens an array into a single column, optionally skipping blanks or errors.
+- `TOROW(array, [ignore], [scan_by_column])` — Flattens an array into a single row, optionally skipping blanks or errors.
+- `TRANSPOSE(array)` — Swaps the rows and columns of an array.
+- `UNIQUE(array, [by_col], [exactly_once])` — Returns the distinct rows or columns of an array.
+- `VLOOKUP(lookup_value, table_array, col_index_num, [range_lookup])` — Finds a value in the first column of a table and returns the value in the same row of another column.
+- `VSTACK(array1, [array2], ...)` — Stacks arrays on top of each other.
+- `WRAPCOLS(vector, wrap_count, [pad_with])` — Breaks a row or column into columns of the given length.
+- `WRAPROWS(vector, wrap_count, [pad_with])` — Breaks a row or column into rows of the given length.
+- `XLOOKUP(lookup_value, lookup_array, return_array, [if_not_found], [match_mode], [search_mode])` — Searches a row or column and returns the matching item, row or column from another array.
+- `XMATCH(lookup_value, lookup_array, [match_mode], [search_mode])` — Returns the position of a value in a row or column with flexible match and search modes.
+
+## MathTrig
+
+- `ABS(number)` — Absolute value of a number.
+- `ACOS(number)` — Arccosine in radians.
+- `ACOSH(number)` — Inverse hyperbolic cosine.
+- `ACOT(number)` — Arccotangent in radians (0 to pi).
+- `ACOTH(number)` — Inverse hyperbolic cotangent.
+- `AGGREGATE(function_num, options, ref1, ...)` — An aggregate that can skip hidden rows and errors.
+- `ARABIC(text)` — Converts Roman numerals to a number.
+- `ASIN(number)` — Arcsine in radians.
+- `ASINH(number)` — Inverse hyperbolic sine.
+- `ATAN(number)` — Arctangent in radians.
+- `ATAN2(x_num, y_num)` — Angle of the point (x, y) from the x-axis in radians.
+- `ATANH(number)` — Inverse hyperbolic tangent.
+- `BASE(number, radix, [min_length])` — Writes a number in another base, padded with zeros.
+- `CEILING.MATH(number, [significance], [mode])` — Rounds a number up to the nearest integer or multiple.
+- `CEILING.PRECISE(number, [significance])` — Rounds a number toward positive infinity to a multiple.
+- `COMBIN(number, number_chosen)` — Number of combinations without repetition.
+- `COMBINA(number, number_chosen)` — Number of combinations with repetition.
+- `COS(number)` — Cosine of an angle in radians.
+- `COSH(number)` — Hyperbolic cosine.
+- `COT(number)` — Cotangent of an angle in radians.
+- `COTH(number)` — Hyperbolic cotangent.
+- `CSC(number)` — Cosecant of an angle in radians.
+- `CSCH(number)` — Hyperbolic cosecant.
+- `DECIMAL(text, radix)` — Reads text in a given base as a number.
+- `DEGREES(angle)` — Converts radians to degrees.
+- `EVEN(number)` — Rounds away from zero to the nearest even integer.
+- `EXP(number)` — e raised to the given power.
+- `FACT(number)` — Factorial of a number.
+- `FACTDOUBLE(number)` — Double factorial of a number.
+- `FLOOR.MATH(number, [significance], [mode])` — Rounds a number down to the nearest integer or multiple.
+- `FLOOR.PRECISE(number, [significance])` — Rounds a number toward negative infinity to a multiple.
+- `GCD(number1, [number2], ...)` — Greatest common divisor of integers.
+- `INT(number)` — Rounds a number down to the nearest integer.
+- `ISO.CEILING(number, [significance])` — Rounds a number toward positive infinity to a multiple.
+- `LCM(number1, [number2], ...)` — Least common multiple of integers.
+- `LN(number)` — Natural logarithm.
+- `LOG(number, [base])` — Logarithm to the given base (10 by default).
+- `LOG10(number)` — Base-10 logarithm.
+- `MDETERM(array)` — Determinant of a square matrix.
+- `MINVERSE(array)` — Inverse of a square matrix.
+- `MMULT(array1, array2)` — Matrix product of two arrays.
+- `MOD(number, divisor)` — Remainder of a division, with the sign of the divisor.
+- `MROUND(number, multiple)` — Rounds a number to the nearest multiple.
+- `MULTINOMIAL(number1, [number2], ...)` — Ratio of the factorial of a sum to the product of factorials.
+- `MUNIT(dimension)` — Identity matrix of the given size.
+- `ODD(number)` — Rounds away from zero to the nearest odd integer.
+- `PI()` — The constant pi to 15 digits.
+- `POWER(number, power)` — Raises a number to a power.
+- `PRODUCT(number1, [number2], ...)` — Multiplies all the numbers in the arguments.
+- `QUOTIENT(numerator, denominator)` — Integer part of a division.
+- `RADIANS(angle)` — Converts degrees to radians.
+- `RAND()` — A random number between 0 and 1, recalculated every time.
+- `RANDARRAY([rows], [columns], [min], [max], [whole_number])` — Builds an array of random numbers in a range.
+- `RANDBETWEEN(bottom, top)` — A random integer between two bounds, inclusive.
+- `ROMAN(number, [form])` — Converts a number to Roman numerals in one of five styles.
+- `ROUND(number, num_digits)` — Rounds a number to a given number of digits, halves away from zero.
+- `ROUNDDOWN(number, num_digits)` — Rounds a number toward zero to a given number of digits.
+- `ROUNDUP(number, num_digits)` — Rounds a number away from zero to a given number of digits.
+- `SEC(number)` — Secant of an angle in radians.
+- `SECH(number)` — Hyperbolic secant.
+- `SEQUENCE(rows, [columns], [start], [step])` — Builds an array of evenly stepped numbers.
+- `SERIESSUM(x, n, m, coefficients)` — Sum of a power series.
+- `SIGN(number)` — 1 for positive, -1 for negative and 0 for zero.
+- `SIN(number)` — Sine of an angle in radians.
+- `SINH(number)` — Hyperbolic sine.
+- `SQRT(number)` — Positive square root.
+- `SQRTPI(number)` — Square root of the number times pi.
+- `SUBTOTAL(function_num, ref1, ...)` — A subtotal that can skip hidden rows.
+- `SUM(number1, [number2], ...)` — Adds all the numbers in the arguments.
+- `SUMIF(range, criteria, [sum_range])` — Adds the cells that meet a condition.
+- `SUMIFS(sum_range, criteria_range1, criteria1, ...)` — Adds the cells that meet every condition.
+- `SUMPRODUCT(array1, [array2], ...)` — Multiplies matching elements of equally sized arrays and adds the products.
+- `SUMSQ(number1, [number2], ...)` — Adds the squares of the numbers.
+- `SUMX2MY2(array_x, array_y)` — Sums the differences of squares of matching elements.
+- `SUMX2PY2(array_x, array_y)` — Sums the sums of squares of matching elements.
+- `SUMXMY2(array_x, array_y)` — Sums the squared differences of matching elements.
+- `TAN(number)` — Tangent of an angle in radians.
+- `TANH(number)` — Hyperbolic tangent.
+- `TRUNC(number, [num_digits])` — Cuts off the fractional part of a number at the given digits.
+
+## Statistical
+
+- `AVEDEV(number1, [number2], ...)` — Average absolute deviation from the mean.
+- `AVERAGE(number1, [number2], ...)` — Arithmetic mean of the numbers.
+- `AVERAGEA(value1, [value2], ...)` — Mean counting text as 0 and logical values as 1 or 0.
+- `AVERAGEIF(range, criteria, [average_range])` — Average of the cells that meet a condition.
+- `AVERAGEIFS(average_range, criteria_range1, criteria1, ...)` — Average of the cells that meet every condition.
+- `BETA.DIST(x, alpha, beta, cumulative, [A], [B])` — Beta distribution density or probability.
+- `BETA.INV(probability, alpha, beta, [A], [B])` — Inverse of the cumulative beta distribution.
+- `BINOM.DIST(number_s, trials, probability_s, cumulative)` — Binomial probability.
+- `BINOM.DIST.RANGE(trials, probability_s, number_s, [number_s2])` — Probability of a number of successes falling in a range.
+- `BINOM.INV(trials, probability_s, alpha)` — Smallest success count whose cumulative binomial probability reaches alpha.
+- `CHISQ.DIST(x, deg_freedom, cumulative)` — Chi-squared density or left-tailed probability.
+- `CHISQ.DIST.RT(x, deg_freedom)` — Right-tailed chi-squared probability.
+- `CHISQ.INV(probability, deg_freedom)` — Inverse of the left-tailed chi-squared distribution.
+- `CHISQ.INV.RT(probability, deg_freedom)` — Inverse of the right-tailed chi-squared distribution.
+- `CHISQ.TEST(actual_range, expected_range)` — Chi-squared test of independence.
+- `CONFIDENCE.NORM(alpha, standard_dev, size)` — Confidence interval half-width using the normal distribution.
+- `CONFIDENCE.T(alpha, standard_dev, size)` — Confidence interval half-width using Student's t distribution.
+- `CORREL(array1, array2)` — Correlation coefficient of two data sets.
+- `COUNT(value1, [value2], ...)` — Counts the numbers.
+- `COUNTA(value1, [value2], ...)` — Counts the non-empty values.
+- `COUNTBLANK(range)` — Counts empty cells and empty text in a range.
+- `COUNTIF(range, criteria)` — Counts the cells that meet a condition.
+- `COUNTIFS(criteria_range1, criteria1, ...)` — Counts the cells that meet every condition.
+- `COVARIANCE.P(array1, array2)` — Population covariance of paired values.
+- `COVARIANCE.S(array1, array2)` — Sample covariance of paired values.
+- `DEVSQ(number1, [number2], ...)` — Sum of squared deviations from the mean.
+- `EXPON.DIST(x, lambda, cumulative)` — Exponential distribution density or probability.
+- `F.DIST(x, deg_freedom1, deg_freedom2, cumulative)` — F distribution density or left-tailed probability.
+- `F.DIST.RT(x, deg_freedom1, deg_freedom2)` — Right-tailed F probability.
+- `F.INV(probability, deg_freedom1, deg_freedom2)` — Inverse of the left-tailed F distribution.
+- `F.INV.RT(probability, deg_freedom1, deg_freedom2)` — Inverse of the right-tailed F distribution.
+- `F.TEST(array1, array2)` — Two-tailed probability that two variances do not differ.
+- `FISHER(x)` — Fisher transformation.
+- `FISHERINV(y)` — Inverse of the Fisher transformation.
+- `FORECAST.LINEAR(x, known_ys, known_xs)` — Predicts a value along a linear trend.
+- `FREQUENCY(data_array, bins_array)` — Counts how many values fall into each bin, as a vertical array.
+- `GAMMA(number)` — The gamma function.
+- `GAMMA.DIST(x, alpha, beta, cumulative)` — Gamma distribution density or probability.
+- `GAMMA.INV(probability, alpha, beta)` — Inverse of the gamma cumulative distribution.
+- `GAMMALN(x)` — Natural log of the gamma function.
+- `GAMMALN.PRECISE(x)` — Natural log of the gamma function.
+- `GAUSS(z)` — Probability that a standard normal value falls between the mean and z.
+- `GEOMEAN(number1, [number2], ...)` — Geometric mean of positive numbers.
+- `GROWTH(known_ys, [known_xs], [new_xs], [const])` — Values along a fitted exponential growth curve.
+- `HARMEAN(number1, [number2], ...)` — Harmonic mean of positive numbers.
+- `HYPGEOM.DIST(sample_s, number_sample, population_s, number_pop, cumulative)` — Hypergeometric probability.
+- `INTERCEPT(known_ys, known_xs)` — Y-intercept of the least-squares regression line.
+- `KURT(number1, [number2], ...)` — Excess kurtosis of a sample.
+- `LARGE(array, k)` — The k-th largest number in a data set.
+- `LINEST(known_ys, [known_xs], [const], [stats])` — Least-squares line coefficients and optional regression statistics.
+- `LOGEST(known_ys, [known_xs], [const], [stats])` — Exponential curve coefficients and optional regression statistics.
+- `LOGNORM.DIST(x, mean, standard_dev, cumulative)` — Lognormal density or probability.
+- `LOGNORM.INV(probability, mean, standard_dev)` — Inverse of the cumulative lognormal distribution.
+- `MAX(number1, [number2], ...)` — Largest number (0 when there are none).
+- `MAXA(value1, [value2], ...)` — Largest value counting text as 0 and logicals as 1/0.
+- `MAXIFS(max_range, criteria_range1, criteria1, ...)` — Largest value among cells that meet every condition.
+- `MEDIAN(number1, [number2], ...)` — Middle value of the numbers.
+- `MIN(number1, [number2], ...)` — Smallest number (0 when there are none).
+- `MINA(value1, [value2], ...)` — Smallest value counting text as 0 and logicals as 1/0.
+- `MINIFS(min_range, criteria_range1, criteria1, ...)` — Smallest value among cells that meet every condition.
+- `MODE.MULT(number1, [number2], ...)` — Vertical array of all the most frequent numbers.
+- `MODE.SNGL(number1, [number2], ...)` — Most frequently occurring number.
+- `NEGBINOM.DIST(number_f, number_s, probability_s, cumulative)` — Negative binomial probability.
+- `NORM.DIST(x, mean, standard_dev, cumulative)` — Normal distribution density or cumulative probability.
+- `NORM.INV(probability, mean, standard_dev)` — Inverse of the normal cumulative distribution.
+- `NORM.S.DIST(z, cumulative)` — Standard normal density or cumulative probability.
+- `NORM.S.INV(probability)` — Inverse of the standard normal cumulative distribution.
+- `PEARSON(array1, array2)` — Pearson product-moment correlation coefficient.
+- `PERCENTILE.EXC(array, k)` — k-th percentile, k strictly between 0 and 1.
+- `PERCENTILE.INC(array, k)` — k-th percentile, k from 0 to 1 inclusive.
+- `PERCENTRANK.EXC(array, x, [significance])` — Relative standing of a value strictly between 0 and 1.
+- `PERCENTRANK.INC(array, x, [significance])` — Relative standing of a value from 0 to 1 inclusive.
+- `PERMUT(number, number_chosen)` — Number of ordered selections without repetition.
+- `PERMUTATIONA(number, number_chosen)` — Number of ordered selections with repetition.
+- `PHI(x)` — Standard normal density.
+- `POISSON.DIST(x, mean, cumulative)` — Poisson probability.
+- `PROB(x_range, prob_range, lower_limit, [upper_limit])` — Probability that values fall between two limits.
+- `QUARTILE.EXC(array, quart)` — Quartile (1–3) of a data set, exclusive method.
+- `QUARTILE.INC(array, quart)` — Quartile (0–4) of a data set, inclusive method.
+- `RANK.AVG(number, ref, [order])` — Rank of a number within a list; ties get the average rank.
+- `RANK.EQ(number, ref, [order])` — Rank of a number within a list; ties share the top rank.
+- `RSQ(known_ys, known_xs)` — Square of the correlation coefficient.
+- `SKEW(number1, [number2], ...)` — Sample skewness.
+- `SKEW.P(number1, [number2], ...)` — Population skewness.
+- `SLOPE(known_ys, known_xs)` — Slope of the least-squares regression line.
+- `SMALL(array, k)` — The k-th smallest number in a data set.
+- `STANDARDIZE(x, mean, standard_dev)` — Z-score of a value.
+- `STDEV.P(number1, [number2], ...)` — Population standard deviation.
+- `STDEV.S(number1, [number2], ...)` — Sample standard deviation.
+- `STDEVA(value1, [value2], ...)` — Sample standard deviation counting text as 0 and logicals as 1/0.
+- `STDEVPA(value1, [value2], ...)` — Population standard deviation counting text as 0 and logicals as 1/0.
+- `STEYX(known_ys, known_xs)` — Standard error of predicted y values in a regression.
+- `T.DIST(x, deg_freedom, cumulative)` — Student's t density or left-tailed probability.
+- `T.DIST.2T(x, deg_freedom)` — Two-tailed Student's t probability.
+- `T.DIST.RT(x, deg_freedom)` — Right-tailed Student's t probability.
+- `T.INV(probability, deg_freedom)` — Left-tailed inverse of Student's t distribution.
+- `T.INV.2T(probability, deg_freedom)` — Two-tailed inverse of Student's t distribution.
+- `T.TEST(array1, array2, tails, type)` — Probability from Student's t-test.
+- `TREND(known_ys, [known_xs], [new_xs], [const])` — Values along a least-squares linear fit.
+- `TRIMMEAN(array, percent)` — Mean after trimming a fraction of points from both ends.
+- `VAR.P(number1, [number2], ...)` — Population variance.
+- `VAR.S(number1, [number2], ...)` — Sample variance.
+- `VARA(value1, [value2], ...)` — Sample variance counting text as 0 and logicals as 1/0.
+- `VARPA(value1, [value2], ...)` — Population variance counting text as 0 and logicals as 1/0.
+- `WEIBULL.DIST(x, alpha, beta, cumulative)` — Weibull density or probability.
+- `Z.TEST(array, x, [sigma])` — One-tailed probability of a z-test.
+
+## Text
+
+- `ARRAYTOTEXT(array, [format])` — Converts an array to text, either as a comma list or as a strict array constant.
+- `ASC(text)` — Converts full-width characters to half-width (no change for single-byte text).
+- `CHAR(number)` — Returns the character for a code from the Windows-1252 character set.
+- `CLEAN(text)` — Removes non-printable control characters from text.
+- `CODE(text)` — Returns the Windows-1252 code of the first character of a text.
+- `CONCAT(text1, [text2], ...)` — Joins text from values and every cell of ranges, without a separator.
+- `CONCATENATE(text1, [text2], ...)` — Joins several text values into one.
+- `DBCS(text)` — Converts half-width characters to full-width (no change in this locale).
+- `DOLLAR(number, [decimals])` — Formats a number as currency text.
+- `EXACT(text1, text2)` — TRUE when two texts are identical, including case.
+- `FIND(find_text, within_text, [start_num])` — Finds the position of one text in another (case-sensitive).
+- `FINDB(find_text, within_text, [start_num])` — Byte version of FIND.
+- `FIXED(number, [decimals], [no_commas])` — Rounds a number and formats it as text with fixed decimals and optional thousands separators.
+- `JIS(text)` — Converts half-width characters to full-width (no change in this locale).
+- `LEFT(text, [num_chars])` — Returns the first characters of a text.
+- `LEFTB(text, [num_bytes])` — Byte version of LEFT (same as LEFT for single-byte text).
+- `LEN(text)` — Counts the characters in a text.
+- `LENB(text)` — Byte version of LEN (same as LEN for single-byte text).
+- `LOWER(text)` — Converts text to lower case.
+- `MID(text, start_num, num_chars)` — Returns characters from the middle of a text.
+- `MIDB(text, start_num, num_bytes)` — Byte version of MID (same as MID for single-byte text).
+- `NUMBERVALUE(text, [decimal_separator], [group_separator])` — Converts text to a number using the given decimal and group separators.
+- `PHONETIC(reference)` — Returns the phonetic (furigana) text; here the text itself.
+- `PROPER(text)` — Capitalises the first letter of each word and lower-cases the rest.
+- `REGEXEXTRACT(text, pattern, [return_mode], [case_sensitivity])` — Extracts the first match, all matches or the capture groups of a regular expression.
+- `REGEXREPLACE(text, pattern, replacement, [occurrence], [case_sensitivity])` — Replaces matches of a regular expression, all of them or a chosen occurrence.
+- `REGEXTEST(text, pattern, [case_sensitivity])` — TRUE when a regular expression matches somewhere in the text.
+- `REPLACE(old_text, start_num, num_chars, new_text)` — Replaces part of a text by position.
+- `REPLACEB(old_text, start_num, num_bytes, new_text)` — Byte version of REPLACE.
+- `REPT(text, number_times)` — Repeats a text a given number of times.
+- `RIGHT(text, [num_chars])` — Returns the last characters of a text.
+- `RIGHTB(text, [num_bytes])` — Byte version of RIGHT (same as RIGHT for single-byte text).
+- `SEARCH(find_text, within_text, [start_num])` — Finds the position of one text in another, ignoring case and allowing wildcards.
+- `SEARCHB(find_text, within_text, [start_num])` — Byte version of SEARCH.
+- `SUBSTITUTE(text, old_text, new_text, [instance_num])` — Replaces occurrences of one text with another, optionally only a given occurrence.
+- `T(value)` — Returns the value if it is text, otherwise empty text.
+- `TEXT(value, format_text)` — Formats a number as text.
+- `TEXTAFTER(text, delimiter, [instance_num], [match_mode], [match_end], [if_not_found])` — Returns the text that comes after a delimiter.
+- `TEXTBEFORE(text, delimiter, [instance_num], [match_mode], [match_end], [if_not_found])` — Returns the text that comes before a delimiter.
+- `TEXTJOIN(delimiter, ignore_empty, text1, [text2], ...)` — Joins text from values and ranges with a delimiter, optionally skipping empty items.
+- `TEXTSPLIT(text, col_delimiter, [row_delimiter], [ignore_empty], [match_mode], [pad_with])` — Splits text into a grid of columns and rows at the given delimiters.
+- `TRIM(text)` — Removes leading and trailing spaces and collapses runs of spaces to one.
+- `UNICHAR(number)` — Returns the character for a Unicode code point.
+- `UNICODE(text)` — Returns the Unicode code point of the first character of a text.
+- `UPPER(text)` — Converts text to upper case.
+- `VALUE(text)` — Converts text that looks like a number, date or time into a number.
+- `VALUETOTEXT(value, [format])` — Converts any value to text, optionally in strict (quoted) form.
+
+## Web
+
+- `ENCODEURL(text)` — Percent-encodes text for use in a URL.
+- `FILTERXML(xml, xpath)` — Extracts data from XML with an XPath (not available; returns #VALUE!).
+- `WEBSERVICE(url)` — Fetches data from a web service (not available; returns #VALUE!).
