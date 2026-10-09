@@ -52,6 +52,27 @@ pass files between apps in open formats (SVG, PDF, PNG, WAV, MP4, CSV).
 
 ## Setup
 
+### Install the other skills
+
+When the user asks to install the storytold skills (or an app skill above isn't available), install them from
+GitHub. Install each one on its own, because `hermes skills install` takes one skill per call:
+
+```bash
+hermes skills install hermes-pro/storytold-skills/<skill> --yes
+```
+
+The skills are `storytold-install`, `vectorcraft`, `photocraft`, `lightcraft`, `effectcraft`, `filmcraft`,
+`designcraft`, `pdfcraft`, `wordcraft`, `gridcraft`, `deckcraft`, `soundcraft` and `cadcraft`. Skip any that
+`hermes skills list` already shows.
+
+The 12 app skills pass Hermes' security scan. **`storytold-install` is blocked** ("community source + caution
+verdict"), because its job is to persist a PATH entry, run the app CLIs and `hermes mcp add`, and read
+`STORYTOLD_*` / `GITHUB_TOKEN` environment variables. Tell the user that, and point them to
+`hermes skills inspect hermes-pro/storytold-skills/storytold-install`. Re-run it with `--force` **only after the
+user agrees**. Then ask the user to start a new session so the new skills load.
+
+### Install the apps
+
 If the app you need has no `mcp_<app>_*` tools and `<app>-cli --version` fails, load the `storytold-install`
-skill and run `setup <app>`. It installs the app, puts it on PATH, checks the MCP server and registers it with
-Hermes.
+skill and run `setup <app>`, or `setup` on its own for all twelve. It installs the app, puts it on PATH, checks
+the MCP server and registers it with Hermes.

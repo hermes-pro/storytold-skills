@@ -14,30 +14,35 @@ The skills give an agent three things:
 
 ## Quick start
 
-Install all 14 skills into Hermes with one line.
-
-macOS / Linux:
+Install the `storytold` skill:
 
 ```bash
-for s in storytold-install storytold vectorcraft photocraft lightcraft effectcraft filmcraft designcraft pdfcraft wordcraft gridcraft deckcraft soundcraft cadcraft; do hermes skills install "hermes-pro/storytold-skills/$s" --yes --force; done
+hermes skills install hermes-pro/storytold-skills/storytold --yes
 ```
 
-Windows (PowerShell):
+Then tell Hermes:
 
-```powershell
-'storytold-install','storytold','vectorcraft','photocraft','lightcraft','effectcraft','filmcraft','designcraft','pdfcraft','wordcraft','gridcraft','deckcraft','soundcraft','cadcraft' | % { hermes skills install "hermes-pro/storytold-skills/$_" --yes --force }
-```
+> Install the storytold skills.
 
-**Why `--force`:** Hermes scans skills from community sources and blocks any that match risky code patterns.
-The 13 app and router skills pass that scan on their own. `storytold-install` doesn't, because its job is to
-persist a PATH entry (the Windows registry, or `~/.profile` / `~/.bashrc` / `~/.zshrc`), run the app CLIs and
-`hermes mcp add`, and read `STORYTOLD_*` / `GITHUB_TOKEN` environment variables. Read
-[`storytold_tools.py`](storytold-install/scripts/storytold_tools.py) first if you'd like to check it, or
-preview it with `hermes skills inspect hermes-pro/storytold-skills/storytold-install`.
+The `storytold` skill tells the agent how to install the other 13 skills. Then start a new session so they load,
+and tell Hermes:
 
-Then ask Hermes to *"set up the storytold Crafting Apps"*. The `storytold-install` skill downloads the apps,
-puts them on PATH, verifies their MCP servers and registers them. Start a new session (or run `/reload-mcp`),
-and the agent picks the right app for each creative task.
+> Set up the storytold Crafting Apps.
+
+The agent downloads the apps, puts them on PATH, checks that their MCP servers answer, and registers them with
+Hermes. After one more new session (or `/reload-mcp`), the app tools are loaded and the agent picks the right
+app for each creative task.
+
+The agent will ask you before it installs `storytold-install` with `--force`. Hermes scans skills from community
+sources and blocks any that match risky code patterns. The app skills and the router pass that scan.
+`storytold-install` doesn't, because its job is to:
+
+- persist a PATH entry (the Windows registry, or `~/.profile` / `~/.bashrc` / `~/.zshrc`)
+- run the app CLIs and `hermes mcp add`
+- read `STORYTOLD_*` / `GITHUB_TOKEN` environment variables
+
+To review it first, read [`storytold_tools.py`](storytold-install/scripts/storytold_tools.py), or run
+`hermes skills inspect hermes-pro/storytold-skills/storytold-install`.
 
 ## Skills
 
@@ -63,13 +68,18 @@ from the live MCP server. The skills tell the agent to grep these files rather t
 
 ## Install the skills
 
-The [Quick start](#quick-start) line installs all of them. You can also install single skills straight from GitHub:
+The [Quick start](#quick-start) lets the agent install them. To install all 14 yourself in one line:
 
 ```bash
-hermes skills install hermes-pro/storytold-skills/storytold-install
-hermes skills install hermes-pro/storytold-skills/storytold
-hermes skills install hermes-pro/storytold-skills/vectorcraft     # …and any other app skills you want
+for s in storytold-install storytold vectorcraft photocraft lightcraft effectcraft filmcraft designcraft pdfcraft wordcraft gridcraft deckcraft soundcraft cadcraft; do hermes skills install "hermes-pro/storytold-skills/$s" --yes --force; done
 ```
+
+```powershell
+'storytold-install','storytold','vectorcraft','photocraft','lightcraft','effectcraft','filmcraft','designcraft','pdfcraft','wordcraft','gridcraft','deckcraft','soundcraft','cadcraft' | % { hermes skills install "hermes-pro/storytold-skills/$_" --yes --force }
+```
+
+`--force` is only needed for `storytold-install` (see [Quick start](#quick-start)). Single skills install the
+same way, e.g. `hermes skills install hermes-pro/storytold-skills/vectorcraft`.
 
 You can also add the repo as a tap with `hermes skills tap add hermes-pro/storytold-skills`. Taps look under
 `skills/` by default and these skills live at the repo root, so point that tap's `path` at the root in
