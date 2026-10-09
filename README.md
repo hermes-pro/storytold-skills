@@ -19,14 +19,21 @@ Install all 14 skills into Hermes with one line.
 macOS / Linux:
 
 ```bash
-for s in storytold-install storytold vectorcraft photocraft lightcraft effectcraft filmcraft designcraft pdfcraft wordcraft gridcraft deckcraft soundcraft cadcraft; do hermes skills install "hermes-pro/storytold-skills/$s" --yes; done
+for s in storytold-install storytold vectorcraft photocraft lightcraft effectcraft filmcraft designcraft pdfcraft wordcraft gridcraft deckcraft soundcraft cadcraft; do hermes skills install "hermes-pro/storytold-skills/$s" --yes --force; done
 ```
 
 Windows (PowerShell):
 
 ```powershell
-'storytold-install','storytold','vectorcraft','photocraft','lightcraft','effectcraft','filmcraft','designcraft','pdfcraft','wordcraft','gridcraft','deckcraft','soundcraft','cadcraft' | % { hermes skills install "hermes-pro/storytold-skills/$_" --yes }
+'storytold-install','storytold','vectorcraft','photocraft','lightcraft','effectcraft','filmcraft','designcraft','pdfcraft','wordcraft','gridcraft','deckcraft','soundcraft','cadcraft' | % { hermes skills install "hermes-pro/storytold-skills/$_" --yes --force }
 ```
+
+**Why `--force`:** Hermes scans skills from community sources and blocks any that match risky code patterns.
+The 13 app and router skills pass that scan on their own. `storytold-install` doesn't, because its job is to
+persist a PATH entry (the Windows registry, or `~/.profile` / `~/.bashrc` / `~/.zshrc`), run the app CLIs and
+`hermes mcp add`, and read `STORYTOLD_*` / `GITHUB_TOKEN` environment variables. Read
+[`storytold_tools.py`](storytold-install/scripts/storytold_tools.py) first if you'd like to check it, or
+preview it with `hermes skills inspect hermes-pro/storytold-skills/storytold-install`.
 
 Then ask Hermes to *"set up the storytold Crafting Apps"*. The `storytold-install` skill downloads the apps,
 puts them on PATH, verifies their MCP servers and registers them. Start a new session (or run `/reload-mcp`),
