@@ -127,8 +127,8 @@ Every recipe marked **(tested)** was run against the released apps through their
 outputs were checked by rendering and looking at them, by reading values back, or by measuring them with
 ffprobe or ffmpeg. The versions tested were:
 
-vectorcraft 0.10.0 · photocraft 0.8.2 · lightcraft 0.7.1 · effectcraft 0.9.2 · filmcraft 0.7.2 · designcraft 0.7.1 ·
-pdfcraft 0.7.1 · wordcraft 0.6.1 · gridcraft 0.6.1 · deckcraft 0.6.1 · soundcraft 0.6.1 · cadcraft 0.6.2 · figcraft 0.5.1
+vectorcraft 0.11.0 · photocraft 0.9.0 · lightcraft 0.8.0 · effectcraft 0.10.0 · filmcraft 0.8.0 · designcraft 0.8.0 ·
+pdfcraft 0.8.0 · wordcraft 0.7.0 · gridcraft 0.7.0 · deckcraft 0.7.0 · soundcraft 0.7.0 · cadcraft 0.7.0 · figcraft 0.6.0
 
 Bugs and quirks found along the way, with their exact error text, are in each skill's **Pitfalls** section.
 Each skill also says what wasn't tested. When an app updates, regenerate its `references/` from the live

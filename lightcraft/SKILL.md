@@ -1,7 +1,7 @@
 ---
 name: lightcraft
 description: "Photo development and cataloguing with LightCraft (Lightroom-style): import and cull a shoot, rate / flag / keyword, develop RAW (DNG, CR2, CR3, NEF, ARW, RAF…) and JPEG photos (exposure, white balance, tone curve, HSL, B&W, crop, masks), HDR editing, apply presets, sync edits across a batch, HDR / panorama merge, contact sheet PDFs, batch export JPEG / PNG / TIFF / WebP / AVIF / JPEG XL / PSD / DNG."
-version: 0.2.0
+version: 0.3.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,7 +16,7 @@ metadata:
 LightCraft is a free, open-source clean-room take on Adobe Lightroom (storytold Crafting Apps): a photo
 library plus a non-destructive raw developer. An agent drives it through an MCP server
 (`lightcraft-cli mcp`) or one-shot CLI commands. Edits are settings stored per photo, never baked into the
-original file. Pixels only change in an export. This skill is written against LightCraft 0.7.1.
+original file. Pixels only change in an export. This skill is written against LightCraft 0.8.0.
 
 ## When to Use
 
@@ -57,7 +57,7 @@ Your exported files stay, but the ratings and edits don't. Other modes:
 
 - `lightcraft-cli mcp --library DIR` opens or creates a persistent library in another folder, e.g. one per project.
 - `lightcraft-cli mcp --compact` lists only the helper tools; every command stays reachable via `command_run`.
-- `lightcraft-cli mcp --connect 127.0.0.1:7980` drives a desktop app the user started with
+- `lightcraft-cli mcp --connect 7980` (a bare port means 127.0.0.1) drives a desktop app the user started with
   `lightcraft --control 7980`, so they can watch. Only this mode has the UI tools (`screenshot`, `ui_screenshot`,
   `inspect_ui`, `ui_inspect`, `set_ui`, `click`, `press_key`, `type_text`, `clipboard`, `pointer_gesture`, `list_widgets`).
   The server starts even when the app isn't running yet and connects on the first call.
@@ -73,10 +73,11 @@ Your exported files stay, but the ratings and edits don't. Other modes:
   `vignette.amount`, `detail.sharpen_amount`).
 - **Positions are normalized image coordinates**, 0..1 with the origin at the top-left: crop rects, mask points,
   white-balance picks, spots.
-- **Every action is a command** (309). Each one is also its own tool: `photo.rate` → `mcp_lightcraft_cmd_photo_rate`,
+- **Every action is a command** (313). Each one is also its own tool: `photo.rate` → `mcp_lightcraft_cmd_photo_rate`,
   or use `command_run {id, params}`, or `command_batch {steps}` for several. Grep `references/commands.md`, or
   `command_list {filter}`.
-- Every edit is undoable (`cmd_edit_undo` / `cmd_edit_redo`). `cmd_history_list` shows the steps of the active photo.
+- Every edit is undoable (`cmd_edit_undo` / `cmd_edit_redo`). `cmd_history_list` → `{history, cursor}` for the active
+  photo; `cmd_history_previous` / `cmd_history_next` / `cmd_history_restore {index}` move the cursor.
 
 ## Tools (Hermes names them `mcp_lightcraft_<tool>`)
 
@@ -219,6 +220,7 @@ cmd_develop_hdr {enabled: true}                                 → {enabled: tr
 set_develop {values: {"light.exposure": 0.5, "hdr.sdrHighlights": -40}}
 export {path: "/abs/out/a-hdr.jpg", hdr: true, longEdge: 2048}  → JPEG with an ISO 21496-1 gain map
 export {path: "/abs/out/a-hdr.avif", hdr: true}                 → 10-bit Rec. 2020 PQ AVIF
+export {path: "/abs/out/a-hlg.avif", hdr: true, hdrTransfer: "hlg"}   → 10-bit HLG AVIF
 ```
 
 ### Recipe: HDR merge of brackets (tested)
@@ -236,14 +238,16 @@ Panoramas (tested): `cmd_merge_panorama {ids, projection: auto|cylindrical|spher
 - `path` (one photo, format from the extension) or `dir` + `naming` (batch; the folder is created). Tokens:
   `{name} {num} {seq} {seq:N} {date:%Y%m%d} {folder} {camera} {lens} {iso} {rating} {title} {creator}`.
   `conflict: unique|overwrite|skip` (default unique: a new name).
-- Formats: `.jpg .png .tif .webp .avif .jxl .psd` (a flat PSD), plus `format: "dng"` (raw with edits embedded) and
+- Formats: `.jpg .png .tif .webp .avif .jxl .psd` (a flat PSD), plus `format: "dng"` (raws only: the raw at full size
+  with the edits embedded; also what a `.dng` path gives), `format: "rendereddng"` (Render to DNG: a linear 16-bit
+  float DNG of the rendered photo with the edit baked in; works for any photo and honours the size) and
   `format: "original"` (the file copied, plus an `.xmp` sidecar Lightroom can read).
 - Size: nothing = **3000 px long edge**, `longEdge: 0` = full size, `longEdge|shortEdge|width+height|megapixels|percent`.
   `dontEnlarge` defaults to true, so a 1800 px photo stays 1800 px.
 - Options: `quality` 1..100, `limitKb` (JPEG fits a file size), `colorSpace: srgb|displayP3|adobeRgb|proPhoto|rec2020`,
   `bitDepth` (PNG 8/16, TIFF 8/16/32, PSD 8/16, AVIF 8/10, JXL 8/16), `metadata: all|allExceptCamera|copyright|none`,
   `removeLocation`, `sharpen: screen|matte|glossy`, `ppi`, `watermark: "text"` or `{text, anchor, size, opacity…}`,
-  `jxlLossless`, `hdr` (see HDR editing).
+  `jxlLossless`, `hdr` (see HDR editing), `hdrTransfer: pq|hlg` (HDR AVIF only; default pq).
 - **Read:** JPEG, PNG, TIFF, WebP, PSD composites, JPEG XL, HEIC, and raws: DNG, CR2, CR3, NEF, ARW, RAF (incl.
   compressed and X-Trans), RW2/RWL, PEF, uncompressed ORF and SRW. Compressed ORF/SRW, Nikon HE NEF and a few CR3
   variants open as **embedded previews only** (`previewOnly` in `query_photos`). Raws of cameras without a fitted
@@ -254,6 +258,7 @@ Panoramas (tested): `cmd_merge_panorama {ids, projection: auto|cylindrical|spher
 ```bash
 lightcraft-cli render in.dng -o out.jpg --set light.exposure=0.3 --set light.shadows=40 --preset lc.golden-hour --size 1200
 lightcraft-cli render in.dng -o out.tif --opt bitDepth=16 --opt colorSpace=adobeRgb   # any app.export option
+lightcraft-cli render in.jpg -o out.dng --opt format=rendereddng --size 2000      # a baked, linear DNG
 lightcraft-cli run --import /abs/a.jpg develop.auto develop.set control=light.exposure value=0.7 \
                    app.export path=/abs/a-out.jpg longEdge=800          # one JSON line per command
 lightcraft-cli run --library /abs/lib --import /abs/shoot photo.rate rating=5 'ids=[1,2]'   # persists
@@ -287,12 +292,14 @@ lightcraft-cli commands --json  ·  lightcraft-cli controls --json   # the catal
   read `results[]` to see which steps ran.
 - **Helper tools refuse unknown keys** with a protocol error (`unknown argument "bogusOpt" for export; expected: …`).
 - **One program per library.** While the MCP server has its library open, `lightcraft-cli run --library` on the same folder
-  fails: `This library is already open in lightcraft-cli 0.7.1 (process N on this computer). Close it there first.`
+  fails: `This library is already open in lightcraft-cli 0.8.0 (process N on this computer). Close it there first.`
   The same happens when the desktop app has it open; use `--connect` then. Use a separate `--library` for CLI work.
 - `kind: "prompt"`/`"object"` masks without the model fail with `The SAM 3 model is not installed. Download it (about
   3.4 GB, SAM License (Meta)) … with `segment.model.download {"acknowledged": true}`…`.
 - AI Denoise has no bundled or downloadable model: `cmd_denoise_toggle` fails with `AI Denoise needs a model: install
   one in Settings > AI Denoise`. Use `detail.nrLuminance` instead.
+- **A `.dng` path (or `format: "dng"`) only works for raws:** a JPEG/PNG fails with `b_gradient.jpg: DNG export needs
+  a raw photo`, and a raw comes out at full size whatever `longEdge` says. Use `format: "rendereddng"` instead.
 - A merge writes its DNG **next to the source files**, so copy them first if that folder must stay untouched.
 - Raws get default sharpening (40) and colour noise reduction (25); JPEGs get none.
 - Paths: use absolute paths. Relative ones resolve against the server's working directory, not yours.
@@ -307,7 +314,7 @@ lightcraft-cli commands --json  ·  lightcraft-cli controls --json   # the catal
 
 ## References
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 309 commands with params, grouped by area. Grep it rather than
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 313 commands with params, grouped by area. Grep it rather than
   reading it whole, e.g. `grep -n "mask\." ${HERMES_SKILL_DIR}/references/commands.md`.
 - `${HERMES_SKILL_DIR}/references/controls.md`: all 122 develop slider ids with ranges and defaults, by section. Grep it too.
 - Upstream docs: https://github.com/storytold/lightcraft/tree/main/docs (`mcp.md`, `control-protocol.md`, `ai-masks.md`,

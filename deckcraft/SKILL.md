@@ -1,7 +1,7 @@
 ---
 name: deckcraft
 description: "Presentations with DeckCraft (PowerPoint-style): build and edit slide decks — pitch decks, reports, lectures, briefings. Slides from layouts, bullets, pictures, charts, tables, shapes and diagrams, themes and backgrounds, speaker notes, transitions and animations. Open and save .pptx, export PDF (slides, notes, handouts) and PNG."
-version: 0.2.0
+version: 0.3.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -15,7 +15,7 @@ metadata:
 
 DeckCraft is a free, open-source clean-room take on Microsoft PowerPoint (storytold Crafting Apps). An agent
 drives it through an MCP server (`deckcraft-cli mcp`) or one-shot CLI commands. It opens and saves `.pptx`,
-and exports PDF (slides, notes pages, handouts), PNG/JPEG and text outlines. This skill is written for DeckCraft 0.6.1.
+and exports PDF (slides, notes pages, handouts), PNG/JPEG and text outlines. This skill is written for DeckCraft 0.7.0.
 
 ## When to Use
 
@@ -59,14 +59,14 @@ The server is **headless** by default (in-process engine, no window). Everything
 - **There's a current slide.** `add_slide` inserts after it and makes the new slide current; `go_to_slide {index}`
   switches. Shape tools (`add_shape`, `insert_chart`…) act on the current slide. Slide indexes are 0-based.
 - **Theme colours** (`accent1`..`accent6`, `tx1`, `bg1`) work anywhere a colour does, so a retheme recolours them.
-- Every action is a command (226). `run_command {command, params}` runs one, `batch` runs several.
+- Every action is a command (232). `run_command {command, params}` runs one, `batch` runs several.
 
 ## Tools (Hermes names them `mcp_deckcraft_<tool>`)
 
 | Tool | Use it for |
 |---|---|
 | `new_presentation {theme?, blank?}` | New deck with one empty title slide (in a fresh session its title/subtitle are ids 258/259; confirm with `inspect_slide`), or none with `blank: true` |
-| `open_presentation {path}` / `save_presentation {path}` | `.pptx` or `.deckcraft` (native), picked by extension |
+| `open_presentation {path}` / `save_presentation {path}` | `.pptx` or `.deckcraft` (native), picked by extension. Open returns `missingFonts` (drawn with a substitute) |
 | `add_slide {layout, title?, body?}` | New slide after the current one. `body`: one paragraph per line |
 | `set_text {id, text}` | Replace a shape's text. **Leading tabs set bullet levels** |
 | `add_shape {preset, x, y, w, h, fill?, line?, text?}` | Preset shapes (`references/catalogs.md`); `fill` `#RRGGBB` or `accent1..6` |
@@ -77,7 +77,7 @@ The server is **headless** by default (in-process engine, no window). Everything
 | `inspect_document` / `inspect_slide {index?}` | Deck structure / one slide's shapes, notes, transition, animations |
 | `render_slide {slide?, scale?}` | PNG of a slide so you can **look** at it (`scale: 0.6` is enough to check) |
 | `export {path, format?, all?, slide?, scale?}` | `png`/`jpeg` (one or all slides), `pptx`, `outline`, `pdf`. Format defaults to the extension |
-| `export {path, format:"pdf", layout?, perPage?, slides?, dpi?, includeHidden?, textLayer?, frame?}` | PDF: `layout` `slides`/`notes`/`handouts`, `perPage` 1/2/3/4/6/9 |
+| `export {path, format:"pdf", layout?, perPage?, slides?, dpi?, includeHidden?, textLayer?, frame?}` | PDF: `layout` `slides`/`notes`/`handouts`, `perPage` 1/2/3/4/6/9. `slides`: `[0,1,3]` (0-based) or `"1-2,4"` (1-based, like the print dialog) |
 | `select {ids}`, `go_to_slide {index}` | Selection and current slide |
 | `list_commands {filter}` / `run_command` / `batch` | Everything else |
 | `pointer`, `select_tool`, `key`, `type_text` | Mouse/keyboard emulation (rarely needed) |
@@ -98,7 +98,10 @@ The server is **headless** by default (in-process engine, no window). Everything
   `table.style {style: "medium2-accent1"…}`, `table.options {headerRow, bandedRows…}`, `table.cellFill {color, cells}`, `table.merge`.
 - **Motion:** `transition.set {kind, option?, duration?}`, `transition.applyAll`, `animation.add {effect, ids, start?}`,
   `animation.options {textBuild: "byParagraph", index}`, `animation.painter {id}` + `animation.painterApply {ids}` (copy a sequence).
-- **Files:** `file.export {path, format: "pdf", layout?: slides|notes|handouts, perPage?}` (same as the `export` tool), `file.properties {title, author…}`.
+- **Files:** `file.export {path, format: "pdf", layout?: slides|notes|handouts, perPage?}` (same as the `export` tool), `file.properties {title, author…}`,
+  `file.info` (path, format, dirty, slide/hidden/section counts, properties).
+- **Selection Pane:** `selection.select {ids}` (reaches into groups), `selection.hideAll` / `selection.showAll`, `shape.visible {visible, ids}`,
+  `shape.lock {locked?, ids}` (no `locked` = toggle), `arrange.reorder {id, index}`.
 - **Other:** `insert.hyperlink {url | slide, text?}`, `format.rtl {on}` (right-to-left paragraphs), `media.gifPlay {id, play?}`
   (animated GIFs play in the show), `review.accessibility`, `review.spelling`.
 
@@ -185,7 +188,9 @@ run_command transition.set {kind:"morph", option:"objects", index:<copy index>} 
 save_presentation {path:"/abs/morph.pptx"}       (writes p159:morph with a fade fallback for old viewers)
 ```
 
-`render_slide` shows the end states only; the motion plays in the slide show (desktop app or PowerPoint).
+`render_slide` shows the end states only. To see the motion headlessly, render frames of the transition into a slide
+(`--slide` is 0-based, `--t` is 0..1 of the duration): `deckcraft-cli render-transition /abs/morph.pptx --slide 1 --t 0.25,0.5,0.75 --width 480 /abs/m.png`
+→ `m-t0.250.png` … (tested: the circle sits halfway, colour blended).
 
 ## Formats
 
@@ -193,6 +198,8 @@ save_presentation {path:"/abs/morph.pptx"}       (writes p159:morph with a fade 
   1/2/3/4/6/9), PNG/JPEG (one slide or all), outline text (`format: "outline"`).
 - PDF has a selectable text layer (`textLayer: false` turns it off); `dpi` (36-600, default 200) sets the resolution of
   slide artwork. `deckcraft-cli convert deck.pptx deck.pdf` does it without MCP.
+- From PowerPoint files, 0.7.0 also draws WMF/EMF pictures, embedded-object previews, file-defined table styles,
+  WordArt warps, pattern fills, compound outlines and combo charts with a secondary axis (per the release notes).
 
 ## CLI (no MCP needed)
 
@@ -205,6 +212,7 @@ deckcraft-cli run --cmd 'file.new={"theme":"Ember"}' \
   --cmd 'slide.fromOutline={"text":"Agenda\n\tWhy now\n\tPlan\nRisks\n\tBudget"}' --save /abs/o.pptx --export /abs/o.pdf
 deckcraft-cli commands [FILTER]  ·  deckcraft-cli describe shape.fill     # one command's params
 deckcraft-cli render --sample /abs/sample.png --slide 1        # built-in sample deck, handy for a test picture
+deckcraft-cli render-transition deck.pptx --slide 1 --t 0,0.5,1 --width 480 /abs/tr.png  # tr-t0.000.png … frames of the transition into slide 1
 deckcraft-cli app [--port PORT] COMMAND [JSON]                 # run a command in a running desktop app
 ```
 
@@ -224,9 +232,12 @@ deckcraft-cli app [--port PORT] COMMAND [JSON]                 # run a command i
 - `export {all:true}` writes `<stem>1.png`, `<stem>2.png`… and fails with `…\slide1.png: The system cannot find the path
   specified. (os error 3)` if the folder doesn't exist.
 - `go_to_slide` with an index past the end doesn't fail; it goes to the last slide. Read the returned `index`.
-- `pdftotext` mangles words with ligatures (fi, ffi) and footer fields in DeckCraft PDFs (`Confidential` → `Con dential`).
+- `pdftotext` reads a slide-number field as `<` and runs nested bullets together (`Two nes o ne te`) in DeckCraft PDFs.
   The visible PDF is fine. For a text check use `export {format:"outline"}` or `inspect_document`.
-- `shape.connect` with a wrong id says `both shapes need connection sites` rather than "not found". Check ids with `inspect_slide`.
+- `shape.connect` with a wrong id says `both shapes need connection sites (lines and groups have none)` rather than "not found".
+  Check ids with `inspect_slide`.
+- `list_commands` / `deckcraft-cli commands` list `text.delete` and `text.move` twice, and `describe` shows the older params.
+  The newer ones work (`text.move {to: "paraUp"}`); `references/commands.md` has them.
 - `deckcraft-cli run --cmd file.new` makes a *second* document (`{"document":1}`; the run starts with one); the active
   (new) one is saved. `slide.fromOutline` appends after the existing empty title slide; add `--cmd 'slide.delete={"index":0}'`.
 - Text inside `add_shape` shapes comes out small; size it with `select` + `format.size`.
@@ -248,8 +259,8 @@ deckcraft-cli app [--port PORT] COMMAND [JSON]                 # run a command i
 
 Grep these rather than reading them whole:
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 226 commands with params, menu place and shortcut
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 232 commands with params, menu place and shortcut
   (`grep -n 'chart[.]' ${HERMES_SKILL_DIR}/references/commands.md`).
-- `${HERMES_SKILL_DIR}/references/catalogs.md`: themes, colour/font schemes, 145 shape presets, 49 transitions,
+- `${HERMES_SKILL_DIR}/references/catalogs.md`: themes, colour/font schemes, 183 shape presets, 49 transitions,
   64 animation effects (`grep -n 'morph' ${HERMES_SKILL_DIR}/references/catalogs.md`).
 - Upstream docs: https://github.com/storytold/deckcraft/tree/main/docs (`mcp.md`, `control-protocol.md`).

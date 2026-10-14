@@ -1,11 +1,11 @@
 # WordCraft command catalog
 
-Generated from `wordcraft-cli commands --json` (WordCraft 0.6.1): 615 commands. Run one with `execute {command, params}`, or several with `batch`.
+Generated from `wordcraft-cli commands --json` (WordCraft 0.7.0): 617 commands. Run one with `execute {command, params}`, or several with `batch`.
 Grep this file for a verb (`grep -n 'table[.]' commands.md`) rather than reading it whole.
 `?` = optional, `a|b` = choices, `→` = what it returns. Unknown param keys are ignored silently, so copy names exactly.
 `(Tab › Group)` is where the command sits in the desktop UI; `[keys]` is its shortcut.
 
-Groups: `text` (21), `caret` (16), `select` (14), `edit` (29), `format` (39), `font` (3), `para` (50), `styles` (16), `list` (2), `view` (34), `table` (48), `outline` (26), `insert` (40), `equation` (20), `layout` (18), `review` (35), `file` (25), `document` (6), `design` (11), `references` (25), `fields` (8), `mailings` (17), `picture` (14), `object` (1), `arrange` (14), `shape` (9), `smartArt` (8), `chart` (5), `draw` (16), `canvas` (4), `wordArt` (4), `tools` (11), `hf` (3), `readAloud` (7), `developer` (16)
+Groups: `text` (21), `caret` (16), `select` (14), `edit` (29), `format` (39), `font` (3), `para` (50), `styles` (16), `list` (2), `view` (34), `table` (48), `outline` (26), `insert` (40), `equation` (20), `layout` (18), `review` (35), `file` (27), `document` (6), `design` (11), `references` (25), `fields` (8), `mailings` (17), `picture` (14), `object` (1), `arrange` (14), `shape` (9), `smartArt` (8), `chart` (5), `draw` (16), `canvas` (4), `wordArt` (4), `tools` (11), `hf` (3), `readAloud` (7), `developer` (16)
 
 ## text
 
@@ -470,8 +470,8 @@ Groups: `text` (21), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 
 - `file.new` (File): New {"template"?: "blank|sample|letter|resume|report"} [Mod+N]
 - `file.open` (File): Open {"path": string, "data"?: base64 (the file's bytes; `path` then only names it), "password"?: string (for a password-protected Word document)} [Mod+O / Mod+F12]
-- `file.save` (File): Save {"path"?: string, "password"?: string (encrypt this and later saves with it, as file.encrypt does), "markup"?: bool (Print Markup for a PDF, PNG, HTML, Markdown or text copy: comments shown; default file.printMarkup)} [Mod+S / Shift+F12]
-- `file.saveAs` (File): Save As {"path": string, "password"?: string, "markup"?: bool (as file.save)} [F12]
+- `file.save` (File): Save {"path"?: string, "password"?: string (encrypt this and later saves with it, as file.encrypt does), "markup"?: bool (Print Markup for a PDF, PNG, HTML, Markdown or text copy: comments shown; default file.printMarkup), "format"?: "wordml2003" (an .xml file as a Word 2003 XML Document) | "flatopc" (as a Word XML Document, the default; saving over a Word 2003 XML file keeps that format)} [Mod+S / Shift+F12]
+- `file.saveAs` (File): Save As {"path": string, "password"?: string, "markup"?: bool, "format"?: string (as file.save)} [F12]
 - `file.encrypt` (File › Info › Protect Document): Encrypt with Password {"password": string (Word documents are saved encrypted with it) | null or "" (saved unencrypted)}
 - `file.exportPdf` (File › Export): Export PDF {"path": string, "markup"?: bool (Print Markup: tracked changes marked up and each page scaled down beside the comments in balloons; default file.printMarkup)}
 - `file.exportPng` (File › Export): Export Page as PNG {"path": string, "page"?: n (1-based), "scale"?: px per pt, "markup"?: bool (the page with its comments in balloons beside it; default file.printMarkup)}
@@ -482,6 +482,8 @@ Groups: `text` (21), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `file.properties` (File › Info): Properties {"title"?, "subject"?, "author"?, "keywords"?, "comments"?, "category"?, "custom"?: {name: string | null (removes)}}
 - `file.info` (File): Info {}
 - `file.setAuthor` (File › Options › General): User Name {"name": string (author of new tracked changes and comments)}
+- `file.privacyOptions` (File › Options › Save): Privacy Options {"removePersonalInfo"?: bool (save comment and revision authors as "Author", no creator or last-modified-by), "removeDateTime"?: bool (save comments and tracked changes without dates)} — at least one; the open document keeps its real names and dates
+- `file.privacy` (File › Options › Save): Privacy Settings {} → {"removePersonalInfo": bool, "removeDateTime": bool} (file.privacyOptions changes them)
 - `file.options` (File): Options {"pane"?: "general|display|proofing|save|language|accessibility|advanced|agents", "author"?: string, "initials"?: string, "units"?: "inches|centimeters|millimeters|points|picas|auto" (auto: the region's), "region"?: string (a locale tag like pl-PL, saved: the paper File › New starts on, the default units and the decimal separator; auto: the system's), "typingReplacesSelection"?: bool, "insertKeyOvertype"?: bool, "overtype"?: bool, "marks"?: {"tabs"?: bool, "spaces"?: bool, "paragraphs"?: bool, "hidden"?: bool}, "checkSpelling"?: bool, "markGrammar"?: bool, "ignoreUppercase"?: bool, "ignoreNumbers"?: bool, "ignoreInternet"?: bool, "addWords"?: [string], "removeWords"?: [string]} — with any setting it changes them and opens nothing; without, it opens File › Options (at `pane`). Returns the settings.
 - `file.accessibility` (Review › Accessibility): Check Accessibility {}
 - `file.inspect` (File › Info): Inspect Document {"remove"?: ["comments", "revisions", "properties", "hidden", "headers"]}

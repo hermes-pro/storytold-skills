@@ -1,7 +1,7 @@
 ---
 name: pdfcraft
 description: "Work on existing PDFs with PdfCraft (Acrobat-style): read and extract text, merge/combine, split, reorder, rotate or delete pages, highlight and comment, fill or create forms, redact and audit redactions, add watermarks, headers/footers and page numbers, edit metadata and bookmarks, compress/optimize, password-protect, sign, compare, export to Word/HTML/images."
-version: 0.2.0
+version: 0.3.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -14,7 +14,7 @@ metadata:
 # PdfCraft
 
 PdfCraft is a free, open-source, clean-room take on Adobe Acrobat (storytold Crafting Apps). An agent
-drives it through an MCP server (`pdfcraft-cli mcp`, 161 tools in PdfCraft 0.7.1) or one-shot CLI commands.
+drives it through an MCP server (`pdfcraft-cli mcp`, 163 tools in PdfCraft 0.8.0) or one-shot CLI commands.
 Edits stay in memory and are undoable until you save. Saving over the original appends an incremental update.
 
 ## When to Use
@@ -27,7 +27,7 @@ Use it when the job is **an existing PDF**, or a quick PDF assembled from pages,
 - forms: list, fill, import/export data, add fields, auto-detect fields, flatten; Fill & Sign without fields
 - redact text, word lists, patterns (email, phone, SSN, credit card, date) or areas; find faux redactions
 - watermarks, headers/footers, Bates and page numbers, backgrounds; metadata, bookmarks, links
-- shrink/optimize, PDF/A, print-readiness and accessibility checks, digital signatures, export to Word, HTML, RTF, PNG, text
+- shrink, OCR or convert whole folders; PDF/A, print and accessibility checks, signatures; export to Word, HTML, PNG
 
 Pick a different Crafting App when:
 
@@ -57,6 +57,9 @@ Server options: `pdfcraft-cli mcp [--root DIR] [--compact]`. `storytold-install`
   `tool_search` and `tool_call`. If that is all you see, run every other tool in this skill as
   `mcp_pdfcraft_tool_call {name:"comment_add", arguments:{…}}`; `tool_search {name}` returns its full schema.
 
+OCR needs the `models` folder beside the real exe; a hard link in the storytold `bin` dir gets `available: false` and
+`the text recognition models are not installed (…set PDFCRAFT_MODELS…)`. Set `PDFCRAFT_MODELS` to that folder.
+
 The MCP server is always **headless** (an in-process engine; it never attaches to the desktop app). To let the
 user watch, they start `pdfcraft --control FILE` and you drive the real UI with `pdfcraft-cli ui --control FILE …`.
 
@@ -75,7 +78,7 @@ user watch, they start `pdfcraft --control FILE` and you drive the real UI with 
   full rewrite to a new file and the doc then points at that file.
 - **Some tools write files directly** and leave the open doc unchanged: `doc_combine {out}`, `doc_create_multiple
   {out}`, `page_extract`, `doc_split`, `doc_reduce`, `doc_optimize`, `doc_export_*`, `comments_summarize`,
-  `doc_compare_report`, `action_run`. `sign_document` always saves to `out` and the doc then shows the signed file.
+  `doc_compare_report`, `action_run`, `doc_batch`. `sign_document` always saves to `out`; the doc then shows that file.
 - **App commands map to tools.** `command_run {id, params}` runs a menu command id through its tool (`params` are the
   tool's arguments); `command_batch {steps:[{id, params}]}` runs many and reports per-step `ok`/`error`. Only ids
   with a tool work headless (see `references/actions-and-commands.md`). Calling the tool directly is simpler.
@@ -100,12 +103,13 @@ user watch, they start `pdfcraft --control FILE` and you drive the real UI with 
 | `doc_header_footer` / `doc_watermark` / `doc_background` | Page marks (remove with `doc_remove_marks`) |
 | `doc_set_info {key, value}` / `bookmark_add` / `page_number` | Metadata, outline, page labels |
 | `doc_reduce` / `doc_optimize` / `doc_audit_space` | Smaller files |
+| `doc_batch {paths, steps: [convert, ocr, optimize], out_dir}` | Convert, OCR or shrink many files or folders |
 | `doc_protect` / `doc_remove_hidden` / `doc_flatten` | Security and distribution |
 | `print_readiness` / `pdfa_verify` / `accessibility_check` | Pre-flight checks (read-only) |
 | `doc_export_office` / `doc_export_images` / `doc_export_text` | Word, HTML, RTF, PNG/JPEG/TIFF, .txt |
 | `doc_save {path?}` / `doc_close {discard_changes?}` / `edit_undo` | Save, close, undo |
 
-All 161 tools with every parameter are in `references/tools.md`. Grep it (`grep -n "### \`redact_" …`) rather
+All 163 tools with every parameter are in `references/tools.md`. Grep it (`grep -n "### \`redact_" …`) rather
 than reading it whole. Resources: `pdfcraft://document` (open docs), `pdfcraft://commands`,
 `pdfcraft://doc/{doc}/info`, `/text`, `/page/{page}/text`, `/page/{page}/image{?dpi}`. The server has no prompts.
 
@@ -162,12 +166,11 @@ Fill & Sign marks into the page.
 ### Recipe: redact and distribute (tested)
 
 ```text
-doc_info    {doc:1}                                        → fonts: any non-embedded Times? see Pitfalls
 redact_mark {doc:1, pattern:"email"}  ·  redact_mark {doc:1, pattern:"phone"}
 redact_mark {doc:1, words:["98,000","Project Falcon"], whole_words:true}   (or find, rect + page, whole_pages)
 redact_mark {doc:1, find:"98,000", overlay:"REDACTED"}       (or code_set:"foia", codes:["(b)(6)"])
 redact_apply {doc:1}                                         → applied: n
-text_extract {doc:1}                                         → REQUIRED: confirm nothing of the strings is left
+text_extract {doc:1}                                         → confirm nothing of the strings is left
 doc_header_footer {doc:1, header_right:"Quarterly Report", footer_center:"Page <<1 of n>>", font_size:9}
 doc_watermark {doc:1, text:"CONFIDENTIAL", opacity:0.15, color:"#cc0000"}
 doc_remove_hidden {doc:1, categories:["metadata","comments"]}   (omit categories = full sanitize)
@@ -184,9 +187,8 @@ Black boxes drawn over text that is still in the file:
 doc_audit_redactions {doc:1}     → findings: [{page, kind:"covered-text"|"unapplied-mark", rect, covered_text}]
 redact_mark {doc:1, page:1, rect:[x0, H-y1, x1, H-y0]}       (audit rects are bottom-left: flip with page height H)
 redact_apply {doc:1}  ·  text_extract {doc:1}  ·  doc_save {doc:1, path:"/abs/fixed.pdf"}
+pdfcraft-cli audit file.pdf      → same JSON from the CLI; exit 1 when it finds any
 ```
-
-CLI: `pdfcraft-cli audit file.pdf` prints the same JSON and exits 1 when it finds any.
 
 ### Recipe: merge, reorder, split (tested)
 
@@ -206,6 +208,17 @@ doc_save {doc:2, path:"/abs/reorganized.pdf"}
 Mixed inputs: `doc_create_multiple {paths:["/abs/scan.png","/abs/notes.txt","/abs/a.pdf"], pages:[null,null,"1"],
 out:"/abs/all.pdf"}` makes one PDF with a bookmark per file (tested). `doc_combine` also takes images and .txt now.
 
+### Recipe: convert, OCR or shrink a folder (tested)
+
+```text
+doc_batch {paths:["/abs/inbox"], recursive:true, steps:["convert","optimize"], out_dir:"/abs/pdfs", ppi:150, quality:80}
+          → {completed, failed, skipped, files:[{path, output, status, steps}]}
+doc_batch {paths:["/abs/scans"], steps:["ocr","optimize"], out_dir:"/abs/searchable"}   (skip_text_pages:false = all pages)
+```
+
+`convert` (images, .txt) must come first; without it non-PDFs are `skipped`. Subfolders keep their layout, outputs are
+never overwritten (`scan (2).pdf`), sources stay untouched. A failed file makes the result `isError`, report included.
+
 ### More building blocks (all tested)
 
 - **New PDF:** `doc_create {from:"blank", pages:3}` + `page_add_text {page, text, at:[72,72], width:468, size, bold,
@@ -223,9 +236,11 @@ out:"/abs/all.pdf"}` makes one PDF with a bookmark per file (tested). `doc_combi
   `sign_document {doc, id:"/abs/id.p12", password, page, rect, reason, out:"/abs/signed.pdf"}`; `sign_list` validates.
   On Windows `id:"windows:<name>"` from `sign_windows_ids` uses the certificate store.
 - **Pre-flight:** `print_readiness {doc}` (image ppi, boxes, bleed, unembedded fonts), `pdfa_verify`, `accessibility_check`.
+- **OCR one file:** `ocr_status` → `available: true`, then `ocr_recognize {doc}` adds invisible text to scanned pages
+  so `text_find` works. Check the words (`Two` came out as `wo`).
+- **Tag a text-only PDF:** `accessibility_autotag_apply {doc}` (Document + P tags; refuses images, comments, forms).
 - **Form scripting:** `js_run {doc, script:"this.getField('name').value='X'"}` (Acrobat JS; one undo step).
-- **Batch many files:** `action_run {action:"Add Page Numbers", paths:[…], folder}` or custom `steps`
-  (see `references/actions-and-commands.md`). The folder is created if missing.
+- **Action Wizard:** `action_run {action:"Add Page Numbers", paths:[…], folder}` or custom `steps` (see references).
 - **Exports:** `doc_export_office {path:"x.docx"|"x.html"|"x.rtf"}`, `doc_export_images {folder, dpi, format}`,
   `doc_export_text {path}`, `doc_export_all_images {folder}`.
 
@@ -234,10 +249,8 @@ out:"/abs/all.pdf"}` makes one PDF with a bookmark per file (tested). `doc_combi
 - **Read:** PDF (including encrypted with `password`, damaged files are repaired), XFDF/FDF/XML/CSV/TXT form
   and comment data; images (PNG, JPEG, JPEG 2000, TIFF, GIF, BMP) and .txt via `doc_create`, `doc_combine`,
   `doc_create_multiple`, `page_add_image`, `stamp_custom`.
-- **Write:** PDF (incremental or full), PDF/A-2b/3b (`pdfa_convert`, then save), .docx .html .rtf, PNG/JPEG/TIFF
-  pages, .txt, XFDF/FDF/XML/CSV/TXT data, accessibility report HTML, measurement CSV, .p12 digital IDs.
-- OCR (`ocr_recognize`, `page_enhance_camera` for phone photos of pages) needs models: check `ocr_status` first.
-  On the tested Windows install it reported `available: false`.
+- **Write:** PDF (incremental or full; searchable via English OCR), PDF/A-2b/3b (`pdfa_convert`, then save), .docx
+  .html .rtf, PNG/JPEG/TIFF pages, .txt, XFDF/FDF/XML/CSV/TXT data, accessibility report HTML, measurement CSV, .p12 digital IDs.
 
 ## CLI (no MCP needed)
 
@@ -246,12 +259,14 @@ pdfcraft-cli info file.pdf [--password PW]              # JSON summary: pages, t
 pdfcraft-cli text file.pdf [--page N]                   # reading-order text, pages split by form feeds
 pdfcraft-cli render file.pdf --page N [--dpi 96] --out p.png        # also .jpg .tif .pam
 pdfcraft-cli edit in.pdf --out out.pdf [--rotate 1,3:90] [--delete 2,4] [--move 5:1] [--insert-blank 1] \
-                  [--title T] [--author A] [--full]
+                  [--title T] [--author A] [--full]   # options run in order on the edited doc
 pdfcraft-cli combine a.pdf b.pdf --out combined.pdf
 pdfcraft-cli extract in.pdf --pages 1,3,5 --out out.pdf
 pdfcraft-cli split in.pdf (--every N | --before 3,7) [--out-dir DIR]      # → <name>-p1-2.pdf, <name>-p3-4.pdf …
 pdfcraft-cli check <files or dirs…> [--timeout 20] [--dpi 36] [--json out.json]   # can every page be parsed and drawn
 pdfcraft-cli audit file.pdf [--password PW]             # faux redactions as JSON; exit 1 when found
+pdfcraft-cli batch <files or dirs…> --steps convert,ocr,optimize --out-dir DIR [--recursive] [--ppi 150] \
+                  [--quality 60] [--dpi 300] [--ocr-all-pages] [--stop-on-error]  # JSON report; exit 1 if any file failed
 pdfcraft-cli run --script steps.json [--root DIR]     # [{"tool":"doc_open","args":{…}}, …, {"tool":"page_render","args":{…},"out":"p.png"}]
 pdfcraft-cli run doc_combine 'paths=["a.pdf","b.pdf"]' out=c.pdf   # key=value, values parse as JSON
 pdfcraft-cli tools                                    # every tool with its JSON Schema
@@ -265,15 +280,10 @@ All tested. `run` and `mcp` share the same tool table, so the recipes above work
 - **Absolute paths** for every file argument. Bare `mcp` resolves relative paths against its own working directory.
 - **`run <tool>` is a fresh session** each time: `pdfcraft-cli run text_find doc=1 …` fails with
   `no open document with id 1 (see doc_list)`. Use `run --script` for anything that needs `doc_open` first.
-- **Redaction misses characters in non-embedded Times fonts (still in 0.7.1).** `redact_apply` reports success, but
-  where `doc_info` lists `Times-Roman` / `Times-Bold` with `embedded: false` (any file, including text added with
-  `page_add_text {font:"times"}`), the removed span drifts. Times-Roman drifts left and leaves the tail readable
-  (`555-123-4567` → `7` left; `Tuesday` → `ay` left, more the further right on the line). Times-Bold drifts right and
-  leaves the head (`j`, `5`). Helvetica, Courier and embedded fonts were exact. `doc_audit_redactions` and the
-  apply-time check do **not** catch it. Always `text_extract` after `redact_apply`; for Times lines mark a `rect`
-  padded well past the match (or to the line end) instead of `find`/`pattern`/`words`.
+- **Still `text_extract` after `redact_apply`:** 0.8.0 fixed the Times drift, but the audit can't see a surviving glyph.
 - **`doc_audit_redactions` is conservative:** a text run that only touches a dark box (even by a trailing space)
   is still reported as `covered-text` after a correct redaction. Compare its `covered_text` with `text_extract`.
+  It checks page content only: a black-filled `rectangle` comment over text is not reported until `doc_flatten`.
 - **`page_number` only sets page labels** (what viewers show in the page box). For visible numbers use
   `doc_header_footer {footer_center:"Page <<1 of n>>"}`.
 - **Bottom-left rects:** `doc_compare`, `form_detect_fields` and `doc_audit_redactions` return y measured from the
@@ -282,31 +292,29 @@ All tested. `run` and `mcp` share the same tool table, so the recipes above work
   (U+041F); only Western European characters can be added as text for now`. Comments save such text but draw `?`
   (a `warnings` entry says so). Workaround: add placeholder text, then `text_edit` it (falls back to a font that can).
 - Clean errors: `form_fill` → `"country" has no option "Germany" (options: Canada, France, Japan)`; `doc_close`
-  with unsaved changes → `…pass discard_changes: true`; `sign_id_create` → `the password must have at least 6 characters`.
+  unsaved → `…pass discard_changes: true`; `sign_id_create` → `the password must have at least 6 characters`.
 - Encrypted files: `doc_open`, CLI `info` and `text` without the password fail with `the document is protected by a
   password`; CLI `render` says only `the document could not be parsed`. Pass `password` / `--password`.
+  Copy-restricted files need the owner password for text: `text_extract` → `the document's security settings don't
+  allow copying text and images; open it with the owner password…` (CLI `text` refuses too). `text_find` still works.
 - `doc_protect` restrictions (`printing`, `copy`, `changes`) need `permissions_password`, else e.g.
   "`copy` needs `permissions_password`: with open_password alone the document is encrypted but nothing is restricted".
 - `doc_remove_hidden` with `metadata` also wipes Title/Author: set metadata afterwards. When the chosen categories
-  have nothing to remove it fails with a misleading `there are no redaction marks to apply`; check `doc_hidden_info` first.
-- `doc_flatten` before `doc_remove_hidden {categories:["comments"]}` keeps the markup visible as page content.
+  have nothing to remove it fails with a misleading `there are no redaction marks to apply`; check `doc_hidden_info`
+  first. `doc_flatten` before `doc_remove_hidden {categories:["comments"]}` keeps the markup visible as page content.
 - `object_move` with the wrong `kind`: `a selected object no longer exists; select the objects again`. `command_run`
-  on a UI-only id: `command "view.layout.two_up" has no headless tool; see command_list`.
-- Out-of-range pages fail cleanly: `page 9 is out of range: the document has 3 pages`. The CLI `edit --move 9:1`
-  on a 3-page file says `page 8 does not exist` (0-based).
+  on a UI-only id: `command "view.layout.two_up" has no headless tool; see command_list`. Bad pages:
+  `page 9 is out of range: the document has 3 pages` (CLI `edit`: `--move: page 9 does not exist; after the earlier…`).
 
 ## Verification
 
-- `page_render {page, dpi: 72}` every changed page and look at it before reporting done.
-- `text_extract` confirms text changes, redactions, header/footer and watermark text, and filled values.
-- `doc_info` / `form_fields` / `comment_list` / `sign_list` confirm structure; every `doc_save` reply has `bytes`
-  and `path`, and `incremental` says how it was written.
-- `pdfcraft-cli info out.pdf`, `pdfcraft-cli text out.pdf` and `pdfcraft-cli render out.pdf --page 1 --out p.png`
-  independently re-open the file; `pdfcraft-cli audit out.pdf` before sending redacted files.
+- `page_render {page, dpi: 72}` every changed page and look at it; `text_extract` confirms text, redactions, marks.
+- `doc_info` / `form_fields` / `comment_list` / `sign_list` confirm structure; `doc_save` replies with `bytes`.
+- CLI `info`, `text` and `render` independently re-open the saved file; `pdfcraft-cli audit out.pdf` before sending.
 
 ## References
 
-- `references/tools.md`: all 161 MCP tools with every parameter, grouped by area. Grep it.
-- `references/actions-and-commands.md`: Action Wizard actions and steps, and the 191 app command ids for
+- `references/tools.md`: all 163 MCP tools with every parameter, grouped by area. Grep it.
+- `references/actions-and-commands.md`: Action Wizard actions and steps, and the 194 app command ids for
   `ui command` and `command_run` (the `tool` column marks the ones that run headless).
 - Upstream: https://github.com/storytold/pdfcraft (README "Built for agents, too"; `docs/mcp.md`, `docs/cli-batch.md`).

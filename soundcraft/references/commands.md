@@ -1,6 +1,6 @@
 # SoundCraft command catalog
 
-Generated from `list_commands` (SoundCraft 0.6.1, 469 commands). Run with `execute {command, params}`
+Generated from `list_commands` (SoundCraft 0.7.0, 478 commands). Run with `execute {command, params}`
 or `batch {calls:[{command, params}]}`; `soundcraft-cli describe ID` shows one. `?` = optional, `a|b` = choices.
 Positions: samples (int), `{"seconds": x}`, or `"0:12.500"` / `"bars_beats:5|1|000"`. Tracks by id or name; clips by id.
 Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an error such as `make an edit selection first` means: pass them).
@@ -64,8 +64,8 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `edit.move_selection_right` (Edit › Selection › Move Edit Right) [Cmd+Alt+']: {}
 - `edit.halve_selection` (Edit › Selection › Halve Edit): {}
 - `edit.double_selection` (Edit › Selection › Double Edit): {}
-- `edit.extend_selection_up` (Edit › Selection › Extend Edit Up): {}
-- `edit.extend_selection_down` (Edit › Selection › Extend Edit Down): {}
+- `edit.extend_selection_up` (Edit › Selection › Extend Edit Up) [Ctrl+Shift+P]: {}
+- `edit.extend_selection_down` (Edit › Selection › Extend Edit Down) [Ctrl+Shift+;]: {}
 - `edit.remove_selection_top` (Edit › Selection › Remove Edit from Top): {}
 - `edit.remove_selection_bottom` (Edit › Selection › Remove Edit from Bottom): {}
 - `edit.duplicate` (Edit › Duplicate) [Cmd+D]: {tracks?, start?, end?}
@@ -82,16 +82,19 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `edit.trim_to_file_boundaries` (Edit › Trim › To File Boundaries): {clips?}
 - `edit.trim_to_fill_selection` (Edit › Trim › To Fill Selection): {}
 - `edit.mute_clips` (Edit › Mute) [Cmd+M]: {clips?}
-- `edit.copy_to_new_playlist` (Edit › Copy Selection to... › New Playlist): {}
+- `edit.copy_to_new_playlist` (Edit › Copy Selection to... › New Playlist) [Alt+Shift+Down]: {}
 - `edit.strip_silence` (Edit › Strip Silence) [Cmd+U]: {threshold_db?: -48, min_length_ms?: 50, pad_before_ms?: 5, pad_after_ms?: 20}
-- `edit.fades_create` (Edit › Fades › Create) [Cmd+F]: {shape?: linear|equal power|s-curve|exponential|logarithmic, tracks?, start?, end?}
+- `edit.fades_create` (Edit › Fades › Create) [Cmd+F]: {shape?: linear|equal power|s-curve|exponential|logarithmic, tracks?, start?, end?} or {clip: id, side: in|out, length: samples, shape?, curvature?: -1..1}
 - `edit.fades_delete` (Edit › Fades › Delete): {tracks?, start?, end?}
 - `edit.fade_to_start` (Edit › Fades › Fade to Start) [Cmd+Ctrl+D]: {}
 - `edit.fade_to_end` (Edit › Fades › Fade to End) [Cmd+Ctrl+G]: {}
-- `edit.nudge` (Nudge) [Plus/Minus]: {direction: 1|-1, count?: n}
-- `edit.mode` (Edit Mode) [F1-F4]: {mode: shuffle|slip|spot|grid|relative_grid}
+- `edit.nudge` (Nudge) [Plus/Minus]: {direction: 1|-1, count?: n, next?: bool (next larger value)}
+- `edit.mode` (Edit Mode) [F1-F4, Alt+1-4, `]: {mode: shuffle|slip|spot|grid|relative_grid, snap_to_grid?: bool (Shuffle, Slip and Spot)}
+- `edit.snap_to_grid` (Snap to Grid) [Shift+F4]: {value?: bool} (toggles when omitted) — in Shuffle, Slip and Spot the Edit cursor and selections snap to the grid
+- `edit.shuffle_lock` (Shuffle Lock): {value?: bool} (toggles when omitted) — keeps Shuffle mode from being chosen
 - `edit.tool` (Edit Tool) [F5-F10]: {tool: zoom|trim|selector|grabber|scrubber|pencil|smart}
-- `edit.move_clips` (Move Clips): {clips?: [id], by?: samples, to?: position (first clip start), track?: target}
+- `edit.move_clips` (Move Clips): {clips?: [id], by?: samples, to?: position for the first clip that can move (Grid modes snap its sync point), track?: where the first clip's track goes; the others keep their distance}
+- `edit.trim_clip` (Trim Clip): {clip: id, start?: position, end?: position} — moves the clip's edges like the Trim tool, in the current Edit mode
 - `edit.consolidate` (Edit › Consolidate) [Alt+Shift+3]: {tracks?, start?, end?}
 - `edit.cut_pan_automation` (Edit › Cut Special › Pan Automation): {tracks?, start?, end?} — cuts pan automation only to the clipboard
 - `edit.cut_plugin_automation` (Edit › Cut Special › Plugin Automation): {tracks?, start?, end?} — cuts plug-in automation only
@@ -118,10 +121,10 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `edit.space_clips` (Edit › Space Clips): {clips?, gap?: samples|{seconds} (default 0), mode?: end_to_start|start_to_start}
 - `edit.snap_next` (Edit › Snap to › Next): {clips?} — moves each clip so its end meets the start of the next clip
 - `edit.snap_previous` (Edit › Snap to › Previous): {clips?} — moves each clip so its start meets the end of the previous clip
-- `edit.copy_to_target_playlist` (Edit › Copy Selection to... › Target Playlist): {tracks?, start?, end?} — copies the selection into each track's target playlist
+- `edit.copy_to_target_playlist` (Edit › Copy Selection to... › Target Playlist) [Alt+Shift+Up]: {tracks?, start?, end?} — copies the selection into each track's target playlist
 - `edit.copy_to_duplicate_playlist` (Edit › Copy Selection to... › Duplicate of Main Playlist): {tracks?, start?, end?}
-- `edit.move_to_target_playlist` (Edit › Move Selection to... › Target Playlist): {tracks?, start?, end?} — copies to the target playlist and clears it from the main
-- `edit.move_to_new_playlist` (Edit › Move Selection to... › New Playlist): {tracks?, start?, end?}
+- `edit.move_to_target_playlist` (Edit › Move Selection to... › Target Playlist) [Alt+Shift+T]: {tracks?, start?, end?} — copies to the target playlist and clears it from the main
+- `edit.move_to_new_playlist` (Edit › Move Selection to... › New Playlist) [Alt+Shift+N]: {tracks?, start?, end?}
 - `edit.move_to_duplicate_playlist` (Edit › Move Selection to... › Duplicate of Main Playlist): {tracks?, start?, end?}
 - `edit.tce_to_timeline` (Edit › TCE Edit to Timeline Selection): {clip?, start?, end?} — time-stretches the clip to fill the timeline selection (pitch preserved)
 - `edit.automation_coalesce_volume_to_clip_gain` (Edit › Automation › Coalesce Volume Automation to Clip Gain): {tracks?} — folds the whole volume curve into clip gain; the fader goes to 0 dB
@@ -129,6 +132,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `edit.automation_trim_to_all` (Edit › Automation › Trim to All Enabled): {tracks?, start?, end?} — offsets every enabled lane in the selection so it starts at the current control value
 - `edit.automation_glide_to_all` (Edit › Automation › Glide to All Enabled): {tracks?, start?, end?} — ramps every enabled lane from its value at the start to the current value at the end
 - `edit.automation_glide_pan` (Edit › Automation › Glide Pan Only): {tracks?, start?, end?}
+- `edit.tab` (Tab): {back?: bool, extend?: bool (extend the selection)}
 - `edit.copy_audio_as_midi` (Edit › Copy Special › Audio as MIDI): {track?, start?, end?} — monophonic pitch tracking of the selected audio
 
 ## clip — Clip properties (gain, name, loop, lock)
@@ -175,12 +179,16 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `track.split_into_mono` (Track › Split into Mono): {tracks?}
 - `track.make_inactive` (Track › Make Inactive): {tracks?, inactive?: bool}
 - `track.move_to_new_folder` (Track › Move to New Folder) [Cmd+Alt+Shift+N]: {tracks?, name?}
+- `track.move_to_folder` (Move to Folder): {tracks?, folder}
+- `track.remove_from_folder` (Remove from Folder): {tracks?}
 - `track.change_width` (Track › Change Track Width › Change Track Width): {tracks?, format: mono|stereo|…}
 - `track.delete` (Track › Delete): {tracks?}
 - `track.rename` (Rename Track): {track, name}
 - `track.comments` (Track Comments): {track, comments}
 - `track.color` (Track Color): {tracks?, color: [r,g,b] | palette index}
-- `track.height` (Track Height): {tracks?, height: micro|mini|small|medium|large|jumbo|extreme}
+- `track.height` (Track Height): {tracks?, height: micro|mini|small|medium|large|jumbo|extreme | points}
+- `track.height_up` (Increase Track Height) [Ctrl+Up]: {tracks?} — one preset taller
+- `track.height_down` (Decrease Track Height) [Ctrl+Down]: {tracks?} — one preset shorter
 - `track.view` (Track View): {tracks?, view: waveform|blocks|notes|volume|pan|mute|<automation id>}
 - `track.hide` (Hide Track): {tracks?, hidden?: bool}
 - `track.pin` (Pin Track): {tracks?}
@@ -225,8 +233,8 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `track.trim_automation_write` (Write Trim Automation): {tracks?, start?, end?, db} — writes a relative volume trim (dB) over a range
 - `track.coalesce_trim` (Track › Coalesce Trim Automation): {tracks?} — adds trim automation into volume automation and removes the trim
 - `track.coalesce_vca` (Track › Coalesce VCA Controller Automation): {tracks?} — for selected VCA masters: folds VCA level/automation into every member's volume automation, then resets the VCA
-- `track.designate_target_playlist` (Track › Designate as Target Playlist): {tracks?, index?} — the active playlist (or `index`) becomes the target for Copy/Move Selection to
-- `track.show_target_playlist` (Track › Show Target Playlist): {tracks?} — makes the target playlist the main playlist
+- `track.designate_target_playlist` (Track › Designate as Target Playlist) [Cmd+Shift+Right]: {tracks?, index?} — the active playlist (or `index`) becomes the target for Copy/Move Selection to
+- `track.show_target_playlist` (Track › Show Target Playlist) [Shift+Right]: {tracks?} — makes the target playlist the main playlist
 - `track.toggle_recent_playlist` (Track › Toggle Recent Playlist) [Ctrl+Alt+Shift+Left]: {tracks?} — swaps to the previously shown playlist
 
 ## mix — Mixer: volume, pan, mute/solo, inserts, sends, busses
@@ -247,7 +255,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `mix.insert_remove` (Remove Insert): {track?, slot}
 - `mix.insert_bypass` (Bypass Insert): {track?, slot, value?: bool}
 - `mix.insert_param` (Set Plugin Parameter): {track?, slot, param, value}
-- `mix.insert_params` (Set Plugin Parameters): {track?, slot, params: {id: value}, preset?: name}
+- `mix.insert_params` (Set Plugin Parameters): {track?, slot, params: {id: value}, preset?: name} (unknown ids and non-numeric values are errors)
 - `mix.insert_move` (Move Insert): {track?, from, to}
 - `mix.send` (Assign Send): {track?, slot?: 0..9|a..j, bus: name, level_db?: 0 (kept when re-targeting), pre_fader?: false}
 - `mix.send_remove` (Remove Send): {track?, slot}
@@ -256,14 +264,14 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `mix.surround_pan` (Set Surround Pan): {tracks?, x?: -1..1 (left..right), y?: -1..1 (back..front), z?: 0..1 (height), divergence?: 0..1, center?: 0..100, lfe_db?: -144..12, clear?: bool}
 - `mix.send_surround_pan` (Set Send Surround Pan): {track?, slot: 0..9|a..j, x?, y?, z?, divergence?, center?, lfe_db?, clear?: bool}
 - `mix.insert_state` (Store Plugin State): {track, slot: 0..9 | "a".."j" | "instrument", state: base64 | null} → {bytes}. Not undoable and not journaled (states can be large).
-- `mix.instrument` (Set Instrument): {track?, plugin: id} — an instrument track's instrument: built-in, `clap:`, `vst3:` or `au:` id
+- `mix.instrument` (Set Instrument): {track?, plugin: id, params?: {id: value}} — an instrument track's instrument: built-in, `clap:`, `vst3:` or `au:` id; `params` sets built-in parameters (clamped into range; unknown ids and other fields are errors)
 - `mix.instrument_param` (Set Instrument Parameter): {track?, param, value} — one parameter of an instrument track's built-in instrument (clamped into range)
 - `mix.sampler_load` (Load Sampler Sample): {track?, path, params?: {root_note, key_low, key_high, attack, loop_mode, …}} — an instrument track plays the file through the built-in Sampler (made its instrument if it is not already) → {track, source, name, frames, channels, sample_rate}
 - `mix.sampler_clear` (Clear Sampler Sample): {track?} — the track's Sampler stops playing its sample
 
 ## automation — Automation breakpoints and passes
 
-- `automation.set_point` (Add Automation Breakpoint): {track?, param: volume|pan|mute|send_a_level|plugin:a:<id>, at, value}
+- `automation.set_point` (Add Automation Breakpoint): {track?, param: volume|pan|mute|send_a_level|plugin:a:<id>, at, value, from?}
 - `automation.write_range` (Write Automation): {track?, param, start?, end?, value}
 - `automation.clear` (Clear Automation): {track?, param?, start?, end?}
 - `automation.thin` (Edit › Automation › Thin) [Cmd+Alt+T]: {tracks?, tolerance?: 0.1}
@@ -276,7 +284,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 
 ## audiosuite — Offline (destructive-copy) processing
 
-- `audiosuite.process` (AudioSuite Process): {process: <plugin id> | normalize | reverse | invert | gain | duplicate | time_stretch | pitch_shift | varispeed | signal_generator, params?: {..}, clips?}
+- `audiosuite.process` (AudioSuite Process): {process: <plugin id> | normalize | reverse | invert | gain | duplicate | time_stretch | pitch_shift | varispeed | signal_generator, params?: {..}, clips?, tracks?, start?, end?} — signal_generator fills start..end (default: the selection) with a new clip on each audio track in `tracks` (default: the selected tracks)
 
 ## markers — Memory locations
 
@@ -328,7 +336,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 ## midi — MIDI clips and notes
 
 - `midi.notes` (List MIDI Notes): {clip}
-- `midi.new_clip` (New MIDI Clip): {track, start?, end?|length?} (default: the edit selection, or 1 bar)
+- `midi.new_clip` (Clip › New MIDI Clip): {track, start?, end?|length?} (default: the edit selection, or 1 bar)
 - `midi.note_add` (Add Note): {clip, pitch, start_ticks, length_ticks?: 480, velocity?: 100, channel?: 0}
 - `midi.note_edit` (Edit Note): {clip, index, pitch?, start_ticks?, length_ticks?, velocity?}
 - `midi.note_delete` (Delete Notes): {clip, indices: [n]}
@@ -434,9 +442,9 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `view.ruler` (View › Rulers › Rulers): {ruler: bars_beats|min_secs|timecode|feet_frames|samples|tempo|meter|markers|key|chords, visible?: bool}
 - `view.main_counter` (View › Main Counter › Main Counter): {format: bars_beats|min_secs|timecode|feet_frames|samples}
 - `view.sub_counter` (Sub Counter): {format?: … | null}
-- `view.grid` (Grid Value): {value: '1/16' | '1 bar' | '1/8t' | '1/4.' | {seconds} | {frames} | {samples}, lines?: bool}
+- `view.grid` (Grid Value) [Shift+=/-]: {value: '1/16' | '1 bar' | '1/8t' | '1/4.' | {seconds} | {frames} | {samples}, or step: ±n values larger or smaller; lines?: bool}
 - `view.grid_lines` (Show Grid Lines): {value?: bool}
-- `view.nudge` (Nudge Value): {value: like grid}
+- `view.nudge` (Nudge Value) [Alt+Shift+=/-]: {value or step: like grid}
 - `view.edit_comments` (View › Edit Window Views › Comments): {value?: bool} (toggles when omitted)
 - `view.edit_mic_preamps` (View › Edit Window Views › Mic Preamps): {value?: bool} (toggles when omitted)
 - `view.edit_instruments` (View › Edit Window Views › Instruments): {value?: bool} (toggles when omitted)
@@ -517,6 +525,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `view.transport_output_meters` (View › Transport › Output Meters): {value?: bool} (toggles when omitted)
 - `view.transport_expanded` (View › Transport › Expanded): {value?: bool} (toggles when omitted)
 - `view.flags` (View Flags): {prefix?} — lists the view/option flags that are on
+- `view.zoom_toggle` (Zoom Toggle): {width_px?: 1200, height_px?: 600}
 
 ## video — Video track
 

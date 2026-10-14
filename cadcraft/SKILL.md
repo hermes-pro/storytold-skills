@@ -1,7 +1,7 @@
 ---
 name: cadcraft
 description: "Technical drawing and drafting with CADCraft (AutoCAD-style): floor plans, site plans, mechanical part drawings, brackets, layouts with title blocks, dimensioned 2D drawings to scale. Draw lines, polylines, circles and arcs at exact coordinates, offset / trim / fillet, layers, dimensions, hatches, blocks, tables, then save DXF / DWG or export PDF, SVG, PNG."
-version: 0.2.0
+version: 0.3.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,7 +16,7 @@ metadata:
 CADCraft is a free, open-source clean-room take on AutoCAD (storytold Crafting Apps). An agent drives it
 through an MCP server (`cadcraft-cli mcp`) or one-shot CLI commands. It reads DXF (R12–2018), DWG (R13–2018)
 and SVG, writes DXF / DWG (versions 2000–2018, DXF also binary), and plots PDF; SVG and PNG are exports.
-This skill is tested against CADCraft 0.6.2.
+This skill is tested against CADCraft 0.7.0.
 
 ## When to Use
 
@@ -45,8 +45,12 @@ Pick a different Crafting App when:
 
 Without a running desktop app the server is **headless** (in-process session with a CPU renderer). For the
 user to watch live, they run `cadcraft --control 7979` and the server is
-`cadcraft-cli mcp --connect 127.0.0.1:7979` (add `--lazy` to start before the app, `--launch` to open it).
-Only that bridged mode adds `screenshot`, `ui_inspect` and `ui_click`.
+`cadcraft-cli mcp --connect 127.0.0.1:7979`. Plain `--connect` exits at startup if the app isn't answering
+(`cannot connect to 127.0.0.1:7979`); add `--lazy` to start anyway: each call then fails with
+`CADCraft is not answering at 127.0.0.1:7979 … Open CADCraft with its control port …` until the app is up.
+`--launch` (implies lazy) also opens the app, on macOS only; elsewhere calls fail with
+`CADCraft is not running; start it with \`cadcraft --control 7979\``. Only the bridged mode adds `screenshot`,
+`ui_inspect` and `ui_click` (15 tools).
 
 ## Mental Model
 
@@ -58,7 +62,7 @@ Only that bridged mode adds `screenshot`, `ui_inspect` and `ui_click`.
 - **Entities** have a **handle** (hex string such as `"10A"`), a layer, and geometry. Every create command
   returns the handle(s); modify commands take `handle`/`handles`. Keep the handles.
 - **Layers** carry colour, linetype and lineweight (`ByLayer`). Set the current layer before drawing.
-- **Two ways to run commands** (404 commands):
+- **Two ways to run commands** (426 commands):
   - `command_line {text}` types AutoCAD syntax: `line 0,0 @100,0 @0,50 c`, `circle 50,25 10`, `rectang 0,0 @80,40`.
     Coordinates: absolute `x,y`, relative `@dx,dy`, polar `@dist<angle`. Spaces act as Enter, and a trailing
     space ends an open-ended command.
@@ -75,13 +79,15 @@ Only that bridged mode adds `screenshot`, `ui_inspect` and `ui_click`.
 | `script {text}` | Several command lines at once (like a `.scr` file); a blank line = Enter |
 | `inspect_drawing {entities?, limit?}` | Counts by type, extents, layers, styles, blocks, layouts, undo history, entities |
 | `query_entities {type?, layer?, window?, crossing?, limit?, offset?}` | Entities with handles and geometry, e.g. `{type:"Circle"}`, `{window:[[0,0],[100,100]], crossing:false}`. `count` = all matches; pages of 500 |
-| `render {width?, height?, fit?, path?}` | PNG of the active space, fitted to extents (`path` also writes it). **Look at it** |
+| `render {width?, height?, fit?, path?, window?}` | PNG of the active space, fitted to extents (`path` also writes it). `window:[[x0,y0],[x1,y1]]` shows just that area (1600 px wide, the window's shape, if no size). **Look at it** |
+| `find_text {contains?, layer?, window?, limit?, offset?}` | TEXT, MTEXT (plain), attributes and multileaders with `text`, `at`, `height`, `style`, `layer`, `handle`. `contains` ignores case. Finds room names and titles without reading geometry |
 | `new_drawing {metric?}` / `open {path}` / `save {path?}` | `open` takes .dxf/.dwg/.svg; `save` writes .dxf/.dwg by extension, or exports .svg/.png/.pdf |
 | `list_commands {filter?}` | The catalog with aliases and params |
 | `cancel` | Escape: abort a running prompt |
 
 Resources: `cadcraft://drawing` (inspect JSON) and `cadcraft://commands`. There are no prompts. Bad tool
-arguments (missing `text`, wrong type) are JSON-RPC errors `-32602`; a command that fails returns `isError`.
+arguments (missing `text`, wrong type, `render {width:10}` below the 16 px minimum) are JSON-RPC errors
+`-32602`; a command that fails returns `isError`.
 
 ## Drafting essentials (JSON params)
 
@@ -101,13 +107,14 @@ arguments (missing `text`, wrong type) are JSON-RPC errors `-32602`; a command t
 - **Dimensions:** `dimlinear {p1, p2, at}` · `dimaligned` · `dimradius {handle, at}` · `dimdiameter` ·
   `dimangular` · `dimcontinue {points}` / `dimbaseline` (chain from the last linear dim) · `qdim` ·
   `tolerance` (GD&T). Size them for the drawing: `dimstyle {name:"ISO-25", DIMSCALE: 50, DIMDEC: 0}` (any DIM*
-  variable works; `setvar {name:"DIMSCALE", value:50}` also works, as an override for new dimensions).
+  variable works; it also resizes the dimensions already drawn). `setvar {name:"DIMSCALE", value:50}` is only an
+  override for new dimensions.
 - **Hatch:** `hatch {handles:[outer, inner], pattern:"ANSI31", scale}` or `{points:[[x,y]], style:"outer"}`; `pattern:"SOLID"`.
 - **Blocks:** `block {name, base, handles, keep:"delete"}` → `insert {name, at, rotation?, scale?, attribs?}`;
   attributes via `attdef {tag, prompt, default, at, height}` inside the block, filled with `attribs:{TAG: value}`.
   `block`'s default `keep` is `"convert"` (the originals become an insert).
 - **Measure:** `dist {p1, p2}`, `area {handle}` (numeric `area`, `perimeter`), `list`, `properties {handles}`,
-  `massprop`, `count` / `countlist` (blocks), `compare {path}` (diff against another drawing).
+  `massprop`, `count` / `countlist` (blocks), `compare {path}` (diff against another drawing), `texts` (= `find_text`).
 
 ## Procedure
 
@@ -117,7 +124,8 @@ arguments (missing `text`, wrong type) are JSON-RPC errors `-32602`; a command t
 3. **Geometry first**, layer by layer, with `execute` and exact coordinates; chain the returned handles into
    offset/trim/fillet. Use `command_line` for quick AutoCAD-style input.
 4. **Annotate:** dimensions on DIMS, text (height = paper mm × scale, e.g. 2.5 mm × 50 = 125), hatches.
-5. **Check:** `inspect_drawing` counts and extents, `query_entities` geometry, then `render` and look.
+5. **Check:** `inspect_drawing` counts and extents, `query_entities` geometry, `find_text` labels, then `render`
+   and look (`render {window}` to zoom into a room or detail).
 6. **Save** `save {path:"/abs/x.dxf"}` or `.dwg`; export `.pdf` (`exportpdf` or `save` to .pdf), `.svg`, `.png`.
 
 ### Recipe: dimensioned floor plan (tested)
@@ -147,13 +155,15 @@ execute layer.current {name:"DIMS"}
 execute dimlinear {p1:[0,0], p2:[8000,0], at:[4000,-500]} · dimlinear {p1:[0,0], p2:[0,6000], at:[-500,3000]}
 execute dimradius {handle:<table>, at:[3000,2500]}
 render {width:1000, height:800}                             → look
+render {window:[[0,0],[5000,3000]]}                         → one room, 1600×960
+find_text {contains:"room"}                                 → [{text:"LIVING ROOM", at:[2500,5000], …}]
 save {path:"/abs/plan.dxf"} · save {path:"/abs/plan.dwg"}
 execute exportpdf {path:"/abs/plan.pdf", fit:true}          (A4 landscape, real text in Arial)
 ```
 
 ### Recipe: plotted A3 sheet from a layout (tested)
 
-`layout.new` sizes its viewport for the default paper, so a later `pagesetup` to A3 leaves it in one corner.
+`layout.new` sizes its viewport for A4 (284×197 mm), so a later `pagesetup` to A3 leaves it in one corner.
 Make the layout without a viewport, set the page, then draw the viewport:
 
 ```text
@@ -178,12 +188,14 @@ Without `layouts` it publishes Model plus **every** layout, including the empty 
 
 Also tested: `trim` (→ `{handles}`), `fillet` (→ `{arc}`), `script` with `pline … c` / `circle` / polar
 `line 300,0 @50<30`, `command_line` `rectang 0,300 @80,40`, `circle 2p …`, `offset 5 <pick> <side>`,
-attribute blocks, `open` of a DWG and an SVG, `import` of a DWG into the current drawing, `compare`.
+attribute blocks, `open` of a DWG and an SVG, `import` of a DWG into the current drawing, `compare`, `pdfbook`.
 
 ## Formats
 
 - **Open:** .dxf (ASCII/binary R12–2018), .dwg (R13–2018), .svg/.svgz (1 px = 0.2646 mm; SVG y-down
-  becomes negative y). `import {path, at?, scale?}` merges a DXF/DWG/SVG into the current drawing.
+  becomes negative y). `open` returns `{index, entities, warnings}`: `warnings` lists what a damaged file lost;
+  `inspect_drawing`/`info` report unread DXF records in `skipped`. `import {path, at?, scale?}` merges a
+  DXF/DWG/SVG into the current drawing.
 - **Save:** `save {path}` → .dxf/.dwg by extension (2018 by default). `saveas {path, version?: 2000…2018,
   binary?}` for an older version or binary DXF; the format comes from the extension. `save {}` with no path
   fails on a new drawing (`drawing has no file name yet; use saveas {path}`).
@@ -191,6 +203,9 @@ attribute blocks, `open` of a DWG and an SVG, `import` of a DWG into the current
 - **PDF:** `exportpdf {path, layout?, paper?, landscape?, fit?, scale?, plotArea?, window?}` or `plot {…}`; uses
   the layout's page setup. Layers become PDF layers; TrueType text stays real text.
   `plotStyleTable:"monochrome.ctb"` (or `grayscale.ctb`) prints all colours black/grey.
+- **Sheet books:** `pdfbook {path}` finds closed frames of paper height (`frameHeight`, default 297) drawn in model
+  space and plots each row of frames as one PDF, one page per frame (ISO A size matched). 1 unit = 1 mm by default
+  (`unit`).
 - PNG exports and `render` use the dark model-space background; SVG and PDF are on white.
 
 ## CLI (no MCP needed)
@@ -213,8 +228,10 @@ uses the current view if the commands zoomed or panned. `run` exits 1 on the fir
 
 ## Pitfalls
 
-- **Dimensions vanish at real-world scale.** ISO-25 text and arrows are 2.5 units: invisible on an 8000 mm
-  plan. Set `dimstyle {name:"ISO-25", DIMSCALE:<plot scale>}` (or `setvar DIMSCALE`) **before** dimensioning.
+- **Dimensions vanish at real-world scale.** A new metric drawing has DIMSCALE 1: ISO-25 text and arrows are
+  2.5 units, invisible on an 8000 mm plan. Set `dimstyle {name:"ISO-25", DIMSCALE:<plot scale>}`; it also fixes
+  dimensions already drawn. `setvar DIMSCALE` only affects new dimensions, and `dimstyle.update` does not carry
+  that override to old ones (they stay invisible).
 - **Modify commands replace handles.** `trim` and `break` return new handles and the old one is gone. `break`,
   `trim` on it fail with `no such object`, `offset` with `invalid parameters for \`offset\`: no such object`, but
   `erase`, `move`, `list`, `properties` quietly do nothing (`{erased: 0}`, `{moved: 0}`). Always continue
@@ -240,7 +257,8 @@ uses the current view if the commands zoomed or panned. `run` exits 1 on the fir
 ## Verification
 
 - `inspect_drawing`: expected counts per type, layers, blocks, and sensible `extents`.
-- `query_entities {type:"Dimension"}` / `{layer:"WALLS"}` to confirm geometry and layer assignment.
+- `query_entities {type:"Dimension"}` / `{layer:"WALLS"}` to confirm geometry and layer assignment;
+  `find_text` to confirm labels and titles.
 - `render`, then look: walls closed, openings where planned, dims readable, nothing hatched by mistake.
 - For the deliverable, render the PDF to PNG (e.g. `pdftoppm -png -r 60 plan.pdf page`, or
   `vectorcraft-cli convert plan.svg page.png --artboard 0`) and check it; `cadcraft-cli info out.dwg` confirms
@@ -248,7 +266,7 @@ uses the current view if the commands zoomed or panned. `run` exits 1 on the fir
 
 ## References
 
-- `references/commands.md`: all 404 commands with aliases and JSON params, grouped by menu. Grep it rather than
+- `references/commands.md`: all 426 commands with aliases and JSON params, grouped by menu. Grep it rather than
   reading it whole (e.g. `grep -n "^- \`dim" ${HERMES_SKILL_DIR}/references/commands.md`).
 - Upstream docs: https://github.com/storytold/cadcraft/tree/main/docs (`mcp.md`, `control-protocol.md`). They
-  track `main` and may list tools newer than 0.6.2 (`find_text`, `render {window}` are not in 0.6.2).
+  track `main` and may list features newer than 0.7.0.

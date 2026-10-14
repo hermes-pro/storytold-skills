@@ -1,7 +1,7 @@
 ---
 name: photocraft
 description: "Photo editing and compositing with PhotoCraft (Photoshop-style): retouch and color-grade photos, levels / curves / hue-saturation, layers and masks, selections, cut-outs, text on images, banners and thumbnails, resize / crop, filters, PSD files, data-driven variants from a CSV, batch-process folders. Export PNG / JPG / WebP / TIFF / PSD."
-version: 0.2.0
+version: 0.3.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,7 +16,7 @@ metadata:
 PhotoCraft is a free, open-source clean-room take on Adobe Photoshop (storytold Crafting Apps). An agent
 drives it through an MCP server (`photocraft-cli mcp`) or one-shot CLI commands. Documents keep real
 layers, masks, adjustment layers, smart objects, live type and layer styles, and round-trip PSD files.
-This skill was tested on PhotoCraft 0.8.2.
+This skill was tested on PhotoCraft 0.9.0.
 
 ## When to Use
 
@@ -52,7 +52,7 @@ Pick a different Crafting App when:
    fails with `automation filesystem access is not granted: read authority is absent` (or `write authority`).
    If you see that, the server was registered by hand: ask the user to run
    `storytold_tools.py register photocraft --replace`, then `/reload-mcp`. The `PHOTOCRAFT_AUTOMATION_*_ROOT`
-   env vars are **not** honoured by `mcp` (tested on 0.8.2).
+   env vars are **not** honoured by `mcp` (tested on 0.9.0).
 4. Until then, use the CLI one-shots (see **CLI**): they take ordinary paths anywhere.
 
 Headless (no desktop app) is a full engine with a CPU renderer; only the `ui_*` tools and `control_call` need
@@ -70,7 +70,7 @@ the live app. For the user to watch, they start `photocraft --control 7878 --con
   `layer: id` and default to the **active layer**, and a new layer becomes active. Ids are unique across the
   whole session, not per document (a fresh JPEG's Background is often id 2), so never guess one
   (`no such layer LayerId(1)`): keep the ids replies give you. Ids change when a file is reopened.
-- **Every edit is an engine command** (892). `command_run {id, params}` runs one, `command_batch` several.
+- **Every edit is an engine command** (909). `command_run {id, params}` runs one, `command_batch` several.
   Find ids with `command_list {filter: "curves"}` or grep `references/commands.md`.
 - **Destructive vs non-destructive:** `image.adjustments.*` change the active pixel layer;
   `layer.newAdjustmentLayer.*` add an editable adjustment layer (change it later with `layer.setAdjustment`).
@@ -88,11 +88,11 @@ the live app. For the user to watch, they start `photocraft --control 7878 --con
 | `command_batch {steps:[{id, params}], stop_on_error?}` | Several commands in one call; `{completed, failed, results}`. Not atomic: no rollback |
 | `command_list {filter?, enabled_only?}` | Command ids, menu path, **param docs**, `enabled` and `disabledReason` |
 | `doc_render_preview {max_side?, index?}` (alias `render_preview`) | Flattened PNG (default 1024 px, max 2048) so you can **look** at it |
-| `doc_save {path?, quality?, tiffLayers?, tgaBits?, format?}` / `doc_export` | Save native `.pcraft` or export by extension (under the write root) |
+| `doc_save {path?, quality?, tiffLayers?, tgaBits?, dpxBits?, format?}` / `doc_export` | Save native `.pcraft` or export by extension (under the write root) |
 | `doc_place {path, scale?, fit?, center?}` | Place an image file as an embedded Smart Object layer |
 | `doc_export_layers {dir, format?, prefix?, visible_only?}` | One file per layer (Layers to Files); refuses to overwrite |
 | `doc_import_data_sets {path, delimiter?}` / `doc_export_data_sets {dir, format?, naming?, data_sets?}` | Variable data sets from a CSV / one flattened file per data set |
-| `session_list`, `doc_select {index}`, `doc_close {index?}` | Manage open documents (close doesn't save) |
+| `session_list`, `doc_select {index}`, `doc_close {index?}` | Manage open documents (close doesn't save; headless only). A bad `index` is an error: `no document at index 9` |
 | `jobs_list`, `jobs_cancel {job?}` | Background jobs started with `wait: false` |
 | `ui_inspect`, `ui_screenshot`, `ui_set`, `ui_menu_invoke`, `ui_pointer`, `control_call` | Live app only (bridge mode) |
 
@@ -132,6 +132,10 @@ Resources: `photocraft://document` (same JSON as `doc_inspect`) and `photocraft:
 - A missing font (e.g. Helvetica on Windows) falls back, and the reply (and every `doc_save`) carries
   `font 'Helvetica' is not installed; text may render using a fallback face`. `type.fonts {family}` lists a
   family's faces; `type.resolveMissingFonts {}` lists the document's missing families. Prefer fonts the OS has.
+- **Type on a path (tested):** draw the work path with `path.set {path:{subpaths:[{closed:false, knots:[{anchor:[100,380],
+  in:[100,380], out:[250,80]}, {anchor:[700,380], in:[550,80], out:[700,380]}]}]}}`, `type.create` (its `x`/`y` don't
+  matter), then `type.attachToPath {start:40}`. Around a shape: `type.attachToPath {layer, shape:<shape layer id>,
+  flip?}` (another id: `"shape" is not a shape layer`). `type.detachFromPath` releases it. Survives a PSD round trip.
 
 ## Procedure
 
@@ -184,7 +188,9 @@ doc_render_preview {} · doc_save {path:"out/comp.psd"} · doc_save {path:"out/c
 doc_export_layers {dir:"out/layers"}               → comp_0000_<layer>.png … (dir must not hold those names)
 ```
 
-`edit.transform` maps the layer's source frame onto `quad`; its reply `rect` is that source frame.
+`edit.transform` maps the layer's source frame onto `quad`; its reply `rect` is that source frame. For a relative
+change use `edit.transform {scaleX:50, scaleY:50, rotate:30, dx:50, dy:0}` (percent, degrees, about the frame's
+centre, then moved) (tested).
 
 ### Recipe: banner with photo-filled text (tested)
 
@@ -234,14 +240,18 @@ Variable types: `textReplacement`, `visibility` (`true`/`false`), `pixelReplacem
 - **Retouch:** `paint.spotHealing {points, size}`, `paint.cloneStamp {points, source}`, `paint.remove`, `edit.contentAwareFill`.
 - **Paint:** `paint.stroke {points:[[x,y,pressure],…], size, color, hardness}`, `paint.gradient {from, to, colors}`.
   **Actions:** `actions.record` → edits → `actions.stop`, then `actions.get` gives steps for `batch`.
+- **Photoshop .atn (tested):** `actions.save {action}` returns the `.atn` as base64 `data` (for `batch --actions
+  x.atn`); `actions.load {data}` loads one, `actions.play {action}` runs it. Unplayable Photoshop steps fail at
+  playback with their name.
 
 ## Formats
 
 - **Read and write:** `.pcraft` (native, lossless), PSD, PSB, layered or flat TIFF, PNG, JPEG, WebP, GIF, BMP,
-  TGA, ICO, QOI, PNM, OpenEXR, Radiance HDR, AVIF; HEIC read-only (optional build feature). SVG opens as shape
+  TGA, ICO, QOI, PNM, OpenEXR, Radiance HDR, AVIF, DPX; HEIC read-only (optional build feature). SVG opens as shape
   layers and places as a vector smart object.
 - `doc_save` picks the format from the extension (`format` overrides). `quality` 1..100 for JPEG / WebP (WebP
-  without `quality` is lossless). `tiffLayers: true` keeps layers in TIFF; `tgaBits: 24|32` for TGA.
+  without `quality` is lossless). `tiffLayers: true` keeps layers in TIFF; `tgaBits: 24|32` for TGA;
+  `dpxBits: 8|10|12|16` for DPX (default 8 for an 8-bit document, else 16).
 - PSD / `.pcraft` keep layers, masks, adjustment layers, smart objects, smart filters and type (tested round trip).
   Only `.pcraft` keeps variables and data sets. Flat formats return the warning `N layer(s) flattened; layers,
   masks and blend modes are not kept`; JPEG adds `lossy compression` and composites transparency over white.
@@ -256,13 +266,14 @@ photocraft-cli run in.jpg --cmd image.adjustments.curves --params '{"points":[[0
 photocraft-cli run --new '{"width":600,"height":400,"background":"#223344"}' \
                --cmd type.create --params '{"x":300,"y":220,"text":"Hi","size":120,"color":"#ffcc00","align":"center"}' --out t.png
 photocraft-cli batch --actions steps.json --in ./photos --out ./graded --format jpg --quality 80
+photocraft-cli batch --actions grade.atn --action Grade --in ./photos --out ./graded   # a Photoshop .atn set
 photocraft-cli run --new '{"width":10,"height":10}' --cmd file.automate.createDroplet \
                --params '{"path":"grade.pcdroplet","steps":[["image.imageSize",{"width":320,"height":180}]],"format":"png"}'
 photocraft-cli droplet grade.pcdroplet a.jpg ./photos --out ./small   # files and folders
 photocraft-cli commands --filter blur                        # the command catalog (--json for all fields)
 ```
 
-All of the above were run on 0.8.2. `steps.json` is `[["image.adjustments.hueSaturation", {"saturation": -30}],
+All of the above were run on 0.9.0. `steps.json` is `[["image.adjustments.hueSaturation", {"saturation": -30}],
 {"command": "image.imageSize", "params": {…}}]`; an Actions-panel set (`{"actions":[{name, steps}]}`) also works,
 with `--action <name>`. `batch` refuses `--out` equal to `--in` unless `--in-place`, and exits 1 if any file failed.
 `run` also allows the path-taking commands MCP refuses, e.g. `file.placeEmbedded {path, scale}` and
@@ -274,15 +285,19 @@ with `--action <name>`. `batch` refuses `--out` equal to `--in` unless `--in-pla
   alternate separators are not allowed; use `/``), no `..` (`parent traversal is not allowed`), no `~`. An
   absolute path outside the root fails with `automation path rejected: absolute paths must be inside the automation
   root`. The output folder must exist: otherwise `I/O: automation write `…` failed (NotFound)`.
-- **Path-taking commands are refused over MCP** (`file.placeEmbedded`, `file.saveACopy`, `file.export.*`, …):
+- **Path-taking commands are refused over MCP** (`file.placeEmbedded`, `file.saveACopy`, `file.export.*`,
+  `actions.load|save {path}`, …):
   `automation command `file.placeEmbedded` uses ambient filesystem paths and is disabled; use capability-scoped
   document methods`. Use `doc_open`, `doc_save`, `doc_place`, `doc_export_layers`, the data-set tools, or the CLI `run`.
-- **`doc_save` with no `path` only writes back PSD / PSB / .pcraft.** On a JPEG: `pass `path`: without one, only a PSD,
-  PSB or .pcraft file is written back, in its own format, so `…/photo.jpg` was left unchanged`.
+- **`doc_save` with no `path` only writes back PSD / PSB / .pcraft / OpenRaster.** On a JPEG: `pass `path`: without
+  one, only a PSD, PSB, .pcraft or OpenRaster file that holds the whole document is written back, in its own format,
+  so `…/photo.jpg` was left unchanged`.
 - **`doc_export_layers` never overwrites:** `I/O: automation create export `comp_0000_logo.png` failed (AlreadyExists)`.
   Use a fresh `dir` or a `prefix`.
-- **Unknown command params are ignored silently** (`image.imageSize {widht:100}` runs as a no-op and still adds an
-  `Image Size` history step). Compare the reply with what you asked for.
+- **Unknown command params are mostly ignored silently** (`image.imageSize {widht:100}` runs as a no-op and still
+  adds an `Image Size` history step; `layer.setProps {bogus:1}` too). Only a few commands check them so far
+  (`layer.hideLayers {bogus:1}`: `invalid parameters for `layer.hideLayers`: unknown parameter `bogus` (expected:
+  layer)`). Compare the reply with what you asked for.
 - **Filters and `image.adjustments.*` need a pixel layer.** A new adjustment or type layer becomes active, so the next
   filter fails with `filters need a pixel layer (active layer is an Adjustment layer)`. `layer.select` first.
   `batch` fails the same way on PSDs saved with an adjustment layer active: `active layer is an Adjustment layer, not
@@ -293,7 +308,8 @@ with `--action <name>`. `batch` refuses `--out` equal to `--in` unless `--in-pla
   running on this document; wait for it to finish or cancel it (Esc)`. Keep the default (wait) unless you poll `jobs_list`.
 - **PSD drops variables and data sets** without a warning; save `.pcraft` to keep them.
 - **Bridge mode:** `doc_render_preview` returns a screenshot of the app window, not the image. Export a PNG to check
-  pixels. (Not re-checked on 0.8.2.)
+  pixels. `doc_close` fails: ``doc_close` is only available in headless mode (in the GUI use the window/tab UI or
+  control_call)`. (Checked on 0.9.0.)
 
 ## Verification
 
@@ -304,7 +320,7 @@ with `--action <name>`. `batch` refuses `--out` equal to `--in` unless `--in-pla
 
 ## References
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 892 engine commands with params, grouped by area
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 909 engine commands with params, grouped by area
   (`layer.newAdjustmentLayer`, `filter.blur`, `select`, `type`, `image.variables`…). Grep it rather than reading
   it whole, e.g. `grep -n "unsharp" ${HERMES_SKILL_DIR}/references/commands.md`.
 - Upstream docs: https://github.com/storytold/photocraft/tree/main/docs (`mcp.md`: tools, resources, batch

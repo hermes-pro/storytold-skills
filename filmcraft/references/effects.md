@@ -1,6 +1,6 @@
 # FilmCraft effects and transitions
 
-Generated from `effects.list {detail: true}` (FilmCraft 0.7.2, 303 entries). Apply a clip effect with `command_run effects.apply {clips: [id], effect: <id or name>}`, then set params with `effects.setParam {clip, effect: <id or index>, param, value, time?}`. Transitions go on with `sequence.applyVideoTransition {clip, edge, effect, frames}` / `sequence.applyAudioTransition {clip, effect, frames}`. Choice params take an index (options listed). `*` = not animatable. Format: `id` **Name**: `param` (default), …
+Generated from `effects.list {detail: true}` (FilmCraft 0.8.0, 303 entries). Apply a clip effect with `command_run effects.apply {clips: [id], effect: <id or name>}`, then set params with `effects.setParam {clip, effect: <id or index>, param, value, time?}`. Transitions go on with `sequence.applyVideoTransition {clip, edge, effect, frames}` / `sequence.applyAudioTransition {clip, effect, frames}`. Choice params take an index (options listed). `*` = not animatable. Format: `id` **Name**: `param` (default), …
 
 ## Video effects
 

@@ -1,6 +1,6 @@
 # FigCraft layer properties (`node.set`)
 
-Generated from the live `node.set` docs and `frame.presets` (FigCraft 0.5.1, 94 keys). These keys go in
+Generated from the live `node.set` docs and `frame.presets` (FigCraft 0.6.0, 95 keys). These keys go in
 `set_properties {ids, props}`, in `create_node {props}` and in `node.create`/`frame.create` `props`. Unknown keys are an
 error that lists every known key. Grep this file rather than reading it whole.
 
@@ -91,6 +91,7 @@ fontSize, lineHeight, letterSpacing, textAlign, textAutoResize, styledRuns`), `b
 - `paddingTop/Right/Bottom/Left`
 - `mainAlign` (min|center|max, or the auto gaps spaceBetween|spaceAround|spaceEvenly)
 - `crossAlign` (min|center|max|baseline: first text baselines, horizontal layouts)
+- `contentAlign` (wrapped lines: auto = packed where crossAlign says | spaceBetween)
 - `wrap` (rows of a horizontal layout, columns of a vertical one)
 - `strokesIncluded` (the frame's inside stroke takes up space)
 - `reverseZ` (canvas stacking: true = first on top)

@@ -203,6 +203,16 @@ def _link(src: Path, dst: Path) -> None:
         dst.symlink_to(src)
 
 
+def _junction(src: Path, dst: Path) -> None:
+    """Windows directory junction dst -> src (no admin or developer mode needed)."""
+    if os.path.lexists(dst):
+        try:
+            os.rmdir(dst)  # removes a junction (not its target) or an empty folder
+        except OSError as e:
+            raise RuntimeError(f"{dst} exists and isn't a junction; move it away") from e
+    subprocess.run(["cmd", "/c", "mklink", "/J", str(dst), str(src)], check=True, capture_output=True)
+
+
 def install_app(app: str, version: str | None, force: bool) -> dict:
     rel = release(app, version)
     ver = rel["tag_name"].rsplit("v", 1)[-1]
@@ -241,6 +251,11 @@ def install_app(app: str, version: str | None, force: bool) -> dict:
         if not IS_WINDOWS:
             src.chmod(src.stat().st_mode | 0o755)
         _link(src, bin_dir() / (exe_name + EXE))
+    if IS_WINDOWS:
+        # A hard link looks for its data next to itself, e.g. PdfCraft's OCR `models` folder.
+        for data in ("models",):
+            if (bins[f"{app}-cli"].parent / data).is_dir():
+                _junction(bins[f"{app}-cli"].parent / data, bin_dir() / data)
 
     # Drop older versions once the new one is linked in.
     for old in (install_root() / "apps" / app).iterdir():

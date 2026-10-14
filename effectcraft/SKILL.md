@@ -1,7 +1,7 @@
 ---
 name: effectcraft
 description: "Motion graphics and compositing with EffectCraft (After Effects-style): animated titles, title cards, lower thirds, logo reveals, kinetic type, intros, overlays with alpha, keyframes, easing, expressions, effects (glow, blur, keying, tracking), and renders to MP4 / GIF / WebM / ProRes / PNG sequence / Lottie."
-version: 0.2.0
+version: 0.3.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,7 +16,7 @@ metadata:
 EffectCraft is a free, open-source clean-room take on Adobe After Effects (storytold Crafting Apps). An
 agent drives it through an MCP server (`effectcraft-cli mcp`), one-shot CLI commands, or After Effects-style
 JavaScript (`run_script` / `effectcraft-cli script`). Projects are `.ecproj` files; everything stays editable.
-This skill is written for EffectCraft 0.9.2.
+This skill is written for EffectCraft 0.10.0.
 
 ## When to Use
 
@@ -24,7 +24,8 @@ Use it for **things that move, built from layers over time**:
 
 - animated titles, title cards, lower thirds, end cards, logo reveals, kinetic typography, intros/outros
 - overlays and graphics with transparency (WebM VP9 alpha, ProRes 4444, PNG sequence) for an editor to drop in
-- compositing and VFX on footage: keying, masks, track mattes, motion/camera tracking, stabilizing, roto
+- compositing and VFX on footage: keying, masks, track mattes, motion/camera tracking, stabilizing, roto,
+  cutting an object out with a click (Object Matte)
 - short animated GIFs and Lottie animations for the web
 
 Pick a different Crafting App when:
@@ -65,7 +66,7 @@ The headless project lives in memory: `save_project` after each milestone, since
 - **Layers are referenced** by id (returned on creation), `"#n"`, or **name**. Name layers when you create them
   (`name` param) and keep using the names. A name that matches nothing is an error, never a silent no-op.
   An all-digit string (`"4"`) that matches no name is taken as an id.
-- **Every edit is an engine command** (681 of them) and undoable. The dedicated tools cover the common ones;
+- **Every edit is an engine command** (731 of them) and undoable. The dedicated tools cover the common ones;
   everything else is `execute_command {command, params}`. Unknown param keys are rejected with the accepted list.
 - **Rendering is a render queue**: `renderQueue.add` then `renderQueue.render`. `render_frame` is for looking.
 
@@ -108,6 +109,8 @@ The headless project lives in memory: `save_project` after each milestone, since
 - **Solids / nulls / adjustment:** `layer.newSolid {name, color}`, `layer.newNull`, `layer.newAdjustment`.
 - **Footage:** `file.import {paths: [abs]}` → `{items}`; then `layer.addItem {item, time?, index?}` into the active
   comp, or `project.select {items}` + `file.newCompFromSelection {}` for a comp matching the clip.
+  Moved files: `footage.missing {}` lists them; `footage.relink {item, path}` fixes the rest in that folder too.
+  `file.importProject {path}` merges another `.ecproj` into a folder → `{comps, primaryComp}`.
 - **Grow from an edge:** scale grows around `transform/anchor`. For a bar that wipes in from the left, set
   `anchor` to `[-w/2, 0]` and `position` to the left edge, then key `transform/scale` from `[0,100]` to `[100,100]`.
 - **Timing:** `layer.timing {layers: [...], in?: s, out?: s, start?: s}` trims or shifts layers.
@@ -118,6 +121,8 @@ The headless project lives in memory: `save_project` after each milestone, since
   bounceInWords, trackingIn, scramble, blurIn, jitter, dropInLines) and `anim.applyBuiltinPreset {preset, layers}`
   (`anim.builtinPresets`: fadeIn/fadeOut, wipes, clock, blinds, card flip, pixel dissolve…). Both start at the
   **current time** (`time.set {time}` first). Fades take 0.5 s, wipes 1 s, typewriter 2 s.
+- **Animated backgrounds:** put one of 23 `anim.builtinPresets {category: "Backgrounds"}` on a full-comp solid
+  (auroraVeil, slowFog, emberHaze, magmaFlow, bokehDrift, blueprintGrid, dawnSky…): `anim.applyBuiltinPreset`.
 
 ## Procedure
 
@@ -128,8 +133,7 @@ The headless project lives in memory: `save_project` after each milestone, since
    loops/wiggles: `set_property {path, expression: "wiggle(2, 10)"}`; the reply's `evaluated` shows the result.
 4. **Look.** `render_frame {time, max_side: 640}` at the start, mid-move and the hold. Check framing, overlap,
    contrast, cut-off text. Fix before rendering.
-5. **Save** `save_project {path: "/abs/x.ecproj"}`.
-6. **Render** via the render queue (below), then verify the file (see **Verification**).
+5. **Save** `save_project {path: "/abs/x.ecproj"}`, then **render** via the render queue and verify the file.
 
 ### Recipe: title card (tested)
 
@@ -207,8 +211,7 @@ execute_command edit.pasteSvg {name:"Logo", svg:"<svg xmlns='http://www.w3.org/2
 set_property {layer:"Logo", path:"transform/position", value:[640,300]}
 execute_command layer.newText {text:"Launch Day", name:"Headline", size:96, fill:"#ffffff", position:[640,520]}
 execute_command anim.applyBuiltinPreset {preset:"fadeIn", layers:["Logo"]}        # CTI is 0 → keys 0–0.5 s
-execute_command time.set {time:0.6}
-execute_command layer.applyTextPreset {layer:"Headline", preset:"typewriter"}     # 0.6–2.6 s
+execute_command time.set {time:0.6} · layer.applyTextPreset {layer:"Headline", preset:"typewriter"}   # 0.6–2.6 s
 add_keyframe {layer:"Logo",     path:"transform/opacity", keys:[{time:3.4,value:100},{time:3.9,value:0}], interpolation:"easyEase"}  # not fadeOut (see Pitfalls)
 add_keyframe {layer:"Headline", path:"transform/opacity", keys:[{time:3.4,value:100},{time:3.9,value:0}], interpolation:"easyEase"}
 render_frame {time:0.25} · {time:1.2} · {time:3.0} · {time:3.7}             → look
@@ -236,6 +239,20 @@ effectcraft-cli render --template /abs/lt.ectemplate --values v.json --out /abs/
 
 An unknown control fails before rendering: `invalid parameters for \`essential.set\`: no control named \`Nope\`
 (controls: Title, Bar Color)`. `render-frame --template … --values …` gives a PNG; `--channels rgba` an overlay.
+
+### Recipe: cut an object out of footage with Object Matte (tested)
+
+```text
+file.import {paths:["/abs/shot.mp4"]} · project.select {items:[1]} · file.newCompFromSelection {}   → comp "shot"
+execute_command objectMatte.apply {layer:"#1", point:[160,180], frame:0, after:59}   → {effect, span:[-30,59]}
+execute_command objectMatte.propagate {layer:"#1", wait:true}                        → computed: frames 0–59
+render_frame {time:1.5, transparent:true}                        → only the object, background transparent
+renderQueue.add {comp:"shot", format:"webm", channels:"rgba", output:"/abs/cutout.webm"} · renderQueue.render {wait:true}
+```
+
+A point on the object (layer pixels) is enough: it segments and tracks it, no roto. Add `box: [x0, y0, x1, y1]`
+when a point is ambiguous. Without `propagate`, frames compute as they render; `objectMatte.freeze {layer,
+wait:true}` computes them all and bakes them. `objectMatte.status` shows progress.
 
 ## Rendering and formats
 
@@ -296,6 +313,8 @@ There is no `help` subcommand: `effectcraft-cli` with no arguments prints the us
   the full comp width, so the logo appears late in the move. Precompose it, or use a fade, for a tight reveal.
 - **Strict arguments:** an unknown tool argument is JSON-RPC `-32602` (`unknown argument "x" for set_property;
   expected: …`); an unknown command param lists the accepted ones (`unknown parameter(s) \`index\`; accepted: …`).
+- **Object Matte only covers its span:** `frame` ± `before`/`after` (30 frames each by default). Frames past it render
+  fully transparent, with no error. Pass `after` (up to 600) to cover the whole shot; the reply's `span` shows it.
 - `layer.setText` and `layer.timing` return `null` on success. That's normal.
 - `easyEaseOut` leaves the incoming side linear; use `easyEase` for both ends.
 
@@ -311,8 +330,8 @@ There is no `help` subcommand: `effectcraft-cli` with no arguments prints the us
 
 Grep these; don't read them whole (`grep -n 'essential\.' ${HERMES_SKILL_DIR}/references/commands.md`).
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 681 commands with params, grouped by prefix (`layer`, `keys`,
-  `renderQueue`, `track`, `mask`, `text`, `essential`, `anim`…).
-- `${HERMES_SKILL_DIR}/references/effects.md`: all 306 effects by category with param ids and defaults. Grep by name.
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 731 commands with params, grouped by prefix (`layer`, `keys`,
+  `renderQueue`, `track`, `mask`, `text`, `essential`, `anim`, `objectMatte`, `footage`…).
+- `${HERMES_SKILL_DIR}/references/effects.md`: all 307 effects by category with param ids and defaults. Grep by name.
 - Upstream docs: https://github.com/storytold/effectcraft/tree/main/docs (`agents.md`: tracking, roto, warp
   stabilizer, Essential Graphics, timeline interchange; `control-protocol.md`).

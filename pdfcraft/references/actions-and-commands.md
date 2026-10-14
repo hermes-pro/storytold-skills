@@ -1,6 +1,6 @@
 # PdfCraft Action Wizard and app commands
 
-Generated from `action_list` and `command_list` (PdfCraft 0.7.1).
+Generated from `action_list` and `command_list` (PdfCraft 0.8.0).
 
 ## Built-in actions (`action_run {action: <name>, paths, folder}`)
 
@@ -25,7 +25,7 @@ Generated from `action_list` and `command_list` (PdfCraft 0.7.1).
 - `detect_form_fields`: Detect form fields
 - `run_javascript`: Run a JavaScript (takes `arg`)
 
-## App commands (191)
+## App commands (194)
 
 Ids for the live desktop app (`pdfcraft-cli ui --control FILE command id=<id>`). The `tool` column names the
 MCP tool that does the same thing headlessly; prefer the tool. `command_run {id, params}` runs only the ids that have a
@@ -78,6 +78,8 @@ tool (it calls that tool; `params` are the tool's arguments).
 | `edit.snapshot` | Take a snapshot | Edit |  |  |
 | `view.full_screen` | Full screen mode | View | Ctrl+L |  |
 | `view.read_mode` | Read mode | View | Ctrl+H |  |
+| `view.next_tab` | Next tab | View | Ctrl+Tab |  |
+| `view.previous_tab` | Previous tab | View | Ctrl+Shift+Tab |  |
 | `view.focus_page_input` | Go to page… | View | Ctrl+Shift+N |  |
 | `ui.dock.reset` | Reset panel layout | View |  |  |
 | `view.theme` | Switch light / dark theme |  |  |  |
@@ -183,6 +185,7 @@ tool (it calls that tool; `params` are the tool's arguments).
 | `ocr.enhance_camera` | Enhance camera image |  |  | `page_enhance_camera` |
 | `ocr.recognize_batch` | Recognize text in multiple files… |  |  | `ocr_recognize_files` |
 | `a11y.check` | Check for accessibility… |  |  | `accessibility_check` |
+| `a11y.autotag` | Automatically tag PDF |  |  |  |
 | `a11y.report` | Open accessibility report |  |  | `accessibility_report` |
 | `a11y.reading_options` | Change reading options… |  |  | `view_reading_colors` |
 | `a11y.alt_text` | Add alternate text… |  |  | `accessibility_figures` |

@@ -1,6 +1,6 @@
 # FilmCraft command catalog
 
-Generated from `command_list` (FilmCraft 0.7.2, 700 commands). Run any of these with `command_run {id, params}` (or several with `command_batch`); `filmcraft-cli describe <id>` shows one in full. Times: 254016000000 ticks per second; most time params also accept `seconds`, `frame` or `timecode`. `params` are the engine's own docs (`str`, `int`, `?` = optional).
+Generated from `command_list` (FilmCraft 0.8.0, 701 commands). Run any of these with `command_run {id, params}` (or several with `command_batch`); `filmcraft-cli describe <id>` shows one in full. Times: 254016000000 ticks per second; most time params also accept `seconds`, `frame` or `timecode`. `params` are the engine's own docs (`str`, `int`, `?` = optional).
 
 ## audio
 
@@ -146,6 +146,7 @@ Generated from `command_list` (FilmCraft 0.7.2, 700 commands). Run any of these 
 - `edit.removeAttributes` Remove Attributes… (Edit): {"clips":[id]?,"motion":bool=true,"opacity":bool=true,"timeRemapping":bool=true,"volume":bool=true,"channelVolume":bool=true,"panner":bool=true,"effects":bool\|[effectId]=true}
 - `edit.removeUnused` Remove Unused (Edit)
 - `edit.rippleDelete` Ripple Delete (Edit) [Shift+Delete]: {"clips":[id]?}
+- `edit.rippleDeleteHead` Ripple Delete Head Frame (Edit): {"clips":[id]?,"clip":id?}
 - `edit.selectAll` Select All (Edit) [Cmd+A]
 - `edit.selectAllMatching` Select All Matching (Edit): {"clips":[id]?}
 - `edit.selectLabelGroup` Select Label Group (Edit › Label)
@@ -276,24 +277,24 @@ Generated from `command_list` (FilmCraft 0.7.2, 700 commands). Run any of these 
 ## graphics
 
 - `graphics.align` Align Layers: {"clip":id?,"layers":[n]?,"align":"left\|hcenter\|right\|top\|vcenter\|bottom","to":"frame\|group\|selection"="frame" (frame: each layer; group: the layers' union; one layer always aligns to the frame)}
-- `graphics.alignFrame.bottom` Bottom (Graphics and Titles › Align to Video Frame): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignFrame.hcenter` Center Horizontally (Graphics and Titles › Align to Video Frame): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignFrame.left` Left (Graphics and Titles › Align to Video Frame): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignFrame.right` Right (Graphics and Titles › Align to Video Frame): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignFrame.top` Top (Graphics and Titles › Align to Video Frame): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignFrame.vcenter` Center Vertically (Graphics and Titles › Align to Video Frame): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignGroup.bottom` Bottom (Graphics and Titles › Align to Video Frame as Group): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignGroup.hcenter` Center Horizontally (Graphics and Titles › Align to Video Frame as Group): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignGroup.left` Left (Graphics and Titles › Align to Video Frame as Group): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignGroup.right` Right (Graphics and Titles › Align to Video Frame as Group): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignGroup.top` Top (Graphics and Titles › Align to Video Frame as Group): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignGroup.vcenter` Center Vertically (Graphics and Titles › Align to Video Frame as Group): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignSelection.bottom` Bottom (Graphics and Titles › Align to Selection): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignSelection.hcenter` Center Horizontally (Graphics and Titles › Align to Selection): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignSelection.left` Left (Graphics and Titles › Align to Selection): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignSelection.right` Right (Graphics and Titles › Align to Selection): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignSelection.top` Top (Graphics and Titles › Align to Selection): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.alignSelection.vcenter` Center Vertically (Graphics and Titles › Align to Selection): {"clip":id?,"layers":[n]? (default: the selected layers)}
+- `graphics.alignFrame.bottom` Bottom (Graphics and Titles › Align to Video Frame): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignFrame.hcenter` Center Horizontally (Graphics and Titles › Align to Video Frame): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignFrame.left` Left (Graphics and Titles › Align to Video Frame): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignFrame.right` Right (Graphics and Titles › Align to Video Frame): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignFrame.top` Top (Graphics and Titles › Align to Video Frame): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignFrame.vcenter` Center Vertically (Graphics and Titles › Align to Video Frame): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignGroup.bottom` Bottom (Graphics and Titles › Align to Video Frame as Group): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignGroup.hcenter` Center Horizontally (Graphics and Titles › Align to Video Frame as Group): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignGroup.left` Left (Graphics and Titles › Align to Video Frame as Group): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignGroup.right` Right (Graphics and Titles › Align to Video Frame as Group): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignGroup.top` Top (Graphics and Titles › Align to Video Frame as Group): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignGroup.vcenter` Center Vertically (Graphics and Titles › Align to Video Frame as Group): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignSelection.bottom` Bottom (Graphics and Titles › Align to Selection): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignSelection.hcenter` Center Horizontally (Graphics and Titles › Align to Selection): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignSelection.left` Left (Graphics and Titles › Align to Selection): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignSelection.right` Right (Graphics and Titles › Align to Selection): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignSelection.top` Top (Graphics and Titles › Align to Selection): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.alignSelection.vcenter` Center Vertically (Graphics and Titles › Align to Selection): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
 - `graphics.alignTextCenter` Center align text [Cmd+Shift+C]
 - `graphics.alignTextLeft` Left align text [Cmd+Shift+L]
 - `graphics.alignTextRight` Right align text [Cmd+Shift+R]
@@ -302,10 +303,10 @@ Generated from `command_list` (FilmCraft 0.7.2, 700 commands). Run any of these 
 - `graphics.bringToFront` Bring to Front (Graphics and Titles › Arrange) [Cmd+Shift+]]: {"clip":id?,"layer":n?}
 - `graphics.deleteLayer` Delete Graphic Layer: {"clip":id?,"layer":n?}
 - `graphics.distribute` Distribute Layers: {"clip":id?,"layers":[n] (3 or more)?,"axis":"horizontal\|vertical","space":bool=false (equal gaps instead of equal centre spacing)}
-- `graphics.distributeHorizontally` Distribute Horizontally (Graphics and Titles › Distribute): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.distributeSpaceHorizontally` Distribute Space Horizontally (Graphics and Titles › Distribute): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.distributeSpaceVertically` Distribute Space Vertically (Graphics and Titles › Distribute): {"clip":id?,"layers":[n]? (default: the selected layers)}
-- `graphics.distributeVertically` Distribute Vertically (Graphics and Titles › Distribute): {"clip":id?,"layers":[n]? (default: the selected layers)}
+- `graphics.distributeHorizontally` Distribute Horizontally (Graphics and Titles › Distribute): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.distributeSpaceHorizontally` Distribute Space Horizontally (Graphics and Titles › Distribute): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.distributeSpaceVertically` Distribute Space Vertically (Graphics and Titles › Distribute): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
+- `graphics.distributeVertically` Distribute Vertically (Graphics and Titles › Distribute): {"clip":id?,"layers":[n]? (default: the selected layers; selected video clips move by Motion Position)}
 - `graphics.fontSizeDown` Decrease Font Size by One Unit [Cmd+Alt+Left]
 - `graphics.fontSizeDown5` Decrease Font Size by Five Units [Cmd+Alt+Shift+Left]
 - `graphics.fontSizeUp` Increase Font Size by One Unit [Cmd+Alt+Right]

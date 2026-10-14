@@ -1,6 +1,6 @@
 # SoundCraft built-in plugins
 
-Generated from `execute engine.plugins` (SoundCraft 0.6.1, 27 plugins). Use the `id` with
+Generated from `execute engine.plugins` (SoundCraft 0.7.0, 27 plugins). Use the `id` with
 `mix.insert {track, plugin, params}` (live insert, slots 0–9) or `audiosuite.process {process: id, params, clips}` (offline render).
 Each param: `id` default [min..max unit]; choice params take the **index** (`{0:Peak|1:Low Shelf…}`); toggles are 0/1.
 Unknown param ids are rejected by `mix.insert` (`` `compressor` has no parameter `thresh` ``) but silently ignored by `audiosuite.process`.
@@ -302,5 +302,5 @@ Unknown param ids are rejected by `mix.insert` (`` `compressor` has no parameter
 - `gain` {db: 0}
 - `reverse`, `invert`, `duplicate` (no params)
 - `time_stretch` {ratio: 1.0, 0.25..4; 2 = twice as long, pitch kept}
-- `pitch_shift` {semitones: 0, -24..24; length kept}
+- `pitch_shift` {semitones: 0, -24..24, clamped (36 gave +24); length kept}
 - `varispeed` {speed: 1.0, 0.25..4; changes length and pitch}

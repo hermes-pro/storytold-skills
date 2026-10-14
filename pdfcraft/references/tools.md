@@ -1,6 +1,6 @@
 # PdfCraft MCP tools
 
-Generated from the live `pdfcraft-cli mcp` server (PdfCraft 0.7.1, 161 tools). Hermes names them
+Generated from the live `pdfcraft-cli mcp` server (PdfCraft 0.8.0, 163 tools). Hermes names them
 `mcp_pdfcraft_<tool>`. The same names work in `pdfcraft-cli run <tool> key=value` and `run --script`.
 With `pdfcraft-cli mcp --compact` only a core set is listed; run any other tool here with
 `tool_call {name, arguments}` (and `tool_search {name}` returns its full schema).
@@ -46,7 +46,7 @@ Save to its own file (an incremental update, which keeps signatures valid) or to
 - `path`?: string — Save as this file. Omit to save in place.
 
 ### `doc_set_info`
-Set a document information entry such as Title, Author, Subject or Keywords. Undoable.
+Set a document information entry such as Title, Author, Subject or Keywords; an empty value removes it. When the file has XMP metadata, the matching XMP property (dc:title, dc:creator, dc:description, pdf:Keywords, xmp:CreatorTool, pdf:Producer) is changed too, so viewers that read XMP first show the new value. Undoable.
 - `key`: string
 - `value`: string
 
@@ -137,8 +137,8 @@ Extract the text of some or all pages, in reading order. With rect, only the tex
 - `rect`?: [4 numbers] — Column select: [x0, y0, x1, y1] in points from the top-left of the displayed page; a glyph counts when its centre is inside.
 
 ### `text_find` (read-only)
-Find a phrase (case-insensitive, whitespace-normalised) and return each match, in page order, with its page and line rectangles in points (origin top-left). Pages are read only until the limit is reached.
-- `limit`?: integer [min 1] — Maximum matches (default 500). The search stops once it has this many; `complete` says whether every match was returned, and when it is false `next` holds the start_page and skip that continue the search.
+Find a phrase (case-insensitive, whitespace-normalised) and return matches in page order with page and line rectangles in points (origin top-left). Reads growing batches, looking one match past the limit for a continuation. Failed pages do not discard readable matches: warnings contains up to 100 {page, error, error_truncated} entries (errors capped at 1024 UTF-8 bytes), warning_count counts failed pages, and warnings_truncated reports a capped list. complete is false after a page failure or when more matches exist; next is present only for a match-limit continuation.
+- `limit`?: integer [min 1] — Maximum matches (default 500). When another match exists, next holds start_page and skip to continue. complete is false for either additional matches or failed pages; an exhausted search with warnings has no next.
 - `query`: string
 - `skip`?: integer [min 0] — Matches to pass over on start_page before returning any (default 0).
 - `start_page`?: integer [min 1] — Page to start searching from (default 1).
@@ -495,7 +495,8 @@ Remove every link in the document (or on the given pages). Undoable.
 - `pages`?: [integer] — 1-based page numbers whose links to remove (default: all).
 
 ### `link_open`
-Follow a local GoToR link in PdfCraft: open the referenced PDF as a new document, respecting --root. page and index use link_list numbering. Named destinations are reported but not applied.
+Follow a local GoToR link in PdfCraft: open the referenced PDF as a new document, respecting --root. page and index use link_list numbering. Named destinations are reported but not applied. Absolute file specifications require allow_absolute: true after reviewing the target; relative links need no opt-in.
+- `allow_absolute`?: boolean — Explicitly allow an absolute local GoToR target (default false). Existing validation and --root confinement still apply.
 - `index`: integer [min 1]
 - `page`: integer [min 1]
 - `password`?: string — Optional password for the linked PDF.
@@ -1017,6 +1018,10 @@ Set a figure's alternate text (alt; empty or omitted clears it), or mark it deco
 Propose paragraph and heading tags for visible text blocks on one page. Returns page bounds, tentative roles and reasons. Does not change the PDF or claim accessibility compliance. Images, tables, lists, annotations and existing structure require separate review.
 - `page`: integer [min 1]
 
+### `accessibility_autotag_apply`
+Write marked content, a Document structure element, paragraph tags and a parent tree for every text object in an untagged, text-only PDF. Refuses graphics, images, annotations, forms, existing tags and malformed streams before changing anything. Review all resulting roles; this does not certify accessibility. Undoable.
+- (no parameters besides `doc`)
+
 ### `accessibility_tags` (read-only)
 List reachable indirect structure tags in document order with PDF object number, generation, nearest indirect parent, depth, page, type, title, actual text, alternate text and language. Inline tag dictionaries have no stable object reference and are not listed.
 - (no parameters besides `doc`)
@@ -1127,7 +1132,7 @@ Snap a point to vector paths, endpoints, midpoints or intersections. Coordinates
 Atomically write saved measurement values, labels, authors and scale ratios as spreadsheet-safe CSV. Returns how many unsupported measurements were left out.
 - `out`: string — A file path (relative to --root when set).
 
-## Action Wizard (batch)
+## Batch: Action Wizard and folder processing
 
 ### `action_list` (read-only)
 Action Wizard: the built-in actions (name, description, steps) and every step an action can use (id, label, whether it takes a text argument).
@@ -1139,3 +1144,16 @@ Action Wizard: run a built-in action (action: its name) or a list of steps ([{st
 - `folder`: string
 - `paths`: [string]
 - `steps`?: [{arg, step}]
+
+### `doc_batch`
+Run convert, ocr and/or optimize over files and folders, one file at a time. recursive defaults to false. Preserve paths relative to each selected folder inside out_dir; duplicate inputs run once. Skip unsupported files, links and the output subtree. Existing outputs receive numbered names and are never replaced. Continue after per-file errors unless stop_on_error is true. Return completed/failed/skipped counts and per-file results. Discovery is bounded to 10000 entries and 64 folder levels. Convert must be first; each step can appear once. OCR uses installed models. Optimize uses Reduce File Size settings, optionally overriding target ppi (threshold 1.5 times ppi) and JPEG quality; a larger candidate keeps the original bytes. Sources and open documents are unchanged.
+- `dpi`?: number [min 72, max 600]
+- `language`?: string
+- `out_dir`: string
+- `paths`: [string]
+- `ppi`?: number [min 9, max 1600]
+- `quality`?: integer [min 1, max 100]
+- `recursive`?: boolean
+- `skip_text_pages`?: boolean
+- `steps`: [convert \| ocr \| optimize]
+- `stop_on_error`?: boolean

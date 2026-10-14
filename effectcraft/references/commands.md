@@ -1,13 +1,13 @@
 # EffectCraft command catalog
 
-Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of these with `execute_command {command, params}` (or several in one undo step with `batch`); read one live with `describe_command {command}`. `?` = optional, `a|b` = choices, `→ {...}` = what it returns. Commands with no params doc take `{}`.
+Generated from `list_commands` (EffectCraft 0.10.0, 731 commands). Run any of these with `execute_command {command, params}` (or several in one undo step with `batch`); read one live with `describe_command {command}`. `?` = optional, `a|b` = choices, `→ {...}` = what it returns. Commands with no params doc take `{}`.
 
 ## anim
 
 - `anim.addKeyframe` Add Keyframe (Animation): {} — keys the selected properties at the CTI
 - `anim.applyBuiltinPreset` Apply Built-in Animation Preset: {preset: id\|name (see anim.builtinPresets), layers?}
 - `anim.applyPreset` Apply Animation Preset... (Animation): {path \| preset, layers?}
-- `anim.applyRecentPreset` Recent Animation Presets: {index? \| path?, layers?}
+- `anim.applyRecentPreset` Recent Animation Presets [Cmd+Alt+Shift+F]: {index? \| path?, layers?}
 - `anim.browsePresets` Browse Presets... (Animation)
 - `anim.builtinPresets` Built-in Animation Presets: {category?}
 - `anim.clearRecentPresets` Clear Recent Presets (Animation › Recent Animation Presets)
@@ -62,6 +62,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 
 ## comp
 
+- `comp.activateRecent` Activate Most Recent Composition in Hierarchy [Shift+Escape]: {comp?}
 - `comp.addMarker` Add Marker [Num*]: {time?, comment?}
 - `comp.close` Close Composition: {comp?}
 - `comp.copyFrame` Copy Frame to Clipboard (Composition): {comp?, time?, scale?}
@@ -91,6 +92,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `comp.vr.extractCubemap` Extract Cubemap... (Composition › VR): {comp?, faceSize?}
 - `comp.vr.setView` VR View Orientation: {comp? (an environment's output / cube map / face comp), orientation?: [x, y, z] degrees, pan?, tilt?, roll?} → turns the six face cameras together
 - `comp.workArea` Set Work Area: {start?, end?, set?: begin\|end (at CTI)}
+- `comp.workAreaToSelection` Set Work Area to Selected Layers [Cmd+Alt+B]: {comp?, layers? (default the selected layers; the whole composition with none)}
 
 ## contentFill
 
@@ -115,7 +117,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `edit.label` Label (Edit › Label): {label: Red\|Yellow\|Aqua\|…, layers?, keys?, target?: layers}
 - `edit.liftWorkArea` Lift Work Area (Edit): {layers?}
 - `edit.paste` Paste (Edit) [Cmd+V]: {} (layers, keyframes at the CTI, effects, shape items into the selected shape layers, or property links / expressions)
-- `edit.pasteReversedKeyframes` Paste Reversed Keyframes (Edit): {layers?, prop?\|path?, time?}
+- `edit.pasteReversedKeyframes` Paste Reversed Keyframes (Edit) [Cmd+Shift+V]: {layers?, prop?\|path?, time?}
 - `edit.pasteSvg` Paste SVG as Shapes: {svg: SVG markup, name?, comp?} → {layer, skipped} (Edit ▸ Paste runs it for SVG on the system clipboard)
 - `edit.pasteTextFormattingOnly` Paste Text Formatting Only (Edit): {layer?} (the copied text's formatting on the selected text or text layers)
 - `edit.pasteTextMatchFormatting` Paste Text and Match Formatting (Edit): {text?} (the clipboard's text in the style at the caret)
@@ -148,8 +150,14 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `effect.removeAll` Remove All (Effect) [Cmd+Shift+E]: {layers?}
 - `effect.reorder` Reorder Effect: {layer?, effect, index}
 - `effect.reset` Reset Effect: {layer?, effect}
+- `effect.setLabel` Effect Label: {layer?, effect, label: name\|index 0-16 (None clears)}
+- `effect.swapTintColors` Swap Tint Colors: {comp?, layer?, effect?: index\|uid\|name} — swaps Tint's Map Black To and Map White To at the current layer time in one undo step
 - `effect.toggle` Toggle Effect: {layer?, effect, value?}
 - `effect.warning` Effect Warning: {layer?, effect?: index\|uid\|name (default: the selected effect), time?} → {effect, warning: string\|null} — what Effect Controls warns about (an OCIO config it can't read, transforms it passes through)
+
+## effects
+
+- `effects.copyPresetsFolderPath` Copy Presets Folder Path
 
 ## engine
 
@@ -213,6 +221,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `file.importLottie` Lottie... (File › Import): {path (.json or .lottie)}
 - `file.importMultiple` Multiple Files... (File › Import) [Cmd+Alt+I]: {paths: [string]}
 - `file.importPlaceholder` Placeholder... (File › Import): {name?, width?, height?, frameRate?, duration? (s)}
+- `file.importProject` EffectCraft Project... (File › Import): {path (.ecproj or .ecprojx)} — merges the project into a folder named after the file; returns {folder, items, comps, rootComps, primaryComp (the only root comp, else null), missingMedia, warnings}
 - `file.importRecent` Import Recent Footage: {index? \| path?}
 - `file.importSolid` Solid... (File › Import): {name?, color?, width?, height?}
 - `file.importTimeline` Adobe Premiere Pro Project... (File › Import): {path (.xml Final Cut Pro XML from Premiere Pro or .fcpxml .otio .edl .aaf .omf), format?: auto\|xml\|fcpxml\|otio\|edl\|aaf\|omf, edlFrameRate?: number}
@@ -227,7 +236,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `file.newProject` New Project (File › New) [Cmd+Alt+N]
 - `file.open` Open Project... (File) [Cmd+O]: {path}
 - `file.openDemoProject` Open Demo Project (Help)
-- `file.openRecent` Open Recent: {index? \| path?}
+- `file.openRecent` Open Recent [Cmd+Alt+Shift+P]: {index? \| path?}
 - `file.projectSettings` Project Settings... (File) [Cmd+Alt+Shift+K]: {bitDepth?: 8\|16\|32, colorEngine?: adobe\|ocio, workingSpace?: none\|srgb\|rec709\|rec2020\|p3\|acescg\|aces2065, workingGamma?: 2.2\|2.4 (with no working space), linearize?, blendLinear?, hdr?: clip\|compand\|toneMap, outputSpace?: srgb\|rec709\|rec2020\|p3\|rec2100pq\|rec2100hlg, renderer?: gpu\|software, timeDisplay?: timecode\|frames\|feet35\|feet16}
 - `file.recoveryInfo` Auto-Save Status
 - `file.reduceProject` Reduce Project (File › Dependencies): {} (keeps the selected comps and what they use)
@@ -238,6 +247,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `file.replaceFootage` File... (File › Replace Footage) [Cmd+H]: {path, item?, sequence?: bool (default true: a numbered still brings its image sequence), alphabetical?: bool}
 - `file.replaceWithLayeredComp` With Layered Comp (File › Replace Footage): {item?}
 - `file.replaceWithPlaceholder` Placeholder... (File › Replace Footage): {item?, width?, height?, frameRate?, duration?}
+- `file.replaceWithPrecomp` Replace with Precomposition: {item?}
 - `file.replaceWithSolid` Solid... (File › Replace Footage): {item?, color?, width?, height?}
 - `file.revealInFinder` Reveal in Finder (File): {item?}
 - `file.revert` Revert (File)
@@ -247,7 +257,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `file.saveCopy` Save a Copy... (File › Save As): {path}
 - `file.saveCopyAsXml` Save a Copy As XML... (File › Save As): {path: .ecprojx}
 - `file.scripts.list` List Scripts: {} → [{name, panel, source: installed\|sample\|extension}]
-- `file.setProxy` File... (File › Set Proxy): {path, items?\|item?}
+- `file.setProxy` File... (File › Set Proxy) [Cmd+Alt+P]: {path, items?\|item?}
 - `file.setProxyNone` None (File › Set Proxy): {items?\|item?}
 - `file.timelineFormats` Timeline Interchange Formats
 - `file.uninstallScript` Uninstall Script: {name}
@@ -260,8 +270,10 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `footage.check` Check Footage: {items?: [id], wait?} — look for every footage file (in the background unless `wait`) and flag missing items
 - `footage.clearInOut` Clear In and Out
 - `footage.info` Footage Panel State
+- `footage.missing` Missing Footage: {} → {missing: [{item, name, path}]}
 - `footage.open` Open in Footage Panel: {item: id\|name}
 - `footage.overlayEdit` Overlay Edit: {item?, comp?, in? (s), out? (s), at? (comp s; default the current time)}
+- `footage.relink` Relink Footage: {item, path} — point a footage item at its file's new location (keeps the interpretation) and relink the other missing files found in the same place
 - `footage.reloadChanged` Reload Changed Footage: {} — reload the footage whose file changed on disk since it was last seen (size or modification time; Settings ▸ Import ▸ Automatically Reload Footage runs this in the background; image sequences only with All Footage); files seen for the first time are only remembered. Returns {files, reloaded}
 - `footage.rippleInsertEdit` Ripple Insert Edit: {item?, comp?, in? (s), out? (s), at? (comp s; default the current time)}
 - `footage.setIn` Set In Point: {time? \| frame? (default: the panel's time)}
@@ -299,6 +311,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `keys.audioToKeyframes` Convert Audio to Keyframes (Animation › Keyframe Assistant): {comp?}
 - `keys.copy` Copy Keyframes
 - `keys.delete` Delete Keyframes
+- `keys.deselectAll` Deselect All Keyframes and Properties [Shift+F2]
 - `keys.easyEase` Easy Ease (Animation › Keyframe Assistant) [F9]: {which?: both\|in\|out}
 - `keys.easyEaseIn` Easy Ease In (Animation › Keyframe Assistant) [Shift+F9]
 - `keys.easyEaseOut` Easy Ease Out (Animation › Keyframe Assistant) [Cmd+Shift+F9]
@@ -312,6 +325,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `keys.nudgeForward` Move Keyframes 1 Frame Later [Alt+ArrowRight]
 - `keys.nudgeForward10` Move Keyframes 10 Frames Later [Alt+Shift+ArrowRight]
 - `keys.paste` Paste Keyframes: {layers?, prop?\|path?, time?}
+- `keys.quickOffset` Quick Offset Keyframes: {delta (comp s: the last layer's keys' move), merge?, fromStart?: bool (with merge: delta is the whole drag)}
 - `keys.rpfCameraImport` RPF Camera Import (Animation › Keyframe Assistant): {path: .json\|.csv camera data, comp?}
 - `keys.select` Select Keyframes: {keys: [{layer, prop: uid \| path (or `path`), time (layer s by default)}], timeBase?: layer\|comp, add?, toggle?: bool (Shift+click: in or out of the selection), selectProperties?: bool (their properties and layers too, as a Timeline click does)}
 - `keys.selectAll` Select All Keyframes [Cmd+Alt+A]: {layers?, visible?: [{layer, prop}] (every key of these properties)}
@@ -347,6 +361,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `layer.autoOrient` Auto-Orient... (Layer › Transform) [Cmd+Alt+O]: {mode: off\|alongPath\|towardsCamera\|towardsPointOfInterest, layers?}
 - `layer.autoTrace` Auto-trace... (Layer): {layer?, timeSpan?: currentFrame\|workArea, channel?: alpha\|red\|green\|blue\|luminance, invert?, blur? (px, 1), tolerance? (px, 1), threshold? (%, 50), minimumArea? (px, 10), cornerRoundness? (%, 50), applyToNewLayer?}
 - `layer.cameraSettings` Camera Settings... (Layer › Camera): {layer?, name?, type?, preset?, zoom?, focalLength?, angleOfView?, dof?, focusDistance?, aperture?, fStop?, blurLevel?, position?, poi?}
+- `layer.castsShadows` Casts Shadows [Alt+Shift+C]: {layers?, value?}
 - `layer.centerAnchor` Center Anchor Point in Layer Content (Layer › Transform) [Cmd+Alt+Home]: {layers?}
 - `layer.channels` Layer Channels: {layer?} → {channels: [name], layers: [{name, rgba: [r, g, b, a channel]}]} — a multi-layer OpenEXR layer's channels (EXtractoR's red / green / blue / alpha take these names)
 - `layer.create` Create: {op: editableText\|shapesFromText\|masksFromText\|shapesFromVector, layers?}
@@ -356,6 +371,8 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `layer.enableTimeRemap` Enable Time Remapping (Layer › Time) [Cmd+Alt+T]: {layers?, value?}
 - `layer.environment` Environment Layer (Layer): {layers?, on?}
 - `layer.expressions` Enable/Disable Expressions: {layers?, enabled: bool}
+- `layer.extendSelectionNext` Extend Selection to Next Layer [Cmd+Shift+ArrowDown]
+- `layer.extendSelectionPrevious` Extend Selection to Previous Layer [Cmd+Shift+ArrowUp]
 - `layer.frameBlending` Frame Blending: {layers?, mode: off\|frameMix\|pixelMotion}
 - `layer.freezeFrame` Freeze Frame (Layer › Time): {layers?}
 - `layer.freezeOnLastFrame` Freeze On Last Frame (Layer › Time): {layers?}
@@ -372,9 +389,17 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `layer.mask.remove` Remove Mask (Layer › Mask): {layer?, mask?}
 - `layer.mask.removeAll` Remove All Masks (Layer › Mask): {layers?}
 - `layer.mask.reset` Reset Mask (Layer › Mask): {layer?, mask?}
+- `layer.mask.selectNext` Select Next Mask [Alt+`]: {layer?}
+- `layer.mask.selectPrevious` Select Previous Mask [Alt+Shift+`]: {layer?}
 - `layer.mask.set` Mask Settings: {layer?, mask?, field: feather\|opacity\|expansion, value}
 - `layer.mask.shape` Mask Shape... (Layer › Mask) [Cmd+Shift+M]: {layer?, mask?, rect: [x, y, w, h], shape?: rect\|ellipse}
 - `layer.mask.unlockAll` Unlock All Masks (Layer › Mask): {layers?}
+- `layer.moveEarlier` Move Layers 1 Frame Earlier [Alt+PageUp]: {layers?}
+- `layer.moveEarlier10` Move Layers 10 Frames Earlier [Alt+Shift+PageUp]: {layers?}
+- `layer.moveInToStart` Move Layer In Point to Beginning of Comp [Alt+Home]: {layers?}
+- `layer.moveLater` Move Layers 1 Frame Later [Alt+PageDown]: {layers?}
+- `layer.moveLater10` Move Layers 10 Frames Later [Alt+Shift+PageDown]: {layers?}
+- `layer.moveOutToEnd` Move Layer Out Point to End of Comp [Alt+End]: {layers?}
 - `layer.new3dPrimitive` 3D Primitive: {kind: cube\|sphere\|plane\|torus\|cone\|cylinder, name?, width?, height?, depth?, radius?, tubeRadius?, segments?, rings?, position? [x,y,z], baseColor?, metallic?, roughness?, emissive?, castsShadows?, acceptsShadows?, acceptsLights?}; switches a Classic 3D comp to Advanced 3D
 - `layer.newAdjustment` Adjustment Layer (Layer › New) [Cmd+Alt+Y]: {name?}
 - `layer.newCamera` Camera... (Layer › New) [Cmd+Alt+Shift+C]: {name?, type?: oneNode\|twoNode (default twoNode), preset?: 15mm\|20mm\|24mm\|28mm\|35mm\|50mm\|80mm\|135mm\|200mm, zoom?, focalLength? mm, angleOfView? deg, dof?, focusDistance?, aperture?, fStop?, blurLevel?, lockToZoom?, position? [x,y,z], poi? [x,y,z]}
@@ -391,11 +416,12 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `layer.openSource` Open Layer Source (Layer): {layer?}
 - `layer.precompose` Pre-compose... (Layer) [Cmd+Shift+C]: {layers?, name?, mode?: move\|leave, adjustDuration?, open?}
 - `layer.quality` Quality: {layers?, quality: best\|draft\|wireframe}
+- `layer.quickOffset` Quick Offset: {delta (comp s: the last layer's move), layers? (in order; default the selection), merge?, fromStart?: bool (with merge: delta is the whole drag)}
 - `layer.rename` Rename [Enter]: {layer?, name}
 - `layer.revealExpressionErrors` Reveal Expression Errors (Layer › Reveal): {comp?}
 - `layer.revealInFinder` Reveal in Finder (Layer): {layer?}
 - `layer.revealSource` Reveal Layer Source in Project (Layer › Reveal): {layer?}
-- `layer.sampling` Sampling: {layers?, sampling: bilinear\|bicubic}
+- `layer.sampling` Sampling: {layers?, sampling: bilinear\|bicubic, toggle?}
 - `layer.sceneEditDetection` Scene Edit Detection... (Layer): {layer?, mode?: markers\|split\|splitPrecompose, threshold? (0…1, 0.25), wait?: bool}
 - `layer.select` Select Layers: {layers: [id\|name\|#n], add?, toggle?}
 - `layer.selectNext` Select Next Layer [Cmd+ArrowDown]: {add?}
@@ -412,8 +438,10 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `layer.settings` Layer Settings... (Layer) [Cmd+Shift+Y]: {layer?, name?, color?, width?, height?, pixelAspect?, affectAll?: bool (default true; false gives this layer its own copy of a solid other layers use)} → {layer, solid?}
 - `layer.showAllVideo` Show All Video (Layer › Switches): {comp?}
 - `layer.slip` Slip Edit: {layers?, delta? (seconds) \| frames?, merge?}
-- `layer.slipBack` Slip Edit 1 Frame Earlier [Alt+PageUp]: {layers?}
-- `layer.slipForward` Slip Edit 1 Frame Later [Alt+PageDown]: {layers?}
+- `layer.slipBack` Slip Edit 1 Frame Earlier: {layers?}
+- `layer.slipForward` Slip Edit 1 Frame Later: {layers?}
+- `layer.stretchInToTime` Stretch Layer In Point to Current Time [Cmd+Shift+,]: {layers?}
+- `layer.stretchOutToTime` Stretch Layer Out Point to Current Time [Cmd+Alt+,]: {layers?}
 - `layer.style.add` Add Layer Style: {style: dropShadow\|innerShadow\|outerGlow\|innerGlow\|bevelEmboss\|satin\|colorOverlay\|gradientOverlay\|stroke (or display name), layers?}
 - `layer.style.bevelEmboss` Bevel and Emboss (Layer › Layer Styles): {layers?}
 - `layer.style.colorOverlay` Color Overlay (Layer › Layer Styles): {layers?}
@@ -434,7 +462,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `layer.style.toggle` Toggle Layer Style: {layer?, style: id\|name\|uid\|layerStyles, value?}
 - `layer.timeReverse` Time-Reverse Layer (Layer › Time) [Cmd+Alt+R]: {layers?}
 - `layer.timeStretch` Time Stretch... (Layer › Time): {layers?, percent?\|duration? (s), hold?: in\|current\|out, op?: reverse}
-- `layer.timing` Layer Timing: {layers?, op?: moveInToTime\|moveOutToTime\|trimInToTime\|trimOutToTime, delta?, start?, in?, out?, inDelta?, outDelta? (seconds, per layer), merge?}
+- `layer.timing` Layer Timing: {layers?, op?: moveInToTime\|moveOutToTime\|moveInToStart\|moveOutToEnd\|trimInToTime\|trimOutToTime, delta?, start?, in?, out?, inDelta?, outDelta? (seconds, per layer), merge?}
 - `layer.trackMatte` Track Matte: {layers?, op: none\|alpha\|alphaInverted\|luma\|lumaInverted\|above\|below}
 - `layer.transform` Transform (Layer › Transform): {layers?, op: reset\|center\|fit\|fitWidth\|fitHeight\|flipH\|flipV}
 - `layer.tree` Layer Property Tree: {layer?, comp?, depth?, time? (comp s)} → nodes with `path`
@@ -509,6 +537,14 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 
 - `motion.sketch` Motion Sketch: {layer?, points: [[t, x, y]…] (t = capture seconds) \| [[x, y]…] (one per frame), start? (s, default current time), captureSpeed? (%, 100), smoothing? (px, 1)}
 
+## objectMatte
+
+- `objectMatte.apply` Object Matte: {layer?, effect? (uid: re-prompt this Object Matte instead of adding one), point: [x, y] (layer pixels: the object), box?: [x0, y0, x1, y1] (layer pixels, around the object), frame? (reference layer frame; default current), track?: follow the object from that frame (default true), before?, after? (frames to follow it; default 30, up to 600)}
+- `objectMatte.freeze` Freeze Object Matte: {layer?, effect?, wait?}
+- `objectMatte.propagate` Track Object Matte: {layer?, effect?, direction?: forward\|backward\|both, wait?: block until done} (a background job like Roto Brush propagation; roto.cancel stops it)
+- `objectMatte.status` Object Matte Status: {layer?, effect?}: the job's progress, whether the instance is frozen, its frames and which are computed
+- `objectMatte.unfreeze` Unfreeze Object Matte: {layer?, effect?}
+
 ## paint
 
 - `paint.brushPreset` Brush Preset: {preset?: index \| name}
@@ -564,6 +600,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `project.setProjectComment` Project Comment: {comment}
 - `project.summary` Project Summary
 - `project.usage` Project Item Usage: {items?: [id\|name] (default: selected)} → {items, layers, comps} that deleting them removes
+- `project.usedIn` Project Item Used In: {item?: id\|name (default: selected)} → {item, count, comps: [{id, name, layers}]}
 
 ## prop
 
@@ -577,7 +614,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `prop.pickWhip` Pick Whip (Link Property): {layer?, path\|prop, target: {layer, path\|prop, dimension?}, expression?, range?: [start, end]} → sets an AE reference expression (`dimension`: one of the target's values, `position[0]`; with `expression`: inserts it there, replacing the characters in `range`, default the end)
 - `prop.removeGroup` Delete Property Group: {layer?, prop: uid}
 - `prop.renameGroup` Rename Property Group: {layer?, prop: uid, name}
-- `prop.reset` Reset Property: {layer?, path\|prop, default?} → removes keyframes and expression; the value becomes `default`, else the property's own (an effect parameter's, a Transform property's)
+- `prop.reset` Reset Property: {layer?, path\|prop, default?} → removes the expression; the value becomes `default`, else the property's own (an effect parameter's, a Transform property's), as a keyframe at the current time when the property is animated
 - `prop.select` Select Property: {layer?, path\|prop, add?, selectKeys?}
 - `prop.separateDimensions` Separate Dimensions (Animation): {layer?, value?}
 - `prop.set` Set Property Value: {layer?, path\|prop, value, time? (layer s by default), timeBase?: layer\|comp, merge?, selected? (also the other selected layers), offset? (them by the same change), proportional? (with offset: Proportional Scrubbing, each layer by its share in selection order, the first none, the last all)}
@@ -722,16 +759,20 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `time.back10` Back 10 Frames [Shift+PageUp]
 - `time.end` Go to End [End]
 - `time.forward10` Forward 10 Frames [Shift+PageDown]
-- `time.go` Go To: {to: start\|end\|workStart\|workEnd\|layerIn\|layerOut\|nextKey\|prevKey, prop?: uid, visible?: [{layer, prop}]}
+- `time.go` Go To: {to: start\|end\|workStart\|workEnd\|layerIn\|layerOut\|nextInOut\|prevInOut\|nextKey\|prevKey, prop?: uid, visible?: [{layer, prop}]}
 - `time.layerIn` Go to Layer In Point [I]
 - `time.layerOut` Go to Layer Out Point [O]
 - `time.nextFrame` Next Frame [PageDown]
+- `time.nextInOut` Go to Next In or Out Point [Cmd+Alt+Shift+ArrowRight]
 - `time.nextKey` Go to Next Keyframe or Marker [K]: {visible?: [{layer, prop}] (only these properties' keys, as the Timeline shows them)}
 - `time.previousFrame` Previous Frame [PageUp]
+- `time.previousInOut` Go to Previous In or Out Point [Cmd+Alt+Shift+ArrowLeft]
 - `time.previousKey` Go to Previous Keyframe or Marker [J]: {visible?: [{layer, prop}]}
 - `time.set` Go to Time... (View) [Alt+Shift+J]: {time? (s) \| frame? \| timecode?}
 - `time.start` Go to Start [Home]
 - `time.step` Step Frames: {frames}
+- `time.workAreaEnd` Go to Work Area End [Shift+End]
+- `time.workAreaStart` Go to Work Area Start [Shift+Home]
 
 ## track
 
@@ -772,11 +813,21 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `view.3d.left` Left (View › Switch 3D View): {comp?}
 - `view.3d.right` Right (View › Switch 3D View): {comp?}
 - `view.3d.top` Top (View › Switch 3D View): {comp?}
-- `view.addGuide` Add Guide... (View): {orientation?: vertical\|horizontal, position? (comp px)}
+- `view.addGuide` Add Guide... (View): {orientation?: vertical\|horizontal, position? (comp px, or percent with percent: true), percent?: bool}
+- `view.addPercentGuide` Add Percentage Guide... (View): {orientation?: vertical\|horizontal, position? (percent of the comp)}
 - `view.assign3dShortcut` Assign Shortcut to 3D View: {slot: F10\|F11\|F12, comp?}
 - `view.channel` Show Channel: {channel: rgb\|red\|green\|blue\|alpha\|rgbStraight, colorized?, toggle?}
+- `view.channel.alpha` Show Channel: Alpha [Alt+4]
+- `view.channel.blue` Show Channel: Blue [Alt+3]
+- `view.channel.blueColorized` Show Channel: Blue, Colorized [Alt+Shift+3]
+- `view.channel.green` Show Channel: Green [Alt+2]
+- `view.channel.greenColorized` Show Channel: Green, Colorized [Alt+Shift+2]
+- `view.channel.red` Show Channel: Red [Alt+1]
+- `view.channel.redColorized` Show Channel: Red, Colorized [Alt+Shift+1]
+- `view.channel.rgbStraight` Show Channel: RGB Straight [Alt+Shift+4]
 - `view.clearGuides` Clear Guides (View): {comp?}
 - `view.closeLockedViewer` Close Locked Viewer
+- `view.convertGuides` Convert Guides to Percentage (View): {comp?, to?: percent\|pixels, index?}
 - `view.customRgb` My Custom RGB...: {name?, red?/green?/blue?/white?: [x, y] (CIE xy), gamma?, srgbCurve?: bool, icc?: path (RGB ICC profile, matrix/TRC or LUT-based A2B0: read when it changes, "" clears; a LUT profile simulates through its tables, `lutProfile` in the reply; typed-in numbers replace it), reload?, from?: a Simulate Output profile to start from, reset?, preserveRgb?, apply?: bool (default true: simulate it)} → the definition (kept in Settings)
 - `view.displayColor` Viewer Color State: {} → display colour management, output simulation, display profile, locked viewer
 - `view.displayColorManagement` Use Display Color Management (View): {value?}
@@ -784,6 +835,11 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `view.exposure` Adjust Exposure: {stops? \| delta?}
 - `view.extendedViewer` Extended Viewer: {value?}
 - `view.fastPreviewMode` Fast Previews: {mode: off\|adaptive\|draft\|fastDraft\|wireframe}
+- `view.fastPreviews.adaptive` Fast Previews: Adaptive Resolution [Cmd+Alt+2]
+- `view.fastPreviews.draft` Fast Previews: Draft [Cmd+Alt+3]
+- `view.fastPreviews.fastDraft` Fast Previews: Fast Draft [Cmd+Alt+4]
+- `view.fastPreviews.off` Fast Previews: Off (Final Quality) [Cmd+Alt+1]
+- `view.fastPreviews.wireframe` Fast Previews: Wireframe [Cmd+Alt+5]
 - `view.fullScreen` Enter Full Screen (View)
 - `view.get3D` 3D View State: {comp?} → current 3D view, view camera, active camera layer, lights
 - `view.grid` Show Grid (View) [Cmd+']: {value?}
@@ -800,7 +856,7 @@ Generated from `list_commands` (EffectCraft 0.9.2, 681 commands). Run any of the
 - `view.panelBackground` Panel Background Color: {color?: black\|darkGray\|mediumGray\|lightGray\|white\|custom\|#hex, pick?: true}
 - `view.removeGuide` Remove Guide: {comp?, index}
 - `view.res.auto` Resolution: Auto: {comp?}
-- `view.res.custom` Custom... (View › Resolution): {factor?: 1..40 (render every n-th pixel), comp?}
+- `view.res.custom` Custom... (View › Resolution) [Cmd+Alt+J]: {factor?: 1..40 (render every n-th pixel), comp?}
 - `view.res.full` Full (View › Resolution) [Cmd+J]: {comp?}
 - `view.res.half` Half (View › Resolution) [Cmd+Shift+J]: {comp?}
 - `view.res.quarter` Quarter (View › Resolution) [Cmd+Alt+Shift+J]: {comp?}

@@ -1,6 +1,6 @@
 # LightCraft command catalog
 
-Generated from `lightcraft-cli commands --json` (LightCraft 0.7.1, 309 commands, headless). Run any of them with
+Generated from `lightcraft-cli commands --json` (LightCraft 0.8.0, 313 commands, headless). Run any of them with
 `command_run {id, params}` (or the older helper `run_command {command, params}`), several in order with
 `command_batch {steps: [{id, params}]}`, or call the per-command MCP tool `cmd_<id with . replaced by _>`
 (`photo.rate` → `mcp_lightcraft_cmd_photo_rate`). `?` = optional, `a|b` = choices, `→ {...}` = what it returns.
@@ -184,8 +184,10 @@ Connect mode (`--connect`) adds the app's UI commands (`view.*`, `ui.*`), which 
 ## history
 
 - `history.clear` Clear History: {} — keeps the current settings as the only step
-- `history.restore` Go to History Step: {index}
-- `history.list` List History: {id?}
+- `history.restore` Go to History Step: {index} — loads that step's settings and moves the History cursor there; later steps stay listed until a new edit
+- `history.previous` Previous History Step: {} — steps the History cursor back one step
+- `history.next` Next History Step: {} — steps the History cursor forward one step
+- `history.list` List History: {id?} — returns {history: labels oldest first, cursor: index of the step the settings are at (later steps can be returned to), versions}
 
 ## journal
 
@@ -238,6 +240,8 @@ Connect mode (`--connect`) adds the app's UI commands (`view.*`, `ui.*`), which 
 - `library.selectNone` Deselect All (Edit) [Cmd+Shift+A]: {}
 - `library.next` Next Photo [Right]: {}
 - `library.previous` Previous Photo [Left]: {}
+- `library.down` Photo Below [Down]: {rows?: n (photos to move forward; default 1, the grid passes the distance to the cell below)}
+- `library.up` Photo Above [Up]: {rows?: n (photos to move back; default 1, the grid passes the distance to the cell above)}
 - `library.emptyRecentlyDeleted` Empty Recently Deleted (Photo): {} → {deleted} — removes every photo in Recently Deleted from the library (files on disk stay)
 - `library.autoImport` Auto Import Settings: {folder?: path | null (off), copy?: bool (copy into the library's Originals, else add in place), album?: name | null} — a watched folder whose new photos are added as they arrive (library.autoImportScan; the app scans every few seconds) → the settings
 - `library.autoImportScan` Auto Import Now: {listing?: [[path, size]] (the folder as listed by the caller, e.g. on a worker thread), start?: bool (false: return the `library.import` params as `import` instead of importing)} — add the watched folder's new photos (files the library doesn't have yet; partial / still-copying files wait for the next scan) → {imported, folder, warnings?: [{path, code, profile?, mode?, fields?}], import?}
@@ -338,7 +342,7 @@ Connect mode (`--connect`) adds the app's UI commands (`view.*`, `ui.*`), which 
 - `photo.allMetadata` All Metadata: {id?} → {exif: [{group, tag, name, value}], xmp: [{name, value}]} — every EXIF / TIFF / GPS tag of the file and its XMP properties
 - `photo.inspect` Inspect Photo: {id?}
 - `photo.saveMetadataToFile` Save Metadata to File (Photo) [Cmd+S]: {ids?} — writes each photo's XMP sidecar (metadata + develop settings) next to the original, merged into an existing one (other apps' data kept; an unreadable one is backed up first) → {written: [path], merged: [path], backups: [{path, backup}], failed}
-- `photo.readMetadataFromFile` Read Metadata from File (Photo): {ids?} — reads each photo's XMP sidecar (or a raw/DNG's embedded XMP): metadata and develop settings, one undo step → {read, failed, warnings?: [{path, code, profile?, mode?, fields?}]}
+- `photo.readMetadataFromFile` Read Metadata from File (Photo): {ids?} — reads each photo's XMP sidecar (or a raw/DNG's embedded XMP): metadata and develop settings, one undo step; never writes the sidecar, even with auto-write on → {read, failed, warnings?: [{path, code, profile?, mode?, fields?}]}
 - `photo.moveToFolder` Move to Folder: {folder, ids?} — move the photos' files (default: the selection) with their XMP sidecars into `folder` on disk and relink them; virtual copies follow their master; across volumes the file is copied, verified and only then removed; never overwrites (a name taken in `folder` refuses the whole move); missing/offline and Local photos are refused; one undo step (undo moves them back) → {moved, folder}
 - `photo.addToLibrary` Add to My Photos (Photo): {ids?} — browsed (Local) photos join the library
 - `photo.relink` Locate Photo: {id?, path} — point a photo at its file's new location (undo never moves files)
@@ -372,7 +376,7 @@ Connect mode (`--connect`) adds the app's UI commands (`view.*`, `ui.*`), which 
 
 ## profiles
 
-- `profiles.list` List Profiles: {} — every profile with its group and favourite flag
+- `profiles.list` List Profiles: {} — every profile (built-in, then imported LUTs marked `imported`) with its group and favourite flag
 - `profiles.menu` Profile Menu: {} — favourites, recent (newest first) and groups
 
 ## redeye

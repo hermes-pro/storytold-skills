@@ -1,7 +1,7 @@
 ---
 name: wordcraft
 description: "Word processing with WordCraft (Word-style): write, format and edit documents — reports, letters, memos, résumés, proposals, manuals. Headings and styles, lists, tables, pictures, native charts and SmartArt, equations, headers/footers, page numbers, TOC, footnotes, comments, track changes, mail merge. Open and save .docx, export PDF; also ODT, RTF, HTML, Markdown, LaTeX, TXT, .doc (read)."
-version: 0.2.0
+version: 0.3.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -15,7 +15,7 @@ metadata:
 
 WordCraft is a free, open-source clean-room take on Microsoft Word (storytold Crafting Apps). An agent
 drives it through an MCP server (`wordcraft-cli mcp`) or one-shot CLI commands. It reads and writes real
-`.docx` that opens in Word, and exports PDF with selectable text. This skill is written for WordCraft 0.6.1.
+`.docx` that opens in Word, and exports PDF with selectable text. This skill is written for WordCraft 0.7.0.
 
 ## When to Use
 
@@ -55,7 +55,7 @@ changes and comments are by (default `WordCraft User`).
 ## Mental Model
 
 - **One active document**, edited like a person would: a **caret/selection**, and every edit is a **command**
-  (615 of them) that acts at the caret or on the selection. `execute {command, params}` runs one,
+  (617 of them) that acts at the caret or on the selection. `execute {command, params}` runs one,
   `batch {commands: [...]}` runs many in one call (stops at the first error unless `keepGoing`).
 - **Write top to bottom:** type a paragraph, style it, `text.newParagraph`, repeat. The paragraph after a
   heading comes back as `Normal`.
@@ -109,7 +109,8 @@ Resources: `wordcraft://document` (same as inspect) and `wordcraft://commands`.
 - **Design:** `design.theme {name}` (`design.themes`: Craft, Studio, Gallery, Atelier, Darkroom, Sketchbook),
   `design.styleSet {name}`, `design.watermark {text, diagonal?}`, `design.pageColor`, `design.pageBorders`.
 - **Review:** `edit.replaceAll {text, with, matchCase?, wholeWord?, regex?, wildcards?, special?}`, `review.newComment {text}`,
-  `review.trackChanges {value?}`, `review.changes`, `review.acceptAll`, `review.wordCount`, `file.setAuthor {name}`.
+  `review.trackChanges {value?}`, `review.changes`, `review.acceptAll`, `review.wordCount`, `file.setAuthor {name}`,
+  `file.privacyOptions {removePersonalInfo?, removeDateTime?}` (saved authors become "Author", no dates).
 - **Tables (caret inside):** `table.style {style}`, `table.look {headerRow, bandedRows…}`, `table.insertRowBelow`,
   `table.merge`, `table.columnWidth {width}`, `table.autofit {mode}`, `table.sort`, `table.properties {…}`.
 - **Check:** `document.layout` (pages and the first block on each), `document.paragraph {path:[i]}`, `format.state`.
@@ -199,7 +200,7 @@ Numbered (`1.`) and bulleted Markdown lists, bold, italic, quotes (`Quote` style
 open_document {path:"/abs/report.docx"}
 execute edit.replaceAll {text:"Lisbon", with:"Porto"}                → {replaced: n}; formatting is kept
 execute design.theme {name:"Atelier"}                                ← theme BEFORE styles.modify (it resets style colours)
-execute styles.modify {style:"Heading 1", chr:{color:{Rgb:[139,30,63]}, bold:true, size:20}, para:{spaceBefore:24}}
+execute styles.modify {style:"Heading 1", chr:{color:"8B1E3F", bold:true, size:20}, para:{spaceBefore:24}}
 select_text {text:"ahead of plan"} → execute format.bold → execute format.highlight {color:"yellow"}
 execute review.newComment {text:"Confirm with finance"}             ← comment on the selection
 select_text {text:"Churn down to 2.1%"} → execute caret.end → execute references.footnote {text:"Trailing twelve months."}
@@ -227,6 +228,7 @@ execute mailings.finish {path:"/abs/merged.docx"}           → one letter per r
 
 - **Open:** .docx .doc (Word 97-2003, read only) .odt .rtf .md .tex .html .txt .json .xml (Word XML), and other text files.
 - **Save:** .docx .pdf .odt .rtf .html .md .tex .txt .xml .png (page image). `.doc` can't be written.
+  `.xml` is a Word XML Document (Flat OPC); `execute file.save {path, format:"wordml2003"}` writes a Word 2003 XML Document.
 - PDF has real text, links and bookmarks. `save_document` to a new path is "Save As"; omit `path` to save in place.
 - Password-protected Word files: `open_document` fails with `this document is protected with a password`; use
   `execute file.open {path, password}`. Save encrypted with `execute file.save {path, password}`.
@@ -236,8 +238,9 @@ execute mailings.finish {path:"/abs/merged.docx"}           → one letter per r
 ```bash
 wordcraft-cli convert in.md out.docx            # docx doc(read) pdf odt rtf html md tex txt json png
 wordcraft-cli convert in.docx out.pdf --markup  # comments beside each page, tracked changes marked
+wordcraft-cli convert in.docx out.xml --format wordml2003   # Word 2003 XML (default .xml is Flat OPC)
 wordcraft-cli info file.docx                     # JSON: pages, words, paragraphs, properties
-wordcraft-cli text file.docx                     # plain text   ·  wordcraft-cli inspect file.docx  (structure JSON)
+wordcraft-cli text file.docx                     # plain text with list labels  ·  wordcraft-cli inspect file.docx  (JSON)
 wordcraft-cli render file.docx page.png --page 2 --scale 0.8
 wordcraft-cli run --template letter --cmd 'edit.replaceAll={"text":"Dear","with":"Hello"}' \
                   --cmd 'select.text={"text":"Hello"}' --cmd format.bold --save /abs/out.docx --print
@@ -254,8 +257,9 @@ wordcraft-cli commands [--json]                  # the full command catalog
 - **AutoCorrect on Enter.** `text.newParagraph` (and `type_text {paragraphs:true}`) applies AutoCorrect to the word before
   it: `x` → `X`, `teh` → `the`, sentence capitals. For names, codes or lowercase lines, run
   `execute tools.autocorrect {enabled:false}` first. It lasts for the server session only.
-- **Watermarks are not saved to .docx.** `design.watermark` shows in `render_page` and in a PDF exported from the same
-  session, but the saved .docx has no watermark (reopening it shows none). Export the PDF before closing.
+- **Watermarks are not saved to .docx (or .odt).** `design.watermark` shows in `render_page` and in a PDF exported from
+  the same session, but the saved .docx has no watermark (no header part is written; reopening it shows none). Export
+  the PDF before closing.
 - **`design.theme` resets style colours and fonts.** A `styles.modify` colour set before it is replaced by the theme colour.
   Apply the theme first, then `styles.modify`.
 - **Cover page spills onto a second page.** `insert.coverPage` builds the page from empty `Normal` paragraphs, and the
@@ -267,9 +271,9 @@ wordcraft-cli commands [--json]                  # the full command catalog
 - **Caret left in a part.** `insert.header`/`insert.footer`/`insert.pageNumber`/`references.footnote` move the caret
   into that part; `get_text` then returns only that part. Run `insert.closeHeader` to get back to the body.
 - **`type_text {paragraphs:true}` then `para.bullets` bullets only the last paragraph.** Turn the list on first, then type.
-- **Colours differ by command.** `format.color`, `para.shading`, `design.*` take `"RRGGBB"`; property objects
-  (`styles.modify chr/para`, `format.set {props}`, `para.set {props}`) need `{"Rgb":[r,g,b]}`. A hex string there fails with
-  `bad parameters: unknown variant `8B1E3F`, expected `Auto` or `Rgb``.
+- **Colours** are `"RRGGBB"` everywhere, including property objects (`styles.modify chr/para`, `format.set {props}`,
+  `para.set {props}`: color, shading, underlineColor). `"#RRGGBB"`, `"auto"` and `{"Rgb":[r,g,b]}` also work. A bad value
+  fails with `bad parameters: invalid value: string "zz", expected `auto`, `RRGGBB` or `#RRGGBB``.
 - **Unknown param keys are silently ignored** (no error). Check the effect with `format.state` or `document.paragraph {path:[i]}`.
 - **Table style names:** `insert.table {style:"Grid Table 4 Accent 1"}` → `bad parameters: no table style `Grid Table 4 Accent 1``.
   Use the ids listed above (`styles.list`).
@@ -294,7 +298,7 @@ wordcraft-cli commands [--json]                  # the full command catalog
 
 ## References
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 615 commands with params, ribbon location and shortcut, grouped by
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 617 commands with params, ribbon location and shortcut, grouped by
   area (text, para, table, chart, smartArt, equation, mailings, review, references, fields, developer…). Grep it
   (`grep -n 'chart[.]' ${HERMES_SKILL_DIR}/references/commands.md`) rather than reading it whole.
 - Upstream docs: https://github.com/storytold/wordcraft/tree/main/docs (`mcp.md`, `control-protocol.md`, `typing-parity.md`).

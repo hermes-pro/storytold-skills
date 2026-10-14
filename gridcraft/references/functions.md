@@ -1,6 +1,6 @@
 # GridCraft worksheet functions
 
-Generated from `gridcraft-cli functions --json` (GridCraft 0.6.1, 513 functions). Grep for a name or a word
+Generated from `gridcraft-cli functions --json` (GridCraft 0.7.0, 514 functions). Grep for a name or a word
 from the description. The `category` filter of `list_functions` takes these exact names:
 `AddIn`, `Compatibility`, `Cube`, `Database`, `DateTime`, `Engineering`, `Financial`, `Information`, `Logical`, `Lookup`, `MathTrig`, `Statistical`, `Text`, `Web`.
 
@@ -47,6 +47,7 @@ from the description. The `category` filter of `list_functions` takes these exac
 - `TDIST(x, deg_freedom, tails)` — One- or two-tailed Student's t probability.
 - `TINV(probability, deg_freedom)` — Two-tailed inverse of Student's t distribution.
 - `TTEST(array1, array2, tails, type)` — Probability from Student's t-test.
+- `USDOLLAR(number, [decimals])` — Formats a number as currency text, like DOLLAR.
 - `VAR(number1, [number2], ...)` — Sample variance.
 - `VARP(number1, [number2], ...)` — Population variance.
 - `WEIBULL(x, alpha, beta, cumulative)` — Weibull density or probability.

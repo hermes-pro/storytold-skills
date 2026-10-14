@@ -1,6 +1,6 @@
 # DesignCraft command catalog
 
-Generated from `designcraft-cli commands` (DesignCraft 0.7.1, 446 commands). Run any of these with
+Generated from `designcraft-cli commands` (DesignCraft 0.8.0, 459 commands). Run any of these with
 `execute {command, params}` or several with `batch {commands: [...]}`; check one live with `list_commands {filter}`
 or `designcraft-cli describe <id>`. `params` use the engine's shorthand: `?` = optional, `a|b` = choices,
 `→ {...}` = what it returns. Coordinates are spread points (y down); `page` params say whether they are 0- or 1-based.
@@ -71,6 +71,7 @@ Grep this file rather than reading it whole.
 - `color.settings` (Color Settings): {rgb?: working RGB profile, cmyk?: working CMYK profile, intent?: perceptual\|relative\|saturation\|absolute, bpc?: bool} → {rgb, cmyk, intent, bpc, profiles}
 - `color.loadProfile` (Load Profile…): {path} — an ICC profile (.icc/.icm) to use as a working space or proof target
 - `color.convert` (Convert Color): {color: {model: rgb, r, g, b} \| {model: cmyk, c, m, y, k} \| {model: gray, k}, to: rgb\|cmyk\|gray\|lab} — through the working spaces
+- `color.sample` (Sample Color (Eyedropper)): {at: [x,y] (spread coords), spread?, target?: fill\|stroke, ids?} → {color: "#rrggbb", swatch, from: image id} — the Eyedropper on a placed image: the image's colour at the point (an unnamed colour) fills the selected text, else the selected objects
 
 ## condition
 
@@ -117,7 +118,7 @@ Grep this file rather than reading it whole.
 - `edit.copy` (Edit › Copy, Cmd+C): {} → {text} when text is selected (with formatting, footnotes, markers)
 - `edit.cut` (Edit › Cut, Cmd+X): {}
 - `edit.pasteWithoutFormatting` (Edit › Paste without Formatting, Cmd+Shift+V): {text?} — plain text at the insertion point, in the format there
-- `edit.paste` (Edit › Paste, Cmd+V): {inPlace?: bool, text?: the system clipboard's text (pastes it unless it is what was copied here)}
+- `edit.paste` (Edit › Paste, Cmd+V): {inPlace?: bool, text?: the system clipboard's text (pastes it unless it is what was copied here; with no insertion point it becomes a new text frame), spread?, at?: [x, y] (spread coords: the new text frame's centre)}
 - `edit.pasteInto` (Edit › Paste Into, Cmd+Alt+V): {id?} — the copied objects become the content of the selected frame (or `id`), clipped by it
 - `edit.pasteInPlace` (Edit › Paste in Place, Cmd+Alt+Shift+V): {}
 - `edit.duplicate` (Edit › Duplicate, Cmd+Alt+Shift+D): {}
@@ -180,7 +181,7 @@ Grep this file rather than reading it whole.
 ## footnote
 
 - `footnote.insert` (Type › Insert Footnote): {text?} — a footnote reference at the insertion point; the caret moves into the new footnote's text
-- `footnote.options` (Type › Document Footnote Options…): {style?: arabic\|upperRoman\|lowerRoman\|upperLetters\|lowerLetters\|symbols, startAt?, restart?: never\|page\|spread\|section, prefix?, suffix?, affixIn?: none\|reference\|text\|both, refPosition?: superscript\|subscript\|normal\|otSuperscript, refCharStyle?, paraStyle?, separator?, spaceBefore?, spaceBetween?, firstBaseline?, firstBaselineMin?, spanColumns?, rule?: {on, weight, color, tint, width, offset, leftIndent}} → the options (no params: just read them)
+- `footnote.options` (Type › Document Footnote Options…): {style?: arabic\|upperRoman\|lowerRoman\|upperLetters\|lowerLetters\|symbols, startAt?, restart?: never\|page\|spread\|section, prefix?, suffix?, affixIn?: none\|reference\|text\|both, refPosition?: superscript\|subscript\|normal\|otSuperscript, refCharStyle?, paraStyle?, separator?, spaceBefore?, spaceBetween?, firstBaseline?: ascent\|capHeight\|leading\|xHeight\|emboxHeight\|fixed, firstBaselineMin?, spanColumns?, rule?: {on, weight, color, tint, width, offset, leftIndent}} → the options (no params: just read them)
 - `footnote.list` (Footnotes): {story?} → [{story, id, index, anchor, text}] in story order
 - `footnote.setText` (Set Footnote Text): {story, id, text} — replaces the footnote's text
 - `footnote.delete` (Delete Footnote): {story, id} — deletes the reference (and so the footnote)
@@ -194,7 +195,7 @@ Grep this file rather than reading it whole.
 
 ## frame
 
-- `frame.create` (Create Frame): {spread?, rect: [x0,y0,x1,y1] (spread coords), shape?: rectangle\|ellipse\|polygon, content?: graphic\|text\|unassigned, sides?: 6, text?: string, caret?: bool, vertical?: bool (text: a new vertical story)}
+- `frame.create` (Create Frame): {spread?: index \| {kind: doc\|parent, index} (a parent spread: index into `parents` of document.inspect), rect: [x0,y0,x1,y1] (spread coords), shape?: rectangle\|ellipse\|polygon, content?: graphic\|text\|unassigned, sides?: 6, text?: string, caret?: bool, vertical?: bool (text: a new vertical story)}
 - `frame.grid` (Gridify): {rect, cols, rows, gutter? (pt, 12), shape?, content?, spread?} — a grid of frames filling `rect` (frame tools: arrow keys while dragging)
 
 ## gap
@@ -339,6 +340,8 @@ Grep this file rather than reading it whole.
 - `object.showAll` (Object › Show All on Spread, Cmd+Alt+3): {}
 - `object.setFlags` (Set Visibility / Lock): {ids: [id], hidden?: bool, locked?: bool} — Layers panel eye/lock per object
 - `object.fill` (Fill): {swatch (a swatch's name, e.g. [Paper]), tint?: 0..1, ids?}
+- `object.swapFillStroke` (Swap Fill and Stroke): {ids?} — each object's fill and stroke colours (and tints) trade places; locked objects stay as they are
+- `object.defaultFillStroke` (Default Fill and Stroke): {ids?} — no fill and a black stroke; locked objects stay as they are
 - `object.stroke` (Stroke): {swatch?, tint?, weight?, align?: center\|inside\|outside, type?: {kind:…}, cap?: butt\|round\|projecting, join?: miter\|round\|bevel, miterLimit?, start?, end?: none\|simple\|simpleWide\|triangle\|triangleWide\|barbed\|curved\|circle\|circleSolid\|square\|squareSolid\|bar, gapSwatch?, gapTint?, gapOverprint?: bool, ids?}
 - `object.opacity` (Opacity): {opacity: 0..1, blend?: normal\|multiply\|…, ids?}
 - `object.dropShadow` (Object › Effects › Drop Shadow, Cmd+Alt+M): {on?: bool, distance?, angle?, globalLight?: bool, opacity?, size?, spread? (%), color? (swatch), ids?}
@@ -351,7 +354,7 @@ Grep this file rather than reading it whole.
 - `object.directionalFeather` (Object › Effects › Directional Feather): {on?: bool, widths?: [top, left, bottom, right] \| number, ids?}
 - `object.feather` (Object › Effects › Basic Feather): {width (0 = off), ids?}
 - `object.content` (Object › Content › Content): {type: graphic\|text\|unassigned, ids?}
-- `object.textFrameOptions` (Object › Text Frame Options…, Cmd+B): {columns?, gutter?, inset?: number\|[t,l,b,r] (null keeps that side), verticalJustification?: top\|center\|bottom\|justify, firstBaseline?, autoSize?, ignoreWrap?, balanceColumns?, columnRule?: bool, columnRuleWeight? (pt), columnRuleColor? (swatch name), columnRuleTint? (0..1), columnRuleOffset? (pt, horizontal), columnRuleTopInset? (pt), columnRuleBottomInset? (pt), vertical?: bool (sets the story direction of the frames' stories, as Type ▸ Story Direction), ids?}
+- `object.textFrameOptions` (Object › Text Frame Options…, Cmd+B): {columns?, gutter?, inset?: number\|[t,l,b,r] (null keeps that side), verticalJustification?: top\|center\|bottom\|justify, firstBaseline?: ascent\|capHeight\|leading\|xHeight\|emboxHeight\|fixed, autoSize?, ignoreWrap?, balanceColumns?, columnRule?: bool, columnRuleWeight? (pt), columnRuleColor? (swatch name), columnRuleTint? (0..1), columnRuleOffset? (pt, horizontal), columnRuleTopInset? (pt), columnRuleBottomInset? (pt), vertical?: bool (sets the story direction of the frames' stories, as Type ▸ Story Direction), ids?}
 - `object.cornerOptions` (Object › Corner Options…): {shape: none\|rounded\|inverseRounded\|inset\|bevel\|fancy, size, ids?}
 - `object.textWrap` (Window › Text Wrap, Cmd+Alt+W): {mode: none\|boundingBox\|contour\|jumpObject\|jumpToNextColumn, offset?: number\|[t,l,b,r], invert?: bool, ids?}
 - `object.fit` (Object › Fitting › Fitting): {mode: fillProportionally\|fitProportionally\|fitContentToFrame\|centerContent\|fitFrameToContent, ids?}
@@ -378,7 +381,7 @@ Grep this file rather than reading it whole.
 - `object.qrCode` (Object › Generate QR Code…): {type?: url\|text\|sms\|email\|vcard (default url), content (url/text), number?, message?, to?, subject?, body?, name?, phone?, email?, org?, url?, color? (swatch, [Black]), rect? (new object; else into the selected frame, or re-encode a selected code), spread?} → {id, content}
 - `object.convertShape` (Object › Convert Shape › Convert Shape): {to: rectangle\|roundedRectangle\|beveledRectangle\|inverseRoundedRectangle\|ellipse\|triangle\|polygon\|line\|orthogonalLine\|openPath\|closedPath, ids?}
 - `object.gradient` (Gradient): {kind?: linear\|radial, stops?: [{location: 0–100, color: "#rrggbb"\|{c,m,y,k}\|[r,g,b], opacity?: 0–100, midpoint?: 13–87}], reverse?: bool, angle?: degrees, from?: [x,y], to?: [x,y] (spread coords: the Gradient Swatch tool's drag), ids?} → {swatch, kind, stops} — edits the fill's gradient (an unnamed gradient unless it equals a gradient swatch)
-- `object.color` (Apply Color): {color: "#rrggbb"\|{c,m,y,k}(0..100)\|[r,g,b](0..255), target?: fill\|stroke, ids?} — an unnamed colour (not in the Swatches panel until Add to Swatches) on the selection
+- `object.color` (Apply Color): {color: "#rrggbb"\|{c,m,y,k}(0..100)\|[r,g,b](0..255), target?: fill\|stroke, text?: bool, ids?} — an unnamed colour (not in the Swatches panel until Add to Swatches) on the selection; `text`: on the selected text, or the text of the selected frames (Formatting Affects Text)
 
 ## page
 
@@ -388,8 +391,10 @@ Grep this file rather than reading it whole.
 ## path
 
 - `path.create` (Create Path): {spread?, anchors: [{p:[x,y], in?:[x,y], out?:[x,y]}], closed?: bool}
-- `path.appendAnchor` (Add Anchor): {id, anchor: {p, in?, out?}} (spread coords)
-- `path.close` (Object › Paths › Close Path): {id}
+- `path.appendAnchor` (Add Anchor): {id, anchor: {p, in?, out?} (spread coords), subpath?: index (default the last)} — after the subpath's last anchor
+- `path.setAnchor` (Set Anchor): {id, subpath?: index (default the last), anchor: index\|"first"\|"last", p?, in?, out? (spread coords)} — moves an anchor or its direction lines; with both lines given and collinear it becomes smooth
+- `path.reverse` (Object › Paths › Reverse Path): {ids?, subpath?: index (only that subpath of the first target)} — the anchors run the other way (the end point becomes the start)
+- `path.close` (Object › Paths › Close Path): {id, subpath?: index (default every subpath)}
 - `path.moveAnchors` (Move Anchors): {id, anchors: [[subpath, index]], dx, dy, handle?: in\|out}
 - `path.addAnchor` (Add Anchor Point): {id, at: [x,y] (spread coords; the nearest point on the path), tolerance?: pt (default 4)} → {subpath, anchor}
 - `path.deleteAnchor` (Delete Anchor Point): {id, subpath, anchor} — removes the point (and the object when no path is left)
@@ -481,7 +486,7 @@ Grep this file rather than reading it whole.
 - `style.paragraph.create` (New Paragraph Style…): {name, basedOn?, nextStyle?, para?: {…}, chars?: {…}, fromSelection?: bool}
 - `style.paragraph.edit` (Paragraph Style Options…): {name, rename?, basedOn?, nextStyle?, para?: {… ruleAbove?/ruleBelow?: only the named rule fields change}, chars?: {…}}
 - `style.paragraph.delete` (Delete Paragraph Style): {name, replaceWith?}
-- `style.character.create` (New Character Style…): {name, basedOn?: style \| "[None]", chars?: {…}} — the style sets only `chars` → {name} (made unique)
+- `style.character.create` (New Character Style…): {name, basedOn?: style \| "[None]", chars?: {…}, fromSelection?: bool (default false)} — if true, capture the first selected character's style/local overrides (caret: typing format), then overlay chars (null unsets); only explicit fill names are validated; paragraph formatting stays inherited; no text target: chars only → {name} (made unique)
 - `style.character.edit` (Character Style Options…): {name, rename?, basedOn?: style \| "[None]" \| null, chars?: {attr: value \| null (no longer set)}} — renaming updates every use
 - `style.list` (List Styles): {} → paragraph and character style names
 - `style.object.apply` (Apply Object Style): {name, ids?}
@@ -529,8 +534,8 @@ Grep this file rather than reading it whole.
 - `table.moveColumn` (Move Column): {from?, to} (0-based; from defaults to the target column)
 - `table.sortRows` (Table › Sort): {column?: 0-based (default: the target cell's), descending?: bool} — body rows by that column's text (numbers numerically)
 - `table.unmerge` (Table › Unmerge Cells): {}
-- `table.splitHorizontally` (Table › Split Cell Horizontally): {} — the target cell becomes two, one above the other
-- `table.splitVertically` (Table › Split Cell Vertically): {} — the target cell becomes two, side by side
+- `table.splitHorizontally` (Table › Split Cell Horizontally): {} — each target cell becomes two, one above the other
+- `table.splitVertically` (Table › Split Cell Vertically): {} — each target cell becomes two, side by side
 - `table.setCell` (Cell Options): {fill?: swatch, tint?, insets?: n \| [t,l,b,r], vj?: top\|center\|bottom\|justify, text?, stroke?: {weight?, color?, tint?, type?: solid\|dashed\|dotted, edges?: all\|outer\|inner\|top\|left\|bottom\|right}}
 - `table.setRowHeight` (Row Height): {height, mode?: atLeast\|exactly}
 - `table.setColumnWidth` (Column Width): {width}
@@ -550,12 +555,19 @@ Grep this file rather than reading it whole.
 - `text.placeCaret` (Place Caret): {frame, point: [x,y] (spread coords)} — converts empty frames to text frames
 - `text.release` (Release): {frame, point, moved: bool, copy?: bool} — ends a press in text: a drag that started in the selected text moves (copy: duplicates) it to the point; a click places the caret
 - `text.extendTo` (Extend Text Selection): {frame, point}
-- `text.selectWord` (Select Word): {frame, point}
+- `text.selectWord` (Select Word): {frame, point} — the word (or run of spaces) under the point
+- `text.selectAt` (Select Text Unit): {frame, point, unit: word\|line\|paragraph\|story} — what a double, triple, quadruple or quintuple click selects: the word (or run of spaces) under the point, its line, its paragraph with the paragraph return, or the whole story
+- `text.selectSentence` (Select Sentence): {frame, point} — the sentence under the point
+- `text.selectParagraph` (Select Paragraph): {frame, point} — the paragraph under the point, without its paragraph return
+- `text.selectStory` (Select Story): {frame, point} — all the text of the story under the point, threaded frames included
 - `text.select` (Select Text): {story, anchor, focus} (UTF-8 byte offsets into the story text, as find.find reports them: á or — counts 2 or 3)
 - `text.insert` (Type): {text, raw?: bool (no typographer's quotes)} — replaces the selected text
 - `text.delete` (Delete Text): {forward?: bool, word?: bool}
 - `text.move` (Move Caret): {dir: left\|right\|up\|down\|lineStart\|lineEnd\|storyStart\|storyEnd, extend?, word?}
 - `text.exitToFrame` (Select Frame): {}
+- `text.thread` (Thread Text Frames): {from?, to?, rect?: [x0,y0,x1,y1] (spread coords), spread?, autoflow?: bool} — threads frame `to` right after frame `from` (between `from` and the frame that followed it, if any). `to` is an empty frame or a text frame nothing threads into yet; its text joins the end of the story. Give `rect` in place of `from` or `to` to thread a new text frame made there on `spread`: `{from, rect}` adds it after `from`, `{rect, to}` in front of `to`. autoflow: then add pages with threaded frames until the story fits. Selects the frame that joined the thread. → {story, from, to, overset, pagesAdded}
+- `text.unthread` (Break Thread): {frame?, side?: after\|before} — breaks the thread after (or before) `frame` (default: the selected text frame). The frames from the break on stay threaded to each other but become empty; the text stays in the story, overset if the earlier frames can't hold it
+- `text.removeFromThread` (Remove Frame from Thread): {frame?} — takes `frame` (default: the selected text frame) out of its thread: the frames before and after it join up and keep the text, `frame` stays empty
 
 ## toc
 
@@ -586,17 +598,18 @@ Grep this file rather than reading it whole.
 
 - `type.createOutlines` (Type › Create Outlines, Cmd+Shift+O): {ids?} — text frames become compound paths of their glyphs (one per text colour, grouped when several) → {ids}
 - `type.onPath` (Type on a Path): {id: path, text?, start?: distance along the path, flip?, align?: baseline\|ascender\|descender\|center} → {story} — the text cursor goes into it
-- `type.pathOptions` (Type › Type on a Path › Type on a Path Options…): {id?, start?, flip?, align?: baseline\|ascender\|descender\|center, delete?: true (Delete Type from Path)}
+- `type.pathOptions` (Type › Type on a Path › Type on a Path Options…): {id?, start?, end?: distance along the path or null (the path's end), flip?, align?: baseline\|ascender\|descender\|center, delete?: true (Delete Type from Path)} — start and end are the brackets: start ≤ end, both on the path
 - `type.fillWithPlaceholder` (Type › Fill with Placeholder Text): {frame?}
 - `type.char` (Character Formatting): {attrs: {fontFamily?, fontStyle?, size?, leading?: {kind:auto}\|{kind:points,value}, tracking?, kerning?, hScale?, vScale?, baselineShift?, fill?, capitalization?, underline?, …}}
-- `type.para` (Paragraph Formatting): {attrs: {align?, leftIndent?, firstLineIndent?, spaceBefore?, spaceAfter?, dropCapLines?, hyphenate?, composer?, tabs?, ruleAbove?/ruleBelow?: {on?, weight?, color?, tint?, columnWidth?, offset?, leftIndent?, rightIndent?} (only the named rule fields change), …}}
+- `type.para` (Paragraph Formatting): {attrs: {align?, leftIndent?, firstLineIndent?, spaceBefore?, spaceAfter?, dropCapLines?, dropCapChars?, dropCapStyle?, dropCapAlignLeft?, dropCapScaleDescenders?, hyphenate?, composer?, tabs?, ruleAbove?/ruleBelow?: {on?, weight?, color?, tint?, columnWidth?, offset?, leftIndent?, rightIndent?} (only the named rule fields change), …}}
 - `type.align` (Align): {align: left\|center\|right\|leftJustified\|…}
 - `type.alignLeft` (Align Left, Cmd+Shift+L): {}
 - `type.alignCenter` (Align Center, Cmd+Shift+C): {}
 - `type.alignRight` (Align Right, Cmd+Shift+R): {}
 - `type.justify` (Justify Left, Cmd+Shift+J): {}
-- `type.bold` (Bold, Cmd+Shift+B): {}
-- `type.italic` (Italic, Cmd+Shift+I): {}
+- `type.bold` (Bold, Cmd+Shift+B): {on?: bool} — the family's bold style, keeping italic (style linking); toggles when `on` is left out
+- `type.italic` (Italic, Cmd+Shift+I): {on?: bool} — the family's italic style, keeping the weight (style linking); toggles when `on` is left out
+- `type.swapFillStroke` (Swap Text Fill and Stroke): {} — swap each selected character's resolved fill/stroke and tints; at a caret, swap the next typing's colors
 - `type.underline` (Underline, Cmd+Shift+U): {}
 - `type.allCaps` (All Caps, Cmd+Shift+K): {}
 - `type.tateChuYoko` (Tate-Chu-Yoko): {on?: bool} — set the selected text horizontally within one em of a vertical line (toggles by default)
@@ -608,7 +621,7 @@ Grep this file rather than reading it whole.
 - `type.sizeDown` (Decrease Point Size, Cmd+Shift+,): {}
 - `type.changeCase` (Type › Change Case): {case: upper\|lower\|title\|sentence} — the selected text, or the stories of selected frames (formatting kept)
 - `type.openType` (OpenType): {feature?: dlig\|frac\|ordn\|swsh\|titl\|calt\|zero\|ssNN\|any tag, on?: bool (default: toggle), figures?: tabularLining\|proportionalOldstyle\|proportionalLining\|tabularOldstyle\|default, stylisticSets?: [1–20]} → {features, figures}
-- `type.selectionAttrs` (Selection Attributes): {} → resolved character/paragraph attributes at the text selection
+- `type.selectionAttrs` (Selection Attributes): {} → resolved character/paragraph attributes at the text selection, and its start as `selectedText` (one line, up to 60 characters)
 
 ## variables
 

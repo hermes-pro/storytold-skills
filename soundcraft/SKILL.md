@@ -1,7 +1,7 @@
 ---
 name: soundcraft
 description: "Audio editing, recording and mixing with SoundCraft (Pro Tools-style DAW): podcast and voice-over cleanup, music mixing and mastering, trimming, fades, crossfades, EQ, compression, reverb, sound effects, stems, loudness (LUFS) and WAV / AIFF / FLAC bounces."
-version: 0.2.0
+version: 0.3.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -47,6 +47,15 @@ plays out loud. Everything works except the APP_ONLY tools. For the user to watc
 `soundcraft --control 0` (it prints `SOUNDCRAFT_CONTROL_PORT=<port>`) and the server is started as
 `soundcraft-cli mcp --connect <port>`. Close it later with `soundcraft-cli app --port <port> app.quit`.
 
+Bare `mcp` can read and write any absolute path. To confine it, start it with
+`--automation-read-root DIR --automation-write-root DIR` (existing folders; give the same folder twice,
+or you can't reopen what you saved). Then every open/import/sampler load must be inside the read root and
+every save/bounce/export inside the write root; relative paths resolve against the server's working
+directory. Refusals read ``automation path rejected: outside the write root C:\work: C:/Windows/Temp/x.wav``;
+with no write root: `automation filesystem access is not granted: write authority is absent: …`. A session
+whose audio lies outside the read root opens with those files under `missing`. The roots can't be combined
+with `--connect`.
+
 ## Mental Model
 
 - A **session** (`.scraft` JSON + an `Audio Files/` folder) holds **tracks** (audio, aux, master,
@@ -57,7 +66,7 @@ plays out loud. Everything works except the APP_ONLY tools. For the user to watc
   the source file. `inspect_session` lists each clip's `id`, `start`, `end`, `length`, `fade_in/out`, `gain_db`.
 - **Positions** are samples (integers), `{"seconds": 2.5}`, or strings: `"0:12.500"`, `"bars_beats:5|1|000"`,
   `"timecode:00:00:10:00"`. MIDI notes use ticks (960 per quarter note).
-- **Every action is a command** (469 of them): `execute {command, params}`, or `batch {calls: [...]}` for
+- **Every action is a command** (478 of them): `execute {command, params}`, or `batch {calls: [...]}` for
   several. Find them with `list_commands {filter: "fade"}` or grep `references/commands.md`.
 - Omitted `tracks` / `start` / `end` / `clips` fall back to the **current selection**. Pass them explicitly.
   `track` (one name/id) and `tracks` (an array, or a single name) are both accepted by most commands.
@@ -137,7 +146,7 @@ execute mix.volume {tracks:["Host"], delta_db: 2.0}        # target − measured
 bounce_mix {path:"/abs/episode.wav", start:0, end:"0:08.400", bit_depth:"16"}   → −16.0 LUFS, peak −10.6
 ```
 
-Checked on 0.6.1 with ffmpeg `ebur128` and ffprobe: −16.0 LUFS, −10.6 dBFS, 8.4 s, 48 kHz stereo
+Checked on 0.7.0 with ffmpeg `ebur128` and ffprobe: −16.0 LUFS, −10.6 dBFS, 8.4 s, 48 kHz stereo
 `pcm_s16le`; the waveform shows the fade-in and fade-out. (The test voice was a −20 LUFS synthetic signal;
 real speech has more peak, so the maximizer works harder.) A limiter makes gain changes non-linear, so
 iterate rather than computing once.
@@ -167,7 +176,7 @@ execute file.bounce_stems {dir:"/abs/stems"}               → "Song - kick.wav"
 execute file.bounce_mix {path:"/abs/verb.wav", source:"Verb", start:0, end:{seconds:10}}   # the bus alone
 ```
 
-On 0.6.1: 10.0 s 48 kHz stereo WAV (24-bit) and FLAC, three stems, and the reverb tail visible after 8 s
+On 0.7.0: 10.0 s 48 kHz stereo WAV (24-bit) and FLAC, three stems, and the reverb tail visible after 8 s
 in the waveform. The maximizer added 2 dB (−21.4 → −19.4 LUFS with quiet test tones). An unknown
 `source` fails with ``unknown bus `Nope` ``.
 
@@ -194,11 +203,17 @@ unloads the sample.
   `edit.move_clips {clips, by | to}` (`by` in samples or `{seconds}`); `edit.fades_create` over a range that
   spans the boundary of two butted clips gives a fade-out + fade-in pair (`shape: "equal power"`): a 3.8–4.2 s
   range over a split at 4 s made a 0.4 s overlap.
+- **Trim one clip / fade one clip:** `edit.trim_clip {clip, start?, end?}` moves its edges (1–9 s of a 12 s
+  clip → `{start:48000, end:432000}`); `edit.fades_create {clip, side:"in"|"out", length:24000, shape?}` fades
+  it without a range (`length` is samples only; `{seconds}` fails with `length must be a positive sample count`).
 - **Remove silences:** `edit.select {tracks, start, end}` then `edit.strip_silence {threshold_db:-40, min_length_ms:200}`
   (tone-gap-tone-gap-tone → 3 clips). Run `edit.select_none` afterwards.
 - **Clip gain:** `clip.gain {clips:[id], db:-6}` (or `delta_db`); `clip.gain_nudge_up` / `_down {clips}` step 1 dB.
 - **Offline effects:** `audiosuite.process {process:"time_stretch", params:{ratio:1.1}, clips:[3]}` → clip 10 % longer;
   `{process:"normalize", params:{target_db:-1}}`; `{process:"eq_1band", params:{type:3, freq:100}}`; `reverse`, `invert`.
+  `pitch_shift {semitones}` is clamped to ±24 (36 came out as +24).
+- **Test tone / room tone:** `audiosuite.process {process:"signal_generator", params:{waveform:0, freq:1000, level:-20},
+  tracks:["Tone"], start:{seconds:10}, end:{seconds:11}}` puts a new 1 s clip on each listed audio track.
 - **Synth parts / sound effects from MIDI:** `event.tempo {bpm:100}`; `track.new {kind:"instrument",
   instrument:"subtractive_synth", name:"Lead"}`; `midi.new_clip {track:"Lead", start:0, length:"bars_beats:3|1|000"}`
   → clip id (use the returned one); `midi.note_add {clip, pitch:60, start_ticks:0, length_ticks:960, velocity?}`.
@@ -226,12 +241,14 @@ soundcraft-cli run [--in S.scraft | --demo] --cmd 'file.import_audio={"path":"/a
 soundcraft-cli script cmds.txt [--in S] [--save S] --bounce out.wav     # one `ID {json}` per line
 soundcraft-cli commands [FILTER] · describe ID · plugins · parity [--write PATH]
 soundcraft-cli app [--port P] METHOD [JSON]              # call a running app's control channel
+soundcraft-cli mcp [--connect PORT] [--demo] [--automation-read-root DIR] [--automation-write-root DIR]
 ```
 
 `run`/`script` print one JSON result per command plus the bounce report. `--start/--end` take time
 strings (`0:04.000`), not JSON (`{"seconds":4}` fails with `cannot parse position`). Malformed `--cmd` JSON
 stops the run (`mix.insert: bad JSON: key must be a string at line 1 column 2`). `--save` over an existing
-session replaces it and keeps the old one in `Backups/S backup N.scraft` next to it.
+session replaces it and keeps the old one in `Backups/S backup N.scraft` next to it. `convert` refuses bad
+values (``--bit-depth: expected 16, 24 or 32f, got `12` ``, ``--rate: expected a sample rate in Hz, got `0` ``).
 
 ## Pitfalls
 
@@ -258,7 +275,9 @@ session replaces it and keeps the old one in `Backups/S backup N.scraft` next to
   `the selection must cover a clip start, end or the boundary between two clips`.
 - Relative paths resolve against the server's working directory. Use absolute paths everywhere.
 - Error texts are precise — read them: ``unknown command `edit.x` ``, ``unknown plugin `noise_reduction` ``,
-  `` `compressor` has no parameter `thresh` ``, `unknown track "Nope"`, `no such clip`,
+  `` `compressor` has no parameter `thresh` `` (`mix.insert`, `mix.instrument {params}`),
+  `` `compressor` has no parameter(s): thresh `` and `parameter(s) need a numeric value: ratio` (`mix.insert_params`),
+  `unknown track "Nope"`, `no such clip`,
   `` `edit.cut` is not available: make an edit selection first ``.
 
 ## Verification
@@ -277,6 +296,6 @@ session replaces it and keeps the old one in `Backups/S backup N.scraft` next to
 
 Grep these rather than reading them whole, e.g. `grep -n sampler ${HERMES_SKILL_DIR}/references/commands.md`.
 
-- `references/commands.md`: all 469 commands with params, grouped by area.
+- `references/commands.md`: all 478 commands with params, grouped by area.
 - `references/plugins.md`: all 27 built-in plugins with param ids, defaults and ranges, plus the AudioSuite-only processes.
 - Upstream docs: https://github.com/storytold/soundcraft/tree/main/docs (`mcp.md`, `control-protocol.md`).

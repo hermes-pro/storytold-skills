@@ -1,7 +1,7 @@
 ---
 name: vectorcraft
 description: "Vector illustration with VectorCraft (Illustrator-style): logos, icons, posters, flyers, badges, infographics, charts, and SVG / PDF / EPS / AI / DXF artwork. Draw shapes and Bézier paths, paint, set type, apply live effects, export."
-version: 0.2.0
+version: 0.3.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -15,7 +15,7 @@ metadata:
 
 VectorCraft is a free, open-source clean-room take on Adobe Illustrator (storytold Crafting Apps). An
 agent drives it through an MCP server (`vectorcraft-cli mcp`) or one-shot CLI commands. Everything it
-makes stays editable: live shapes, live effects and live type. This skill is written for VectorCraft 0.10.0.
+makes stays editable: live shapes, live effects and live type. This skill is written for VectorCraft 0.11.0.
 
 ## When to Use
 
@@ -60,7 +60,7 @@ always does, and `--automation-read-root DIR` / `--automation-write-root DIR` co
 
 - **Coordinates** are points (1/72 in). **y points down.** The origin is the first artboard's top-left.
   A new document is US Letter, 612 × 792. For another size, run `command_run file.new {width, height}`.
-- **Every edit is a command** (743 of them). The drawing tools cover the common ones. Anything else goes
+- **Every edit is a command** (749 of them). The drawing tools cover the common ones. Anything else goes
   through `command_run {id, params}`, or `command_batch {steps}` for several in one call. Find commands
   with `command_list {filter: "align"}`, or grep `references/commands.md`.
 - **New objects become the selection**, and most commands act on the selection or on explicit `ids`.
@@ -75,7 +75,7 @@ Common command tools (the same names across the Crafting Apps):
 |---|---|
 | `command_list {filter?, enabled_only?}` | Find command ids and their params |
 | `command_run {id, params?}` | Run any command. Errors come back as `isError` with the reason |
-| `command_batch {steps:[{id, params?}], atomic?, label?, stop_on_error?}` | Several commands in one call. A param string `"$N.path"` / `"$last.path"` takes a value from an earlier step's result (`"$0.id"`, `"$2.matches.0.id"`). `atomic: true` makes the batch one undo step |
+| `command_batch {steps:[{id, params?}], atomic?, label?, stop_on_error?}` | Several commands in one call (at most 256 steps). A param string `"$N.path"` / `"$last.path"` takes a value from an earlier step's result (`"$0.id"`, `"$2.matches.0.id"`). `atomic: true` makes the batch one undo step |
 | `doc_inspect {depth?, childLimit?}` | Artboards, layer tree with ids, bounds and paint, selection, history. `depth: 0` on big files |
 | `render_preview {artboard?, max_side?}` | PNG of an artboard (default 0, 1024 px) so you can **look** at it |
 | `ui_inspect`, `ui_screenshot` | The live desktop app only |
@@ -87,7 +87,7 @@ Drawing and file tools:
 | `draw_shape` | `rectangle`/`ellipse` (`x,y,width,height`, rectangle `radius`), `polygon` (`cx,cy,radius,sides`), `star` (`cx,cy,radius1,radius2,points`), `line` (`x1,y1,x2,y2`), plus `fill`, `stroke`, `strokeWidth`, `rotation` |
 | `draw_path` | Any curve: SVG `d` (`"M0 0 C …Z"`) or `points` (`[x,y]` or `{x,y,in,out}` Bézier handles), `closed` |
 | `set_paint` | Fill, stroke and weight on the selection or `ids` (also becomes the default for new art) |
-| `add_text` | Point type at `(x, y)`, where `x` is the **left** edge and `y` the **baseline**. Area type with `width`/`height`. `path` + `mode` puts type in or on a path. Also `font`, `size`, `color` |
+| `add_text` | Point type at `(x, y)`: `y` is the **baseline**, `x` the left edge (with `justify: "center"` the line's centre, `"right"` its end). Area type with `width`/`height`, plus `fit: "autoHeight"` (frame grows) or `"shrinkText"`. `path` + `mode` puts type in or on a path. Also `font`, `size`, `color`. Returns `overflow: true` when the text doesn't fit |
 | `apply_effect` | Live effects. Call it with no `effect` to get the catalog. See `references/effects.md` |
 | `pathfinder {operation}` | `unite`, `minusFront`, `intersect`, `exclude`, `divide`, `trim`, `merge`, `crop`, `outline`, `minusBack` (destructive) |
 | `transform` | `dx/dy`, `rotate` (degrees, counter-clockwise), `scale`/`scaleX`/`scaleY` (%), `reflect`, `shear`, `origin`, `copy` |
@@ -127,9 +127,12 @@ Resources read one thing at a time: `vectorcraft://object/{id}`, `vectorcraft://
   the document.
 - Style after creating: `command_run text.setStyle {font, style: "Bold", size, leading, tracking, justify}`.
   Use `text.setRangeStyle {id, start, end, …}` for part of a story.
-- **Centering a line:** create it anywhere, then `command_run object.align {horizontal: "center", to: "artboard"}`.
-  The `x` in `add_text` is the left edge, so a guessed `x` puts the line off-centre or past the edge.
-- Use area type (`width`/`height`) for paragraphs. Convert type to paths with `command_run type.createOutlines`,
+- **Centering a line:** `add_text {x: <artboard width / 2>, justify: "center", …}` centres it on `x`. Or create it
+  anywhere, then `command_run object.align {horizontal: "center", to: "artboard"}`. Without `justify`, `x` is the
+  left edge, so a guessed `x` puts the line off-centre or past the edge.
+- Use area type (`width`/`height`) for paragraphs. **Watch for `overflow`** in the reply of `add_text`, `text.create`,
+  `text.setStyle` and `text.setText`: the lines past the frame aren't drawn. Enlarge the frame or pass
+  `fit: "autoHeight"` (or `"shrinkText"`, down to `fitMinPercent`, default 50). Convert type to paths with `command_run type.createOutlines`,
   or export SVG with `outlineText: true` when the file must render without the fonts.
 
 ## Procedure
@@ -207,7 +210,11 @@ don't contain each other.
 - **Group, stacking order, layers:** `object.group`, `object.arrange.bringToFront`, `layer.new`.
 - **Clipping mask:** select the art with the clip shape on top, then `object.clippingMask.make`.
 - **Tracing an image:** `open_file` a PNG/JPG (or `file.place {path}` it), then `imageTrace.make {preset}` and
-  `imageTrace.expand` (or `imageTrace.makeAndExpand`). `imageTrace.presets` lists the presets.
+  `imageTrace.expand` (or `imageTrace.makeAndExpand`). `imageTrace.presets` lists the presets. Options worth
+  knowing: `enhanced: true` (the preset's better version), `shapes` (circles and rectangles come out as live
+  shapes), `gradients`, `ignoreWhite` / `ignoreColor`.
+- **3D:** `apply_effect {effect: "threeD.extrude", params: {depth: 30}}` gives a shaded, extruded shape (also
+  `threeD.inflate`, `threeD.rotate`, `threeD.revolve`; bevels and lighting in `references/effects.md`).
 - **Recolour artwork:** `recolor.colors`, then `recolor.apply {map}`. The `recolor` prompt walks through it.
 - **Multiple sizes:** `artboard.new {x, y, width, height}`, then `export {artboard: i}` or
   `command_run document.exportForScreens {folder}` (one file per artboard). Without `x`/`y` a new artboard
@@ -232,7 +239,7 @@ don't contain each other.
 ## CLI (no MCP needed)
 
 ```bash
-vectorcraft-cli convert in.svg out.pdf [--scale N] [--artboard I | --range "1-3"] [--outline-text]
+vectorcraft-cli convert in.svg out.pdf [--scale N] [--artboard I | --range "1-3"] [--outline-text] [--decimals N]
 vectorcraft-cli info file.ai                         # JSON: artboards, object counts, fonts, import warnings
 vectorcraft-cli run [--in FILE] --cmd shape.rectangle --params '{"x":50,"y":50,"width":200,"height":100}' \
                     --cmd paint.setFill --params '{"color":"#ff0000"}' --export out.svg --scale 2   # one JSON line per step
@@ -241,7 +248,9 @@ vectorcraft-cli commands                             # the full command catalog 
 
 `run` takes the same command ids and params as `command_run`, and `"$N.path"` references like
 `command_batch` (`--params '{"id":"$1.id"}'`). That's handy for batch conversion and scripted art
-without an MCP session.
+without an MCP session. A failing step stops `run` with exit code 1. `convert` replies with the export's
+`warnings` and `importWarnings` (what reading the input left out); `--decimals` (1–7) sets SVG precision,
+`--editing-data` opens a `.ai` from its editing copy.
 
 ## Pitfalls
 
@@ -251,15 +260,17 @@ without an MCP session.
 - **Paths:** use absolute paths for `save_file`, `export` and `open_file`. A relative path lands in the
   server's working directory, not yours. With the root flags, a path outside them fails with
   `automation path rejected: outside the write root …`.
-- **Misspelt command params are ignored silently** in 0.10.0: `file.new {widht: 300}` makes a default-size
-  document, `effect.apply {params: {blurr: 3}}` uses the default radius. Copy keys from
-  `command_list` / `references/commands.md`. (Unknown *tool* arguments are refused: ``unknown argument
-  `justify` for `add_text` ``.)
+- **Misspelt params:** most commands now refuse them: ``invalid parameters for `file.new`: unknown parameter
+  `widht`; did you mean `width`?``, and for effects ``unknown parameter `blurr`; the command takes: radius``.
+  A few still **ignore them silently** in 0.11.0: `text.setStyle`, `paint.setFill`, `transparency.set` and
+  `stroke.set` (`transparency.set {opacty: 50}` succeeds and changes nothing). Copy keys from `command_list` /
+  `references/commands.md`. Unknown *tool* arguments are refused: ``unknown argument `rotat` for `transform` ``.
 - **`paint.setStroke {color: "none"}` fails** with ``invalid parameters for `paint`: bad color "none" ``.
   Use `{none: true}`, or `set_paint {stroke: "none"}`.
 - **A failed `command_batch` keeps the steps before the failure**, even with `atomic: true` (they become
   one undo step). It stops at the failing step and reports `completed`, `failed` and each step's `error`.
-- **`x` in `add_text` is the left edge.** Align to the artboard to center text instead of guessing.
+- **`x` in `add_text` is the left edge** unless you pass `justify: "center"`/`"right"`. Don't guess a centred `x`.
+- **Area type that's too small cuts the text off** without an error. The reply says `overflow: true`; act on it.
 - **Gradient direction:** remember `angle: 90` puts stop 0 at the bottom.
 - **Missing fonts** fall back to Source Sans 3 without an error. Pick from `text.fontList` and check the export `warnings`.
 - **`select.all` grabs everything that isn't locked**, including the background. Lock it, or pass `ids`.
@@ -279,7 +290,7 @@ without an MCP session.
 
 Grep these rather than reading them whole, e.g. `grep -n 'object.align' ${HERMES_SKILL_DIR}/references/commands.md`.
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 743 commands with params, grouped by area.
-- `${HERMES_SKILL_DIR}/references/effects.md`: all 80 live effects with params and defaults.
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 749 commands with params, grouped by area.
+- `${HERMES_SKILL_DIR}/references/effects.md`: all 83 live effects with params and defaults.
 - Upstream docs: https://github.com/storytold/vectorcraft/tree/main/docs (`mcp.md`, `control-protocol.md`).
-  `mcp.md` on `main` can describe features newer than 0.10.0.
+  `mcp.md` on `main` can describe features newer than 0.11.0.

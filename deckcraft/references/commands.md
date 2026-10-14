@@ -1,11 +1,11 @@
 # DeckCraft command catalog
 
-Generated from `deckcraft-cli commands` (DeckCraft 0.6.1): 226 commands. Run one with `run_command {command, params}`, or several with `batch`.
+Generated from `deckcraft-cli commands` (DeckCraft 0.7.0): 232 commands. Run one with `run_command {command, params}`, or several with `batch`.
 Grep this file for a verb (`grep -n 'table[.]' commands.md`) rather than reading it whole.
 `?` = optional, `a|b` = choices, `→` = what it returns. Unknown param keys are ignored silently, so copy names exactly.
 `(Tab › Group)` is where the command sits in the desktop UI; `[keys]` is its shortcut.
 
-Groups: `file` (16), `window` (1), `edit` (11), `slide` (17), `section` (5), `shape` (23), `insert` (13), `chart` (3), `picture` (4), `media` (9), `arrange` (15), `text` (11), `format` (39), `design` (8), `view` (2), `master` (4), `transition` (5), `animation` (11), `table` (16), `comment` (5), `review` (2), `show` (4), `document` (1), `commands` (1)
+Groups: `file` (17), `window` (1), `edit` (11), `slide` (17), `section` (5), `shape` (23), `insert` (13), `chart` (3), `picture` (4), `media` (9), `arrange` (15), `selection` (3), `text` (13), `format` (39), `design` (8), `view` (2), `master` (4), `transition` (5), `animation` (11), `table` (16), `comment` (5), `review` (2), `show` (4), `document` (1), `commands` (1)
 
 ## file
 
@@ -16,7 +16,8 @@ Groups: `file` (16), `window` (1), `edit` (11), `slide` (17), `section` (5), `sh
 - `file.saveAs` (File): Save As… {path, format?} [Cmd+Shift+S]
 - `file.saveTemplate` (File): Save as Template… {path}
 - `file.saveBytes`: Save to Data {format?: deckcraft|pptx} → {data: base64}
-- `file.export` (File): Export… {path, format: png|jpeg|pptx|deckcraft|outline|pdf, slide?: index, all?: bool, scale?: px per pt; pdf: layout?: slides|notes|handouts, perPage?: 1|2|3|4|6|9, dpi?, slides?: [index], includeHidden?, textLayer?, frame?}
+- `file.export` (File): Export… {path, format: png|jpeg|pptx|deckcraft|outline|pdf, slide?: index, all?: bool, scale?: px per pt; pdf: layout?: slides|notes|handouts, perPage?: 1|2|3|4|6|9, dpi?, slides?: [index] | "1-3,5", includeHidden?, textLayer?, frame?}
+- `file.info` (File): Info {} → {title, path, format, dirty, slides, hiddenSlides, sections, bytes?, properties}
 - `file.render`: Render Slide {slide?: index, scale?, edit?: bool} → {png: base64, width, height}
 - `file.close` (File): Close {} [Cmd+W]
 - `file.properties` (File): Properties {title?, subject?, author?, keywords?, comments?, category?, company?} → properties
@@ -93,7 +94,7 @@ Groups: `file` (16), `window` (1), `edit` (11), `slide` (17), `section` (5), `sh
 - `shape.rename` (Selection Pane): Rename {name, id?}
 - `shape.altText` (Shape Format › Accessibility): Alt Text {text, decorative?: bool, ids?}
 - `shape.visible` (Selection Pane): Show/Hide {visible?: bool, ids?}
-- `shape.lock`: Lock {locked?: bool, ids?}
+- `shape.lock` (Selection Pane): Lock {locked?: bool (default: toggle), ids?} (a group locks or unlocks with everything in it)
 - `shape.setDefault`: Set as Default Shape {}
 - `shape.merge` (Shape Format › Insert Shapes › Merge Shapes): Merge Shapes {op: union|combine|fragment|intersect|subtract, ids?: shapes in selection order (the first one's formatting is kept)} → {ids}
 - `shape.inspect`: Inspect Shape {id} → full shape JSON plus its effective box
@@ -145,7 +146,7 @@ Groups: `file` (16), `window` (1), `edit` (11), `slide` (17), `section` (5), `sh
 - `arrange.bringForward` (Arrange): Bring Forward {ids?} [Cmd+]]
 - `arrange.sendBackward` (Arrange): Send Backward {ids?} [Cmd+[]
 - `arrange.sendToBack` (Arrange): Send to Back {ids?} [Cmd+Shift+[]
-- `arrange.reorder` (Arrange): Reorder Objects {id, index: position in the stack (0 = back)}
+- `arrange.reorder` (Arrange): Reorder Objects {id, index: position among its siblings (0 = back; a group's child stays in its group)} → {index}
 - `arrange.group` (Arrange): Group {ids?} [Cmd+Alt+G]
 - `arrange.ungroup` (Arrange): Ungroup {ids?} [Cmd+Alt+Shift+G]
 - `arrange.regroup` (Arrange): Regroup {} [Cmd+Alt+J]
@@ -157,13 +158,21 @@ Groups: `file` (16), `window` (1), `edit` (11), `slide` (17), `section` (5), `sh
 - `arrange.flipVertical` (Arrange › Rotate or Flip): Flip Vertical {ids?}
 - `arrange.nudge`: Nudge {dx, dy, ids?} (arrow keys: 6 pt, with Alt 1 pt)
 
+## selection
+
+- `selection.select` (Selection Pane): Select {ids | id, toggle?: bool (Ctrl+click), add?: bool} → {selected}: objects in groups too; a hidden object picked from the list is shown
+- `selection.showAll` (Selection Pane): Show All {} shows every object on the slide, inside groups too
+- `selection.hideAll` (Selection Pane): Hide All {} hides every top-level object on the slide
+
 ## text
 
 - `text.edit`: Edit Text {id?, at?: [paragraph, char], end?: bool, cell?: [row, col], notes?: bool} [Enter]
 - `text.exit`: Stop Editing Text {}
 - `text.insert`: Type Text {text} (\n = new paragraph, \u000b = line break)
-- `text.delete`: Delete Text {dir?: backward|forward|wordBackward|wordForward} [Backspace]
-- `text.move`: Move Insertion Point {to: left|right|up|down|wordLeft|wordRight|lineStart|lineEnd|paraStart|paraEnd|start|end, extend?: bool}
+- `text.delete`: Delete Text {dir?: backward|forward|wordBackward|wordForward} — the word directions are Ctrl+Backspace/Delete: they work from the start of a selection without deleting it [Backspace]
+- `text.compose`: Compose Text {text, active?: [start, end]} — an input method's composition (preedit) at the insertion point; empty text cancels it
+- `text.commit`: Commit Composition {text} — the input method's result replaces its composition, as one undo step
+- `text.move`: Move Insertion Point {to: left|right|up|down|wordLeft|wordRight|lineStart|lineEnd|paraStart|paraEnd|paraUp|paraDown|start|end, extend?: bool} — left/right are on screen: in a right-to-left paragraph left goes forward
 - `text.select`: Select Text {anchor: [p, c], caret: [p, c]}
 - `text.selectAll`: Select All Text {}
 - `text.selectWord`: Select Word {at?: [p, c]}
@@ -185,7 +194,7 @@ Groups: `file` (16), `window` (1), `edit` (11), `slide` (17), `section` (5), `sh
 - `format.shrink` (Home › Font): Decrease Font Size {} [Cmd+Shift+,]
 - `format.color` (Home › Font): Font Color {color: #RRGGBB | accent1..6 | tx1… | {scheme, lumMod…}}
 - `format.highlight` (Home › Font): Text Highlight Color {color? (absent = none)}
-- `format.case` (Home › Font): Change Case {mode: sentence|lower|upper|title|toggle} [Shift+F3]
+- `format.case` (Home › Font): Change Case {mode?: cycle|sentence|lower|upper|title|toggle} — cycle (Shift+F3, the default) goes lowercase → Capitalize Each Word → UPPERCASE; a caret in a word changes that word [Shift+F3]
 - `format.caps`: Caps {caps: none|small|all}
 - `format.spacing` (Home › Font): Character Spacing {pt} (veryTight -3, tight -1.5, normal 0, loose 3, veryLoose 6)
 - `format.clear` (Home › Font): Clear All Formatting {} [Cmd+Space]
