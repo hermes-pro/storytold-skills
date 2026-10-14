@@ -1,6 +1,6 @@
 # SoundCraft built-in plugins
 
-Generated from `execute engine.plugins` (SoundCraft 0.3.0, 26 plugins). Use the `id` with
+Generated from `execute engine.plugins` (SoundCraft 0.6.1, 27 plugins). Use the `id` with
 `mix.insert {track, plugin, params}` (live insert, slots 0–9) or `audiosuite.process {process: id, params, clips}` (offline render).
 Each param: `id` default [min..max unit]; choice params take the **index** (`{0:Peak|1:Low Shelf…}`); toggles are 0/1.
 Unknown param ids are rejected by `mix.insert` (`` `compressor` has no parameter `thresh` ``) but silently ignored by `audiosuite.process`.
@@ -273,6 +273,27 @@ Unknown param ids are rejected by `mix.insert` (`` `compressor` has no parameter
 - `tom_decay` 500 [50..2000 Ms]
 - `cymbal_decay` 2000 [200..6000 Ms]
 
+### `sampler` — Sampler (instrument: `track.new {kind: instrument, instrument: id}`, then `mix.sampler_load {track, path}`)
+
+- `root_note` 60 [0..127 None]
+- `transpose` 0 [-48..48 Semitones]
+- `fine_tune` 0 [-100..100 Cents]
+- `key_track` 1 [0..1 Toggle]
+- `key_low` 0 [0..127 None]
+- `key_high` 127 [0..127 None]
+- `vel_low` 1 [1..127 None]
+- `vel_high` 127 [1..127 None]
+- `velocity` 70 [0..100 Percent]
+- `attack` 1 [0.1..5000 Ms]
+- `decay` 300 [1..10000 Ms]
+- `sustain` 100 [0..100 Percent]
+- `release` 150 [1..10000 Ms]
+- `play_mode` 0 — 0=Gate, 1=One Shot
+- `start` 0 [0..100 Percent]
+- `loop_mode` 0 — 0=Off, 1=Forward, 2=Ping-Pong
+- `loop_start` 0 [0..100 Percent]
+- `loop_end` 100 [0..100 Percent]
+- `level` 0 [-48..12 Db]
 ## AudioSuite-only processes
 
 `audiosuite.process {process, params, clips}` also takes these (from the engine source):

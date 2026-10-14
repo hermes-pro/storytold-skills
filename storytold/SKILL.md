@@ -1,19 +1,19 @@
 ---
 name: storytold
-description: "Pick the right storytold Crafting App for a creative task: vector art, photo editing, RAW development, motion graphics, video, layout, PDF, documents, spreadsheets, slides, audio, CAD. Routes to the app's own skill."
-version: 0.1.0
+description: "Pick the right storytold Crafting App for a creative task: vector art, photo editing, RAW development, motion graphics, video, layout, PDF, documents, spreadsheets, slides, audio, CAD, UI design. Routes to the app's own skill."
+version: 0.2.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
 metadata:
   hermes:
-    tags: [Creative, Design, Photo, Video, Audio, Office, CAD, MCP, Router]
-    related_skills: [storytold-install, vectorcraft, photocraft, lightcraft, effectcraft, filmcraft, designcraft, pdfcraft, wordcraft, gridcraft, deckcraft, soundcraft, cadcraft]
+    tags: [Creative, Design, Photo, Video, Audio, Office, CAD, UI, MCP, Router]
+    related_skills: [storytold-install, vectorcraft, photocraft, lightcraft, effectcraft, filmcraft, designcraft, pdfcraft, wordcraft, gridcraft, deckcraft, soundcraft, cadcraft, figcraft]
 ---
 
 # storytold Crafting Apps: which one?
 
-The storytold Crafting Apps are twelve free, open-source creative tools. Each has a desktop app, a CLI and an
+The storytold Crafting Apps are thirteen free, open-source creative tools. Each has a desktop app, a CLI and an
 MCP server (`<app>-cli mcp`, which Hermes exposes as `mcp_<app>_*` tools). Each also has its own skill. Use
 this table to pick one, then **load that app's skill** before you start working.
 
@@ -33,6 +33,7 @@ this table to pick one, then **load that app's skill** before you start working.
 | A slide deck or presentation, .pptx | DeckCraft | `deckcraft` |
 | Audio: podcast edit, mix, mastering, sound design, WAV/MP3 | SoundCraft | `soundcraft` |
 | A precise technical drawing: floor plan, part, DXF/DWG, dimensions | CADCraft | `cadcraft` |
+| A UI design: app or web screen, wireframe, mockup, prototype, component library, design tokens, .fig | FigCraft | `figcraft` |
 
 ## Tie-breakers
 
@@ -45,6 +46,9 @@ this table to pick one, then **load that app's skill** before you start working.
   an existing PDF, use PdfCraft.
 - **Documents:** prose is WordCraft. Numbers and calculations are GridCraft. Something to present is DeckCraft.
 - **Drawings to scale** with real units and dimensions are CADCraft, not VectorCraft.
+- **Screens vs artwork:** app and web screens, components with variants, auto layout and clickable prototypes are
+  FigCraft. A standalone logo, icon or illustration is VectorCraft. Draw the icon in VectorCraft and import the SVG
+  into FigCraft.
 
 Bigger jobs often combine apps: build a chart in GridCraft and place it in DeckCraft or DesignCraft, or
 design a logo in VectorCraft and animate it in EffectCraft. Use each app's native save for its master, and
@@ -62,10 +66,10 @@ hermes skills install hermes-pro/storytold-skills/<skill> --yes
 ```
 
 The skills are `storytold-install`, `vectorcraft`, `photocraft`, `lightcraft`, `effectcraft`, `filmcraft`,
-`designcraft`, `pdfcraft`, `wordcraft`, `gridcraft`, `deckcraft`, `soundcraft` and `cadcraft`. Skip any that
+`designcraft`, `pdfcraft`, `wordcraft`, `gridcraft`, `deckcraft`, `soundcraft`, `cadcraft` and `figcraft`. Skip any that
 `hermes skills list` already shows.
 
-The 12 app skills pass Hermes' security scan. **`storytold-install` is blocked** ("community source + caution
+The 13 app skills pass Hermes' security scan. **`storytold-install` is blocked** ("community source + caution
 verdict"), because its job is to persist a PATH entry, run the app CLIs and `hermes mcp add`, and read
 `STORYTOLD_*` / `GITHUB_TOKEN` environment variables. Tell the user that, and point them to
 `hermes skills inspect hermes-pro/storytold-skills/storytold-install`. Re-run it with `--force` **only after the
@@ -74,5 +78,5 @@ user agrees**. Then ask the user to start a new session so the new skills load.
 ### Install the apps
 
 If the app you need has no `mcp_<app>_*` tools and `<app>-cli --version` fails, load the `storytold-install`
-skill and run `setup <app>`, or `setup` on its own for all twelve. It installs the app, puts it on PATH, checks
+skill and run `setup <app>`, or `setup` on its own for all thirteen. It installs the app, puts it on PATH, checks
 the MCP server and registers it with Hermes.

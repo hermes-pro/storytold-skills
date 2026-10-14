@@ -1,6 +1,6 @@
 # SoundCraft command catalog
 
-Generated from `list_commands` (SoundCraft 0.3.0, 460 commands). Run with `execute {command, params}`
+Generated from `list_commands` (SoundCraft 0.6.1, 469 commands). Run with `execute {command, params}`
 or `batch {calls:[{command, params}]}`; `soundcraft-cli describe ID` shows one. `?` = optional, `a|b` = choices.
 Positions: samples (int), `{"seconds": x}`, or `"0:12.500"` / `"bars_beats:5|1|000"`. Tracks by id or name; clips by id.
 Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an error such as `make an edit selection first` means: pass them).
@@ -10,25 +10,26 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `session.new` (File › New) [Cmd+N]: {name?: 'Untitled', sample_rate?: 48000, bit_depth?: 24, template?: blank|demo}
 - `session.open` (File › Open Session) [Cmd+O]: {path}
 - `session.close` (File › Close Session) [Cmd+Shift+W]: {}
-- `session.save` (File › Save Session) [Cmd+S]: {path?}
-- `session.save_as` (File › Save Session As) [Cmd+Shift+S]: {path}
-- `session.save_copy` (File › Save Session Copy In): {path}
-- `session.save_template` (File › Save As Template): {path}
+- `session.save` (File › Save Session) [Cmd+S]: {path?, replace?: false}
+- `session.save_as` (File › Save Session As) [Cmd+Shift+S]: {path, replace?: false}
+- `session.save_copy` (File › Save Session Copy In): {path, replace?: false}
+- `session.save_template` (File › Save As Template): {path, replace?: false}
 - `session.revert` (File › Revert Session to Saved): {}
 - `session.inspect` (Inspect Session): {detail?: summary|full}
 - `session.format_time` (Format Time): {at: samples, format?: bars_beats|min_secs|timecode|feet_frames|samples}
+- `session.audio_health` (Session Audio Health): {} — checks all audio clips, including inactive playlists; no filesystem or signal analysis
 
 ## file — Import, bounce, export
 
-- `file.import_audio` (File › Import › Audio) [Cmd+Shift+I]: {path | paths: [..], track?: target track, at?: position, new_tracks?: true}
+- `file.import_audio` (File › Import › Audio) [Cmd+Shift+I]: {path | paths: [..], track?: target track, at?: position, new_tracks?: true (default; false uses `track` or the selected audio track)}
 - `file.import_midi` (File › Import › MIDI) [Cmd+Alt+I]: {path, at?}
 - `file.import_video` (File › Import › Video) [Cmd+Ctrl+I]: {path, at?} — adds a Video track clip for the movie's picture (H.264, ProRes, Motion JPEG) and imports its audio onto a new track
 - `file.bounce_mix` (File › Bounce Mix) [Cmd+Alt+B]: {path, format?: wav|aiff|flac, bit_depth?: 16|24|32f, start?, end?, source?: main|bus name, normalize?: false, dither?: true, fold_down?: stereo}
 - `file.bounce_stems` (Bounce Stems): {dir, format?: wav|aiff|flac, bit_depth?: 16|24|32f, start?, end?, fold_down?: stereo}
 - `file.export_midi` (File › Export › MIDI): {path, tracks?}
 - `file.export_session_text` (File › Export › Session Info as Text): {path?}
-- `file.export_clips` (Export Clips as Files): {dir, clips?, format?: wav}
-- `file.export_selected_tracks_as_session` (File › Export › Selected Tracks as New Session): {path, tracks?}
+- `file.export_clips` (Export Clips as Files) [Cmd+Shift+K]: {dir, clips?, format?: wav}
+- `file.export_selected_tracks_as_session` (File › Export › Selected Tracks as New Session): {path, tracks?, replace?: false}
 - `file.export_sibelius` (File › Export › Sibelius): {path, tracks?} — MIDI tracks as MusicXML (.musicxml)
 - `file.send_to_sibelius` (File › Send To... › Sibelius): {path?, tracks?} — writes MusicXML for a notation program (to the temp folder when no `path`)
 - `file.print_score` (File › Print Score) [Cmd+P]: {path?, tracks?} — engraves the MIDI tracks as a printable SVG page
@@ -49,13 +50,13 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `edit.clear` (Edit › Clear) [Cmd+B]: {tracks?, start?, end?}
 - `edit.cut_clip_gain` (Edit › Cut Special › Clip Gain) [Cmd+Ctrl+X]: {}
 - `edit.clear_clip_gain` (Edit › Clear Special › Clip Gain) [Cmd+Ctrl+B]: {}
-- `edit.cut_all_automation` (Edit › Cut Special › All Automation): {}
+- `edit.cut_all_automation` (Edit › Cut Special › All Automation): {tracks?, start?, end?}
 - `edit.clear_all_automation` (Edit › Clear Special › All Automation): {}
 - `edit.clear_pan_automation` (Edit › Clear Special › Pan Automation): {}
 - `edit.clear_plugin_automation` (Edit › Clear Special › Plugin Automation): {}
 - `edit.paste_repeat_to_fill` (Edit › Paste Special › Repeat to Fill Selection) [Cmd+Alt+V]: {}
 - `edit.select_all` (Edit › Select All) [Cmd+A]: {}
-- `edit.select` (Set Edit Selection): {tracks?: [id|name], start?, end?, clips?: [id], exact?: bool (ignore edit groups)}
+- `edit.select` (Set Edit Selection): {tracks?: [id|name], start?, end?, clips?: [id], sources?: [id] (Clip List files), exact?: bool (ignore edit groups)}
 - `edit.select_none` (Deselect All): {}
 - `edit.selection_to_timeline` (Edit › Selection › Change Timeline to Match Edit) [Alt+Shift+5]: {}
 - `edit.timeline_to_selection` (Edit › Selection › Change Edit to Match Timeline) [Alt+Shift+6]: {}
@@ -114,7 +115,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `edit.marker_lane_move_down` (Edit › Selection › Move Edit Selection To Marker Lane Below): {}
 - `edit.marker_lane_extend_up` (Edit › Selection › Extend Edit Selection To Marker Lane Above): {} — adds the marker ruler lane above to the selection
 - `edit.marker_lane_extend_down` (Edit › Selection › Extend Edit Selection To Marker Lane Below): {}
-- `edit.space_clips` (Edit › Space Clips…): {clips?, gap?: samples|{seconds} (default 0), mode?: end_to_start|start_to_start}
+- `edit.space_clips` (Edit › Space Clips): {clips?, gap?: samples|{seconds} (default 0), mode?: end_to_start|start_to_start}
 - `edit.snap_next` (Edit › Snap to › Next): {clips?} — moves each clip so its end meets the start of the next clip
 - `edit.snap_previous` (Edit › Snap to › Previous): {clips?} — moves each clip so its start meets the end of the previous clip
 - `edit.copy_to_target_playlist` (Edit › Copy Selection to... › Target Playlist): {tracks?, start?, end?} — copies the selection into each track's target playlist
@@ -143,6 +144,8 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `clip.loop` (Clip › Loop) [Cmd+Alt+L]: {clips?, count?: n, length?: samples}
 - `clip.rename` (Clip › Rename) [Cmd+Alt+Shift+R]: {clip?, name}
 - `clip.gain` (Clip Gain): {clips?, db | delta_db}
+- `clip.gain_nudge_up` (Nudge Clip Gain Up) [Ctrl+Shift+Up]: {clips?}
+- `clip.gain_nudge_down` (Nudge Clip Gain Down) [Ctrl+Shift+Down]: {clips?}
 - `clip.gain_render` (Clip › Clip Gain › Render): {clips?}
 - `clip.gain_bypass` (Clip › Clip Gain › Bypass): {clips?}
 - `clip.identify_sync_point` (Clip › Identify Sync Point) [Cmd+,]: {clip?, at?}
@@ -160,6 +163,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `clip.effects_render` (Clip › Clip Effects › Render): {clips?} — renders clip gain and fades into new audio and clears the clip effects
 - `clip.conform_to_tempo` (Clip › Conform to Tempo): {clips?, source_bpm?} — stretches audio clips so their length in bars follows the session tempo; the first conform records the clip's tempo
 - `clip.remove_pitch_shift` (Clip › Remove Pitch Shift): {clips?} — re-renders vari-speed (stretched) clips with pitch preserved
+- `clip.clear` (Clear Clips) [Cmd+Shift+B]: {clips?: [id], sources?: [id], with_clips?: bool} — removes clips and audio files from the session (files stay on disk); default: the Clip List selection. A file still used on the timeline needs `with_clips: true`, which removes those clips too
 
 ## track — Tracks, routing, playlists, freeze/bounce
 
@@ -245,13 +249,17 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `mix.insert_param` (Set Plugin Parameter): {track?, slot, param, value}
 - `mix.insert_params` (Set Plugin Parameters): {track?, slot, params: {id: value}, preset?: name}
 - `mix.insert_move` (Move Insert): {track?, from, to}
-- `mix.send` (Assign Send): {track?, slot?: 0..9|a..j, bus: name, level_db?: 0, pre_fader?: false}
+- `mix.send` (Assign Send): {track?, slot?: 0..9|a..j, bus: name, level_db?: 0 (kept when re-targeting), pre_fader?: false}
 - `mix.send_remove` (Remove Send): {track?, slot}
 - `mix.send_level` (Send Level): {track?, slot, db?, pan?, mute?, pre_fader?}
 - `mix.new_bus` (New Bus): {name, format?: stereo}
 - `mix.surround_pan` (Set Surround Pan): {tracks?, x?: -1..1 (left..right), y?: -1..1 (back..front), z?: 0..1 (height), divergence?: 0..1, center?: 0..100, lfe_db?: -144..12, clear?: bool}
 - `mix.send_surround_pan` (Set Send Surround Pan): {track?, slot: 0..9|a..j, x?, y?, z?, divergence?, center?, lfe_db?, clear?: bool}
 - `mix.insert_state` (Store Plugin State): {track, slot: 0..9 | "a".."j" | "instrument", state: base64 | null} → {bytes}. Not undoable and not journaled (states can be large).
+- `mix.instrument` (Set Instrument): {track?, plugin: id} — an instrument track's instrument: built-in, `clap:`, `vst3:` or `au:` id
+- `mix.instrument_param` (Set Instrument Parameter): {track?, param, value} — one parameter of an instrument track's built-in instrument (clamped into range)
+- `mix.sampler_load` (Load Sampler Sample): {track?, path, params?: {root_note, key_low, key_high, attack, loop_mode, …}} — an instrument track plays the file through the built-in Sampler (made its instrument if it is not already) → {track, source, name, frames, channels, sample_rate}
+- `mix.sampler_clear` (Clear Sampler Sample): {track?} — the track's Sampler stops playing its sample
 
 ## automation — Automation breakpoints and passes
 
@@ -416,6 +424,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 
 - `view.zoom_in` (Zoom In) [Cmd+]]: {}
 - `view.zoom_out` (Zoom Out) [Cmd+[]: {}
+- `view.zoom_by` (Zoom By): {factor: >1 zooms in, x?: px into the timeline to hold (else the insertion point if on screen)}
 - `view.zoom_set` (Set Zoom): {samples_per_px}
 - `view.zoom_preset` (Zoom Preset) [Cmd+Ctrl+1-5]: {preset: 1..5, store?: bool}
 - `view.zoom_to_selection` (Zoom to Selection) [Alt+F]: {width_px?: 1200}

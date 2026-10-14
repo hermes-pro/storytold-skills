@@ -1,11 +1,11 @@
 # DeckCraft command catalog
 
-Generated from `deckcraft-cli commands` (DeckCraft 0.3.0): 222 commands. Run one with `run_command {command, params}`, or several with `batch`.
+Generated from `deckcraft-cli commands` (DeckCraft 0.6.1): 226 commands. Run one with `run_command {command, params}`, or several with `batch`.
 Grep this file for a verb (`grep -n 'table[.]' commands.md`) rather than reading it whole.
 `?` = optional, `a|b` = choices, `→` = what it returns. Unknown param keys are ignored silently, so copy names exactly.
 `(Tab › Group)` is where the command sits in the desktop UI; `[keys]` is its shortcut.
 
-Groups: `file` (16), `window` (1), `edit` (11), `slide` (17), `section` (5), `shape` (23), `insert` (13), `chart` (3), `picture` (4), `media` (8), `arrange` (15), `text` (11), `format` (38), `design` (8), `view` (2), `master` (4), `transition` (5), `animation` (9), `table` (16), `comment` (5), `review` (2), `show` (4), `document` (1), `commands` (1)
+Groups: `file` (16), `window` (1), `edit` (11), `slide` (17), `section` (5), `shape` (23), `insert` (13), `chart` (3), `picture` (4), `media` (9), `arrange` (15), `text` (11), `format` (39), `design` (8), `view` (2), `master` (4), `transition` (5), `animation` (11), `table` (16), `comment` (5), `review` (2), `show` (4), `document` (1), `commands` (1)
 
 ## file
 
@@ -110,7 +110,7 @@ Groups: `file` (16), `window` (1), `edit` (11), `slide` (17), `section` (5), `sh
 - `insert.slideNumber` (Insert › Text): Slide Number {}
 - `insert.dateTime` (Insert › Text): Date & Time {format?: datetime1..}
 - `insert.symbol` (Insert › Symbols): Symbol {text: character(s)}
-- `insert.hyperlink` (Insert › Links): Link {url? | slide?: index, tooltip?, ids?} [Cmd+K]
+- `insert.hyperlink` (Insert › Links): Link {url? | slide?: index, tooltip?, text?: shown when nothing is selected, ids?} [Cmd+K]
 - `insert.smartArt` (Insert › Illustrations): SmartArt {kind: list|process|cycle|hierarchy|pyramid|matrix, items: [text]}
 - `insert.actionButton` (Insert › Illustrations): Action Buttons {kind: back|forward|beginning|end|home|information|return|movie|document|sound|help|custom, rect?}
 
@@ -137,6 +137,7 @@ Groups: `file` (16), `window` (1), `edit` (11), `slide` (17), `section` (5), `sh
 - `media.seek`: Seek {id?, ms}
 - `media.info`: Media Info {id?} → {id, name, contentType, bytes, durationMs, video, width, height, probe: {container, audio?, video?}, options, status?}
 - `media.posterFrame` (Video Format › Adjust): Poster Frame {id?, ms?: frame time (default: current position)}
+- `media.gifPlay`: Play/Pause GIF {id?, play?: bool (default: toggle)} → {id, playing}
 
 ## arrange
 
@@ -190,7 +191,8 @@ Groups: `file` (16), `window` (1), `edit` (11), `slide` (17), `section` (5), `sh
 - `format.clear` (Home › Font): Clear All Formatting {} [Cmd+Space]
 - `format.textShadow` (Home › Font): Text Shadow {on?: bool}
 - `format.textOutline` (Shape Format › WordArt Styles): Text Outline {color?, width?: pt} (no color = none)
-- `format.align` (Home › Paragraph): Align {align: left|center|right|justify|distributed}
+- `format.align` (Home › Paragraph): Align {align: left|center|right|justify|justifyLow|distributed}
+- `format.rtl` (Home › Paragraph): Right-to-Left Text Direction {on?: bool} (off = left-to-right; switching mirrors left/right alignment)
 - `format.alignLeft` (Home › Paragraph): Align Left {} [Cmd+L]
 - `format.alignCenter` (Home › Paragraph): Center {} [Cmd+E]
 - `format.alignRight` (Home › Paragraph): Align Right {} [Cmd+R]
@@ -251,6 +253,8 @@ Groups: `file` (16), `window` (1), `edit` (11), `slide` (17), `section` (5), `sh
 - `animation.timing` (Animations › Timing): Timing {index? (else selected shapes), start?: onClick|withPrevious|afterPrevious, duration?: ms, delay?: ms, repeat?: n, rewind?: bool, trigger?: shape id | null}
 - `animation.options` (Animations › Animation): Effect Options {option?, textBuild?: asOne|byParagraph|byWord|byLetter, index?}
 - `animation.clear`: Remove All Animations {index?: slide}
+- `animation.painter` (Animations › Advanced Animation): Animation Painter {sticky?: bool, id?} [Alt+Shift+C]
+- `animation.painterApply`: Apply Animation {ids?} [Alt+Shift+V]
 - `animation.list`: Animation Gallery {} → [{id, label, class, options}]
 - `animation.get`: Animations on Slide {slide?} → [animation]
 

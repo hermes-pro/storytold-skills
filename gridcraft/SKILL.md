@@ -1,7 +1,7 @@
 ---
 name: gridcraft
-description: "Spreadsheets with GridCraft (Excel-style): budgets, sales reports, financial models, data analysis, pivot tables, charts and dashboards. Enter data and formulas (SUM, XLOOKUP, SUMIFS, dynamic arrays), format numbers, sort, filter, and open / save XLSX, CSV, TSV, JSON, HTML or export PDF."
-version: 0.1.0
+description: "Spreadsheets with GridCraft (Excel-style): budgets, sales reports, financial models, data analysis, pivot tables, charts and dashboards. Enter data and formulas (SUM, XLOOKUP, SUMIFS, dynamic arrays), format numbers, sort, filter, Solver and forecasts, and open / save XLSX, XLS, ODS, CSV, TSV, JSON, HTML or export PDF."
+version: 0.2.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,16 +16,19 @@ metadata:
 GridCraft is a free, open-source clean-room take on Microsoft Excel (storytold Crafting Apps). An agent
 drives it through an MCP server (`gridcraft-cli mcp`) or one-shot CLI commands. XLSX is the native format,
 so formulas, styles, conditional formats, tables, charts, validation and PivotTables round-trip to Excel.
+This skill is tested against GridCraft 0.6.1.
 
 ## When to Use
 
 Use it for **tabular data and anything that calculates**:
 
 - budgets, invoices, price lists, timesheets, gradebooks, trackers
-- financial models: loans (`PMT`), NPV/IRR, what-if (`data.goalSeek`, scenarios, data tables)
+- financial models: loans (`PMT`), NPV/IRR, what-if (`data.goalSeek`, scenarios, data tables, `data.solver`)
 - analysing a CSV/XLSX: totals by group (`SUMIFS`, PivotTables), lookups, dedupe, sort, filter
+- statistics and forecasting: regression, descriptive stats, histograms (`data.analysisToolPak`),
+  `data.forecastSheet` (FORECAST.ETS with confidence bounds and a chart)
 - charts from table data (column, bar, line, pie, scatter, waterfall, …) and PDF reports of a sheet
-- converting between XLSX, CSV, TSV, JSON and HTML
+- converting between XLSX, CSV, TSV, JSON and HTML; importing old .xls, .xlsb and .ods files
 
 Pick a different Crafting App when:
 
@@ -46,7 +49,8 @@ Pick a different Crafting App when:
 
 Without a running desktop app the server is **headless** (in-process engine, no window). Everything works
 except `screenshot`. For the user to watch live, they run `gridcraft --control 7979` and the server is
-started as `gridcraft-cli mcp --connect 7979`.
+started as `gridcraft-cli mcp --connect 7979`. `gridcraft-cli mcp --in book.xlsx` (or `--sample budget`) starts
+with a workbook already open.
 
 ## Mental Model
 
@@ -54,7 +58,8 @@ started as `gridcraft-cli mcp --connect 7979`.
   Several workbooks can be open; `new_workbook` / `open_workbook` make the new one active.
 - **Input is parsed like typing**: `"=…"` is a formula, `"12%"`, `"$5"`, `"1/2/2024"` become numbers with a
   format, `"'0012"` forces text. Formulas recalculate automatically (dependency graph, dynamic arrays spill).
-- **Every action is a command** (313 of them: `home.*`, `data.*`, `insert.*`, `chart.*`, `pivot.*`, …). The
+  `I1#` refers to a whole spill range; `A1:.F1000` trims blank outer rows/columns (trim-range operator).
+- **Every action is a command** (339 of them: `home.*`, `data.*`, `insert.*`, `chart.*`, `pivot.*`, …). The
   dedicated tools cover the common flow; `execute_command {command, params}` runs anything else. Find ids with
   `list_commands {search}` or grep `references/commands.md`.
 - Commands without `range` act on the **selection** (`select`). Programmatic calls never open dialogs: a
@@ -75,10 +80,10 @@ started as `gridcraft-cli mcp --connect 7979`.
 | `insert_chart {range, type, title?, subtype?, at?}` | Chart from a block with headers; returns the chart id |
 | `create_table {range, name?, style?, header?}` | Excel table: banding, filter buttons, structured refs `Name[Column]` |
 | `sort_range {keys, range?, header?}` | `keys: [{"column":"G","order":"desc"}]` or `["B"]` |
-| `filter {column, values?\|custom?\|top?\|clear?, range?}` | AutoFilter one column (hides rows). Not on table ranges, see Pitfalls |
+| `filter {column, values?\|custom?\|top?\|clear?, range?}` | AutoFilter one column (hides rows). Fails on a fresh table range, see Pitfalls |
 | `select {range, active?}` | Set the selection; `"Sheet2!A1"` switches sheet |
-| `open_workbook` / `save_workbook` / `new_workbook {sample?}` | Files; samples `budget`, `sales`, `grades` |
-| `list_functions {search?, category?}` | The 501 worksheet functions with signatures |
+| `open_workbook` / `save_workbook` / `new_workbook {sample?}` | Files (see Formats); samples `budget`, `sales`, `grades` |
+| `list_functions {search?, category?}` | The 513 worksheet functions with signatures |
 | `list_commands` / `execute_command` | Everything else |
 | `undo` / `redo` | History |
 | `screenshot {path}` | Desktop app only (`--connect`) |
@@ -102,7 +107,13 @@ Resources: `gridcraft://workbook`, `gridcraft://commands`, `gridcraft://function
 - **Charts after insert:** `chart.set {chart, title, legend:"bottom", dataLabels:true, xTitle, yTitle}`,
   `chart.changeColors {chart, colors:["#1F4E78","#ED7D31"]}`, `chart.changeType`, `chart.move`.
 - **Sparklines:** `insert.sparkline {range:"B2:M2", location:"N2", type:"line"|"column"|"winLoss"}`.
+- **Trendline:** `chart.addElement {chart, element:"trendline", type:"linear", displayEquation:true}` (also
+  `exponential`, `linearForecast`, `movingAverage`, `logarithmic`, `power`, `polynomial`; `forward` periods).
 - **PivotTable:** `insert.pivotTable {source:"Orders", rows:["Region"], columns:["Product"], values:[{field:"Revenue", func:"sum"}]}`.
+  Then `pivot.calculatedField {name:"AvgPrice", formula:"=Revenue/Units"}` (works on the field sums) and
+  `insert.pivotChart {type:"column", title, at:"F3"}` (the pivot at the active cell, or `pivot:"PivotTable1"`).
+- **Slicer on a table:** `insert.slicer {table:"Orders", column:"Region", at:"I2"}` → `{slicer}`, then
+  `slicer.toggle {value:"East"}` filters the table, `slicer.clear` shows all. `SUBTOTAL(109, …)` sums only visible rows.
 
 ## Procedure
 
@@ -136,7 +147,8 @@ save_workbook {path:"/abs/sales.xlsx"}  ·  save_workbook {path:"/abs/sales.csv"
 execute_command {command:"file.exportPdf", params:{path:"/abs/sales.pdf", fitToPage:true}}
 ```
 
-The PDF contains the table, the colour scale and the chart on one page.
+The PDF contains the table, the colour scale and the chart on one page. The CSV holds the displayed text
+(`"$12,000.00"`), see Formats.
 
 ### Recipe: analyse a CSV (tested)
 
@@ -148,6 +160,7 @@ execute_command {command:"edit.fillDown", params:{range:"G2:G41"}}
 create_table {range:"A1:G41", name:"Orders"}
 evaluate_formula {formula:"=SUMIFS(Orders[Revenue],Orders[Region],\"North\")"}
 set_cell {cell:"I1", input:"=SORT(UNIQUE(Orders[Rep]))"}  → spills I1:I4
+set_cell {cell:"J1", input:"=COUNTA(I1#)"}                → 4 (I1# = the whole spill)
 sort_range {range:"A1:G41", keys:[{column:"G", order:"desc"}], header:true}
 execute_command {command:"insert.pivotTable", params:{source:"Orders", rows:["Region"],
                  columns:["Product"], values:[{field:"Revenue", func:"sum"}]}}   → new sheet, report at A3
@@ -155,13 +168,46 @@ save_workbook {path:"/abs/orders.xlsx"}
 ```
 
 Other tested formulas: `VLOOKUP`, `XLOOKUP`, `IF`, `LET`, `FILTER`, `TEXT(DATE(…),"yyyy-mm-dd")`, `PMT`,
-cross-sheet `=Data!A2*10`, named ranges. Grep `references/functions.md` before using a rarer function.
+cross-sheet `=Data!A2*10`, named ranges, `SUBTOTAL(109,…)` (skips filtered rows), `ROWS(A1:.F1000)`.
+Grep `references/functions.md` before using a rarer function.
+
+### Recipe: optimise with Solver, then what-if (tested)
+
+```text
+write_range {range:"A1", values:[["Product","Qty","Profit/unit","Hours/unit","Material/unit"],
+  ["Chairs",0,45,2,3],["Tables",0,80,5,2],["Desks",0,110,6,5],
+  ["Profit","=SUMPRODUCT(B2:B4,C2:C4)"],["Hours","=SUMPRODUCT(B2:B4,D2:D4)",null,"Limit",400],
+  ["Material","=SUMPRODUCT(B2:B4,E2:E4)",null,"Limit",300]]}
+execute_command {command:"data.solver", params:{objective:"B5", goal:"max", variables:"B2:B4",
+                 constraints:["B6 <= E6","B7 <= E7","B2:B4 int"], method:"simplex"}}
+  → {status:"optimal", objective:7220, values:{B2:62, B3:54, B4:1}}   (writes the values into B2:B4)
+execute_command {command:"data.goalSeek", params:{set:"B5", to:10000, changing:"B2"}}  → {value, converged}
+```
+
+`method:"grg"` (default) handles nonlinear models; `keep:false` restores the original values. The model is
+saved as hidden `solver_*` names. Scenarios: `data.scenarioAdd`, `data.scenarioSummary`; tables: `data.dataTable`.
+
+### Recipe: forecast and regression (tested)
+
+```text
+write_range {range:"A1", values:[["Month","Sales","Ads"],["2025-01-01",120,10], …12 months…]}
+execute_command {command:"data.analysisToolPak", params:{tool:"regression", inputY:"B1:B13",
+                 inputX:"C1:C13", labels:true, output:"E1"}}     → SUMMARY OUTPUT at E1:M18 (static values)
+execute_command {command:"data.forecastSheet", params:{range:"A1:B13", periods:6}}
+  → {sheet, table, chart}: a new sheet before the current one with Forecast / Lower / Upper Confidence Bound
+    columns (FORECAST.ETS formulas) and a line chart
+```
+
+The forecast columns come unformatted (`232.3090909`); apply `numberFormat:"0.0"`. Other ToolPak tools:
+`descriptive`, `correlation`, `histogram`, `movingAverage`, `exponentialSmoothing`, t-tests, `fTest`, `anovaSingle`.
 
 ## Formats
 
-- **Open:** .xlsx .xlsm .csv .tsv .txt .json
-- **Save** (`save_workbook`, by extension): .xlsx (default, everything round-trips), .csv / .tsv (**active sheet
-  only**, computed values), .json, .html. `file.exportCsv {path, sheet}` picks the sheet.
+- **Open:** .xlsx .xlsm .csv .tsv .txt .json; .xls (values, formulas, number formats); .xlsb and .ods (data and
+  cached formula values only, check `warnings` in the result). `file.open {path, password}` opens an encrypted file.
+- **Save** (`save_workbook`, by extension): .xlsx (default, everything round-trips, unknown parts are kept),
+  .csv / .tsv (**active sheet only**, the **displayed text**: `"$12,000.00"`, `2026-01-05`), .json, .html, .pdf
+  (active sheet, no fit-to-page). `file.exportCsv {path, sheet}` picks the sheet.
 - **PDF:** `file.exportPdf {path, sheets?: "active"|"all", range?, fitToPage?}` → `{pages, bytes, path}`; it honours
   Page Setup (`pageLayout.orientation`, `pageLayout.scaleToFit`, `pageLayout.printArea`, `pageLayout.printTitles`).
 
@@ -174,47 +220,68 @@ gridcraft-cli cat book.xlsx [--range A1:F20] [--sheet S] [--formulas] [--csv]
 gridcraft-cli convert book.xlsx data.csv [--sheet Sales]      # xlsx/csv/tsv/json/html by extension
 gridcraft-cli run [--in FILE | --sample budget] --cmd 'home.bold={"range":"A1:D1"}' \
                   [--script steps.jsonl] --out book.xlsx --print A1:F5 [--formulas]
+gridcraft-cli check book.xlsx [--json]                         # recalc vs cached values + XLSX round trip
 gridcraft-cli commands --search chart  ·  gridcraft-cli functions --search lookup
 ```
 
+`check` recalculates every formula against the values Excel cached and re-saves the file; exit 1 on any
+difference. Use it on an Excel file before trusting GridCraft's numbers for it.
+
 A `--script` file has one command per line, `id {json}`, `id={json}` or `{"command":…, "params":…}`; `#` lines
-are comments. The first failing step stops the run with a non-zero exit. Tested: a 13-step budget script
-(values, number format code, validation, sparkline, named range, merge, bar chart, `chart.set`, PDF).
+are comments. The first failing step stops the run with exit 1 (`step 2 (steps.jsonl:2, bogus.cmd): unknown
+command \`bogus.cmd\``). Tested on 0.6.1: a 13-step budget script (values, number format code, validation, two
+sparklines, named range, merge, bar chart, `chart.set`, PDF), then `info`, `cat --formulas`, `eval --in`,
+`convert` to CSV and `check`.
 
 ## Pitfalls
 
 - **Use absolute paths** for `open_workbook`, `save_workbook` and `file.exportPdf`: the server's cwd isn't yours.
-- **`filter` fails on a table** (`create_table` range) with `filter: no filter`. Filter before making it a
-  table, run `table.convertToRange` first, or use a `=FILTER(...)` formula instead.
-- **Spill references `A1#` are not supported**: `There's a problem with this formula: unknown error literal`.
-  Reference the spill range explicitly (`I1:I4`, see `get_cell` → `spill`) or nest the formulas.
+- **`filter` fails on a table** (`create_table` range) with `filter: no filter` (`data.filterBy` too, with or
+  without `range`, even after `data.filter`). Any of these works: filter first and then `create_table` (the
+  AutoFilter stays and `filter` keeps working), `table.convertToRange` first, a slicer (`insert.slicer` +
+  `slicer.toggle`), or a `=FILTER(...)` formula.
+- **A failed `filter` still adds a "Filter Column" undo step.** The next `undo` removes that empty step, not
+  your last real change. Check `inspect_workbook` → `undo` before undoing.
 - **`list_functions {category}` needs the internal names** (`MathTrig`, `Lookup`, `Statistical`, `Text`,
   `DateTime`, …). The schema's example `"Math & Trig"` returns `[]`. Usually just use `search`.
-- **CSV dates arrive as serial numbers** (`46170`) with no format. Apply `numberFormat:"yyyy-mm-dd"` to the column.
-- **The pivot sheet becomes active** (inserted before the current sheet, report at A3), and so does a new
-  sheet from `home.insertSheet`. Later unqualified ranges then hit that sheet; use `Sheet!A1` or `sheet.activate`.
+- **CSV dates become date serials** (`read_range` gives `46027`, `formatted:true` gives `2026-01-05`). Compare
+  them with `DATE(…)` in formulas, not with text.
+- **CSV / TSV export writes displayed text**, not raw numbers: a `Currency` cell becomes `"$12,000.00"`
+  (`convert` and `cat --csv` too). For machine-readable numbers, set `numberFormat:"General"` on the range,
+  export, then `undo`. The .json save is GridCraft's internal model, not a table.
+- **The pivot sheet becomes active** (inserted before the current sheet, report at A3), and so does the sheet
+  from `data.forecastSheet`, `data.analysisToolPak` without `output`, or `home.insertSheet`. Later
+  unqualified ranges then hit that sheet; use `Sheet!A1` or `sheet.activate`.
 - **CSV / TSV save only the active sheet.** Activate the right one or use `file.exportCsv {sheet}`.
-- **A typo'd function doesn't error**: `set_cell` stores it and the value is `#NAME?`. Read values back.
+- **A typo'd function doesn't error**: `set_cell` stores `=SUMM(1,2)` and the value is `#NAME?`. Read values back.
+  A wrong argument count is refused on entry: `ROUND has too few arguments. Use ROUND(number, num_digits)`.
 - **Bar charts are horizontal**: `chart.set {yTitle}` labels the vertical (category) axis there.
-- **`file.exportPdf` without `fitToPage: true` splits a wide sheet across pages** and can cut a chart in half.
+- **`file.exportPdf` without `fitToPage: true` splits a wide sheet across pages** (the chart beside the table
+  lands on page 2). `save_workbook {path:"x.pdf"}` has no fit option, so use `file.exportPdf` for reports.
 - **Autofit after styling**: a bigger font (`home.cellStyle "Heading 1"`) clips headers until `home.autofitColumnWidth`.
 - Icon-set conditional formats (`type:"iconSet"`) are stored but don't show in the PDF export; data bars, colour
-  scales and fills do.
+  scales and fills do. Slicers don't print either.
+- **`insert.pivotChart` charts every value field** as a series, so `Sum of Units` next to `Sum of Revenue` is a
+  flat line. Give the pivot one value field (or two of the same scale) before charting it.
 - `filter` only hides rows; `read_range` still returns hidden rows.
 - Unknown ids give `unknown command \`x\``; missing params give e.g.
   `invalid parameters for \`home.numberFormat\`: missing \`format\` or \`code\``. Check with `list_commands {search}`.
-- `screenshot` in headless mode errors (`no UI in headless mode`). Export a PDF to look at the sheet instead.
+- `screenshot` in headless mode errors (`screenshot: no UI in headless mode: start the app with \`gridcraft
+  --control 7979\` …`). Export a PDF to look at the sheet instead.
 
 ## Verification
 
 - `read_range` (values) and `read_range {formatted:true}` (what a reader sees) match the intent; no `{"error":…}`.
 - `inspect_workbook` shows the expected sheets, tables, charts, conditional formats, freeze and names.
 - To **look** at layout, charts and colours: `file.exportPdf`, render the page to PNG (e.g.
-  `vectorcraft-cli convert out.pdf page.png --artboard 0`) and check the image.
-- `gridcraft-cli info out.xlsx` and `gridcraft-cli cat out.xlsx --formulas` confirm the saved file reopens.
+  `pdftoppm -r 90 -png out.pdf page` or `vectorcraft-cli convert out.pdf page.png --artboard 0`) and check the image.
+- `gridcraft-cli info out.xlsx` and `gridcraft-cli cat out.xlsx --formulas` confirm the saved file reopens;
+  `gridcraft-cli check out.xlsx` confirms formulas and round trip.
 
 ## References
 
-- `references/commands.md`: all 313 commands with params, grouped by area. Grep it rather than reading it whole.
-- `references/functions.md`: all 501 worksheet functions with signatures, grouped by category. Grep it.
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 339 commands with params, grouped by area. Grep it
+  (`grep -n "data.solver" …`) rather than reading it whole.
+- `${HERMES_SKILL_DIR}/references/functions.md`: all 513 worksheet functions with signatures, grouped by
+  category. Grep it.
 - Upstream docs: https://github.com/storytold/gridcraft/tree/main/docs (`mcp.md`, `cli.md`, `control-protocol.md`).

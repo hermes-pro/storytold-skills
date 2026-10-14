@@ -1,7 +1,7 @@
 # LightCraft develop controls
 
-Generated from `lightcraft-cli controls --json` (LightCraft 0.4.0, 114 sliders). Set them with
-`set_develop {values: {"<id>": number}}` (or `run_command develop.set`). Format: `id` Label: min..max (default).
+Generated from `lightcraft-cli controls --json` (LightCraft 0.7.1, 122 sliders). Set them with
+`set_develop {values: {"<id>": number}}` (or `command_run develop.set`). Format: `id` Label: min..max (default).
 
 ## profile
 
@@ -22,6 +22,13 @@ Generated from `lightcraft-cli controls --json` (LightCraft 0.4.0, 114 sliders).
 - `light.shadows` Shadows: -100..100 (0)
 - `light.whites` Whites: -100..100 (0)
 - `light.blacks` Blacks: -100..100 (0)
+- `hdr.maxEv` HDR Headroom: 0..5 (3)
+- `hdr.sdrBrightness` SDR Brightness: -100..100 (0)
+- `hdr.sdrContrast` SDR Contrast: -100..100 (0)
+- `hdr.sdrHighlights` SDR Highlights: -100..100 (0)
+- `hdr.sdrShadows` SDR Shadows: -100..100 (0)
+- `hdr.sdrWhites` SDR Whites: -100..100 (0)
+- `hdr.sdrClarity` SDR Clarity: -100..100 (0)
 
 ## curve
 
@@ -111,6 +118,7 @@ Generated from `lightcraft-cli controls --json` (LightCraft 0.4.0, 114 sliders).
 
 ## detail
 
+- `enhance.denoise` Amount: 0..100 (0)
 - `detail.sharpenAmount` Sharpening: 0..150 (0)
 - `detail.sharpenRadius` Radius: 0.5..3 (1)
 - `detail.sharpenDetail` Detail: 0..100 (25)

@@ -1,6 +1,6 @@
 # GridCraft command catalog
 
-Generated from `gridcraft-cli commands --json` (GridCraft 0.3.0, 313 commands). Run any of them with
+Generated from `gridcraft-cli commands --json` (GridCraft 0.6.1, 339 commands). Run any of them with
 `execute_command {command, params}` (MCP) or `gridcraft-cli run --cmd 'id={json}'`. Check one live with
 `list_commands {search}`. `?` = optional, `a|b` = choices, `→ {...}` = what it returns. Most commands act on the
 selection when `range` is omitted.
@@ -8,14 +8,15 @@ selection when `range` is omitted.
 ## file
 
 - `file.new` — New Workbook (File) [Cmd+N]: {sample?: "budget"\|"sales"\|"grades"}
-- `file.open` — Open… (File) [Cmd+O]: {path} \| {name, base64} (xlsx, xlsm, csv, tsv, txt, json)
-- `file.save` — Save (File) [Cmd+S]: {path?} (xlsx by default; .csv/.tsv/.json/.html by extension)
-- `file.saveAs` — Save As… (File) [Cmd+Shift+S]: {path}
+- `file.open` — Open… (File) [Cmd+O]: {path} \| {name, base64}, plus {password} for a password-protected workbook (xlsx, xlsm, xls import, xlsb and ods data import, csv, tsv, txt, json)
+- `file.save` — Save (File) [Cmd+S]: {path?} (xlsx by default; .csv/.tsv/.json/.html/.pdf by extension)
+- `file.saveAs` — Save As… (File) [Cmd+Shift+S]: {path} (.xlsx, .csv, .tsv, .json, .html, or .pdf: a PDF of the active sheet)
 - `file.saveBytes` — Encode Workbook: {format?: xlsx\|csv\|tsv\|json\|html} → {base64}
 - `file.close` — Close (File) [Cmd+W]: {force?: bool}
 - `file.exportCsv` — Export as CSV (File › Export): {path, sheet?}
 - `file.exportHtml` — Save as Web Page (File › Export): {path}
 - `file.properties` — Properties (File): {title?, subject?, author?, company?, keywords?, description?}
+- `file.options` — Options (File): {} → {calculation: {mode, iterative, maxIterations, maxChange}} for the active workbook (the interface opens File › Options; change settings with their own commands, e.g. formulas.calculationOptions, view.theme, app.language.set)
 - `file.exportPdf` — Export as PDF (File › Export): {path?, sheets?: active\|all, range?: "A1:F40" (active sheet), fitToPage?: bool} → {pages, bytes, path} or {pages, bytes, base64} when no path. Honours each sheet's Page Setup.
 - `file.print` — Print… (File) [Cmd+P]: {path?, sheets?: active\|all, range?, fitToPage?: bool} → {pages, bytes, base64} — the PDF the UI hands to the system print dialog
 - `file.printPreview` — Print Preview (File): {page? (1-based), sheets?: active\|all, range?, fitToPage?} → {pages, pageList: [{page, sheet, range, rows, columns, scale, paper, orientation, width, height}]}
@@ -52,9 +53,9 @@ selection when `range` is omitted.
 - `edit.goToSpecial` — Go To Special… (Home › Editing › Find & Select): {kind: blanks\|constants\|formulas\|comments\|lastCell\|currentRegion\|visible\|conditionalFormats\|dataValidation\|errors\|numbers\|text}
 - `edit.undo` — Undo (Edit) [Cmd+Z]: {steps?: 1}
 - `edit.redo` — Redo (Edit) [Cmd+Y]: {steps?: 1}
-- `edit.copy` — Copy (Home › Clipboard) [Cmd+C]: {range?}
-- `edit.cut` — Cut (Home › Clipboard) [Cmd+X]: {range?}
-- `edit.paste` — Paste (Home › Clipboard) [Cmd+V]: {at?: "C3", text?: "tab-separated text from the system clipboard"}
+- `edit.copy` — Copy (Home › Clipboard) [Cmd+C]: {range?, html?: bool} → {range, text, html?} (html: a styled HTML table, only when requested and small enough)
+- `edit.cut` — Cut (Home › Clipboard) [Cmd+X]: {range?, html?: bool} → {range, text, html?} (html: a styled HTML table, only when requested and small enough)
+- `edit.paste` — Paste (Home › Clipboard) [Cmd+V]: {at?: "C3", text?: "tab-separated text from the system clipboard", html?: "the clipboard's HTML flavour; cells the source recorded as numbers (x:num, sdval) stay numbers"}
 - `edit.pasteSpecial` — Paste Special… (Home › Clipboard) [Ctrl+Cmd+V]: {what: all\|formulas\|values\|formats\|comments\|validation\|allExceptBorders\|columnWidths\|formulasAndNumberFormats\|valuesAndNumberFormats, operation?: none\|add\|subtract\|multiply\|divide, skipBlanks?, transpose?, link?}
 - `edit.clearClipboard` — Cancel Copy [Escape]: {}
 - `edit.clearAll` — Clear All (Home › Editing › Clear): {range?}
@@ -66,9 +67,9 @@ selection when `range` is omitted.
 - `edit.fillRight` — Fill Right (Home › Editing › Fill) [Cmd+R]: {range?}
 - `edit.fillUp` — Fill Up (Home › Editing › Fill): {range?}
 - `edit.fillLeft` — Fill Left (Home › Editing › Fill): {range?}
-- `edit.autoFill` — AutoFill: {source: "A1:A2", target: "A1:A10", mode?: series\|copy\|formats\|values}: the fill-handle drag
+- `edit.autoFill` — AutoFill: {source: "A1:A2", target: "A1:A10", mode?: series\|alternate\|copy\|formats\|values}: the fill-handle drag (alternate = Ctrl+drag: a lone number counts up, any other series copies)
 - `edit.fillSeries` — Series… (Home › Editing › Fill): {range?, direction?: columns\|rows, type?: linear\|growth\|date\|autofill, step?: 1, stop?, dateUnit?: day\|weekday\|month\|year}
-- `edit.flashFill` — Flash Fill (Home › Editing › Fill) [Cmd+E]: {range?}
+- `edit.flashFill` — Flash Fill (Home › Editing › Fill) [Ctrl+E]: {range?}
 - `edit.find` — Find… (Home › Editing › Find & Select) [Cmd+F]: {what, matchCase?, wholeCell?, lookIn?: formulas\|values, byColumns?, all?: bool, within?: sheet\|workbook}
 - `edit.replace` — Replace… (Home › Editing › Find & Select) [Ctrl+H]: {what, with, matchCase?, wholeCell?, all?: true, within?: sheet\|workbook}
 - `edit.formatPainter` — Format Painter (Home › Clipboard): {sticky?: bool} — first call picks up the selection's formats; with {apply: "C3:D4"} pastes them
@@ -93,7 +94,7 @@ selection when `range` is omitted.
 - `home.formatCells` — Format Cells… (Home › Cells › Format) [Cmd+1]: {range?, style: {font?, fill?, borders?, align?, numFmt?, protection?}} (partial Style JSON merged in)
 - `home.alignLeft` — Align Left (Home › Alignment) [Cmd+L]: {range?}
 - `home.alignCenter` — Center (Home › Alignment) [Cmd+E]: {range?}
-- `home.alignRight` — Align Right (Home › Alignment) [Cmd+R]: {range?}
+- `home.alignRight` — Align Right (Home › Alignment): {range?}
 - `home.justify` — Justify (Home › Alignment): {range?}
 - `home.alignTop` — Top Align (Home › Alignment): {range?}
 - `home.alignMiddle` — Middle Align (Home › Alignment): {range?}
@@ -114,8 +115,8 @@ selection when `range` is omitted.
 - `home.increaseDecimal` — Increase Decimal (Home › Number): {range?}
 - `home.decreaseDecimal` — Decrease Decimal (Home › Number): {range?}
 - `home.cellStyle` — Cell Styles (Home › Styles): {range?, name: "Good"\|"Bad"\|"Neutral"\|"Heading 1"\|"Title"\|"Total"\|"Accent1"…\|"Normal"}
-- `home.rowHeight` — Row Height… (Home › Cells › Format): {rows?: "2:5", height: 20 (points on screen)}
-- `home.columnWidth` — Column Width… (Home › Cells › Format): {cols?: "B:D", width: 64 (points) \| chars: 8.43}
+- `home.rowHeight` — Row Height… (Home › Cells › Format): {rows?: "2:5" \| "2:2,4:5", height: 20 (points on screen)}
+- `home.columnWidth` — Column Width… (Home › Cells › Format): {cols?: "B:D" \| "B:B,D:F", width: 64 (points) \| chars: 8.43}
 - `home.autofitRowHeight` — AutoFit Row Height (Home › Cells › Format): {rows?}
 - `home.autofitColumnWidth` — AutoFit Column Width (Home › Cells › Format): {cols?}
 - `home.defaultWidth` — Default Width… (Home › Cells › Format): {width: 64}
@@ -129,6 +130,7 @@ selection when `range` is omitted.
 - `home.deleteRows` — Delete Sheet Rows (Home › Cells › Delete) [Cmd+-]: {rows?}
 - `home.deleteColumns` — Delete Sheet Columns (Home › Cells › Delete): {cols?}
 - `home.insertCells` — Insert Cells… (Home › Cells › Insert): {range?, shift: right\|down\|row\|column}
+- `home.insertCopiedCells` — Insert Copied Cells (Home › Cells › Insert): {at?: "B3", shift?: down\|right}: inserts the copied cells at `at` (the active cell) and pastes them there. Whole copied rows or columns insert whole rows or columns; other blocks shift the cells at `at` down (default) or right. A cut of whole rows or columns moves them (Insert Cut Cells)
 - `home.deleteCells` — Delete Cells… (Home › Cells › Delete): {range?, shift: left\|up\|row\|column}
 - `home.insertSheet` — Insert Sheet (Home › Cells › Insert) [Shift+F11]: {name?, before?: index}
 - `home.deleteSheet` — Delete Sheet (Home › Cells › Delete): {sheet?}
@@ -142,6 +144,7 @@ selection when `range` is omitted.
 
 ## sheet
 
+- `sheet.moveColumns` — Move Columns: {cols?: "B:C", before: zero-based column index}
 - `sheet.rename` — Rename Sheet (Home › Cells › Format): {sheet?, name}
 - `sheet.move` — Move or Copy Sheet… (Home › Cells › Format): {sheet?, to: index, copy?: bool}
 - `sheet.tabColor` — Tab Color (Home › Cells › Format): {sheet?, color: "#FF0000"\|"none"}
@@ -156,17 +159,20 @@ selection when `range` is omitted.
 
 - `insert.table` — Table (Insert › Tables) [Cmd+T]: {range?, header?: true, style?: "TableStyleMedium2", name?}
 - `insert.chart` — Insert Chart (Insert › Charts): {range?, type?: column\|bar\|line\|pie\|doughnut\|area\|scatter\|bubble\|radar\|combo\|histogram\|waterfall\|funnel\|treemap\|sunburst\|boxWhisker\|stock, subtype?: clustered\|stacked\|stacked100\|markers, title?, at?: "H2", width?, height?}
-- `insert.recommendedCharts` — Recommended Charts (Insert › Charts): {range?}
+- `insert.recommendedCharts` — Recommended Charts (Insert › Charts): {range?, type?, subtype?} (no type: the first of insert.chartRecommendations; the ribbon button opens the dialog)
+- `insert.chartRecommendations` — Chart Recommendations: {range?} → [{type, subtype, label}] chart types that suit the data's shape, best first
 - `insert.sparkline` — Sparklines (Insert › Sparklines): {range: "B2:M2", location: "N2", type?: line\|column\|winLoss, markers?}
-- `insert.picture` — Picture (Insert › Illustrations): {path? \| base64?: "...", mime?, at?: "B2", width?, height?, alt?}
+- `insert.picture` — Picture (Insert › Illustrations): {path? \| base64?: "...", mime?, at?: "B2", width?, height?, alt?, mode?: moveOnly\|moveAndSize\|absolute, placement?: cell\|overCells}
 - `insert.shape` — Shapes (Insert › Illustrations): {kind: rectangle\|roundedRectangle\|ellipse\|triangle\|line\|arrow\|textBox, at?, width?, height?, text?, fill?, line?}
 - `insert.icons` — Icons (Insert › Illustrations): {name: chart\|table\|sum\|filter\|lock\|comment\|picture\|book\|folder\|search\|calc\|check\|… , at?, size?: 48, color?: hex}
 - `insert.textBox` — Text Box (Insert › Text): {at?, width?, height?, text?}
 - `insert.link` — Link (Insert › Links) [Cmd+K]: {cell?, target: "https://…" \| "Sheet2!A1" \| "mailto:…", text?, tooltip?, remove?: bool}
 - `insert.symbol` — Symbol (Insert › Symbols): {char: "€"} (inserted at the end of the active cell's text)
-- `insert.checkbox` — Checkbox (Insert › Cell Controls): {range?} (cells hold TRUE/FALSE and draw as checkboxes; Space toggles)
+- `insert.checkbox` — Checkbox (Insert › Cell Controls): {range?} (TRUE/FALSE and empty cells draw as checkboxes, empty ones become FALSE, other values show as they are; click or Space toggles; Delete unchecks, then removes; Clear Formats removes and keeps the values)
 - `insert.pivotTable` — PivotTable (Insert › Tables): {source?: "Sheet1!$A$1:$E$200" \| table name (default: the table or current region of the selection), destination?: "new" (default: new sheet before the current one, report at A3) \| "Sheet1!H3", name?, rows?: [field \| {field, group?: years\|quarters\|months\|days}], columns?: [..], values?: [field \| {field, func?, name?}], filters?: [field], replace?: bool} → {id, name, sheet, anchor, fields}
 - `insert.recommendedPivotTables` — Recommended PivotTables (Insert › Tables): {source?, apply?: index, destination?} → suggestions [{index, title, rows, columns, values}]; with apply, creates that one
+- `insert.pivotChart` — PivotChart (Insert › Charts): {pivot?: name \| id \| a cell of the report ("Sheet2!B5"; default: the PivotTable at the active cell), type?: column\|bar\|line\|pie\|area\|… (default column), subtype?, title?, at?: "H2", width?, height?} adds a chart bound to the PivotTable's report: categories are the innermost row items, series the column items × value fields; it follows refreshes and layout changes → {chart, pivot, series}
+- `insert.slicer` — Slicer (Insert › Filters): {table?, column?: "Region", columns?: 1, at?: "H2", width?, height?}
 
 ## table
 
@@ -183,40 +189,52 @@ selection when `range` is omitted.
 - `table.resize` — Resize Table (Table Design › Properties): {table?, range: "A1:F20"}
 - `table.removeDuplicates` — Remove Duplicates (Table Design › Tools): {table?, columns?}
 - `table.summarizePivot` — Summarize with PivotTable (Table Design › Tools): {table?, destination?} creates a PivotTable from the table
+- `table.insertSlicer` — Insert Slicer (Table › Tools): {table?, column?: "Region", columns?: 1, at?, width?, height?}
 
 ## chart
 
 - `chart.set` — Chart Properties (Chart Design): {chart?: id, type?, title?, legend?: none\|bottom\|top\|left\|right, dataLabels?, gridlines?, style?, xTitle?, yTitle?, at?, width?, height?, dx?, dy?}
 - `chart.switchRowColumn` — Switch Row/Column (Chart Design › Data): {chart?}
 - `chart.delete` — Delete Chart: {chart?}
-- `chart.addElement` — Add Chart Element (Chart Design › Chart Layouts): {chart?, element: title\|legend\|dataLabels\|gridlines\|axisTitles, on?: bool, position?: bottom\|top\|left\|right}
+- `chart.addElement` — Add Chart Element (Chart Design › Chart Layouts): {chart?, element: title\|legend\|dataLabels\|gridlines\|axisTitles\|smooth\|trendline, on?: bool, position?: bottom\|top\|left\|right; trendline: series?: index (default all), type?: linear\|exponential\|linearForecast\|movingAverage\|logarithmic\|power\|polynomial, order?: 2..6, period?: 2..255, forward?, backward?, displayEquation?, displayRSquared?}
 - `chart.quickLayout` — Quick Layout (Chart Design › Chart Layouts): {chart?, layout: 1..6}
 - `chart.changeColors` — Change Colors (Chart Design › Chart Styles): {chart?, palette: colorful\|monochrome\|accent1..accent6 \| colors: [hex…]}
-- `chart.selectData` — Select Data… (Chart Design › Data): {chart?, range: "Sheet1!A1:D7", byRows?: bool}
+- `chart.selectData` — Select Data… (Chart Design › Data): {chart?, range?: "Sheet1!A1:D7", byRows?: bool, categories?: "Sheet1!A2:A7" (Horizontal (Category) Axis Labels for every series; "" clears), removeSeries?: [index…]}
 - `chart.changeType` — Change Chart Type… (Chart Design › Type): {chart?, type, subtype?}
 - `chart.move` — Move Chart… (Chart Design › Location): {chart?, sheet?: name (moves to that sheet), at?: "B2"}
 - `chart.formatSelection` — Format Selection (Format › Current Selection): {chart?, series?: index, color?: hex}
 - `chart.shapeFill` — Shape Fill (Format › Shape Styles): {chart? \| kind: shape, id?, series?, color: hex}
 - `chart.shapeOutline` — Shape Outline (Format › Shape Styles): {kind: shape, id?, color: hex}
 
+## shape
+
+- `shape.setText` — Edit Text Box: {id: textBox id, text: string}
+
 ## object
 
 - `object.delete` — Delete Object: {kind: chart\|image\|shape, id}
 - `object.move` — Move Object: {kind: chart\|image\|shape, id, at?: "C3", dx?, dy?, width?, height?}
+- `object.setAnchorMode` — Object Properties: {kind: chart\|image\|shape, id, mode: moveAndSize\|moveOnly\|absolute}
 
 ## review
 
-- `review.newNote` — New Note (Review › Notes): {cell?, text, author?}
-- `review.newComment` — New Comment (Review › Comments): {cell?, text, author?}
+- `review.newNote` — New Note (Review › Notes) [Shift+F2]: {cell?, text, author?}
+- `review.newComment` — New Comment (Review › Comments) [Cmd+Shift+F2]: {cell?, text, author?}
 - `review.replyComment` — Reply: {cell?, text, author?}
 - `review.resolveComment` — Resolve Thread: {cell?, resolved?: true}
 - `review.deleteComment` — Delete Comment (Review › Comments): {cell?}
 - `review.showNote` — Show/Hide Note (Review › Notes): {cell?}
 - `review.protectSheet` — Protect Sheet… (Review › Protect): {password?, formatCells?, formatColumns?, formatRows?, insertRows?, insertColumns?, deleteRows?, deleteColumns?, sort?, autofilter?}
 - `review.unprotectSheet` — Unprotect Sheet (Review › Protect): {password?}
-- `review.protectWorkbook` — Protect Workbook (Review › Protect): {on?: bool}
+- `review.protectWorkbook` — Protect Workbook (Review › Protect): {on?: bool (default: toggle), password?} (structure protection; unprotecting needs the password when one was set)
 - `review.workbookStatistics` — Workbook Statistics (Review › Proofing): {}
+- `review.allowEditRanges` — Allow Edit Ranges… (Review › Protect): {action?: list (default) \| add \| modify \| delete \| unlock, title?, range?, password?, newTitle?, sheet?} → ranges
 - `review.checkAccessibility` — Check Accessibility (Review › Accessibility): {} → issues
+- `review.previousComment` — Previous Comment (Review › Comments): {} → {sheet, cell}
+- `review.nextComment` — Next Comment (Review › Comments): {} → {sheet, cell}
+- `review.showComments` — Show Comments (Review › Comments): {on?: bool} (toggles the Comments pane)
+- `review.showAllNotes` — Show All Notes (Review › Notes): {on?: bool}
+- `review.convertToComments` — Convert to Comments (Review › Notes): {} (every note in the workbook) → {converted}
 - `review.spelling` — Spelling (Review › Proofing) [F7]: {range?, sheet?} → misspelled words with cells and suggestions
 - `review.addToDictionary` — Add to Dictionary: {word}
 - `review.changeSpelling` — Change: {cell, word, to, all?: bool}
@@ -227,7 +245,7 @@ selection when `range` is omitted.
 - `data.sortAscending` — Sort A to Z (Data › Sort & Filter): {range?, column?: "B"}
 - `data.sortDescending` — Sort Z to A (Data › Sort & Filter): {range?, column?}
 - `data.sort` — Sort… (Data › Sort & Filter): {range?, header?: bool, keys: [{column: "B", order: asc\|desc, by?: values\|cellColor\|fontColor, customList?: [..]}], orientation?: rows\|columns, matchCase?}
-- `data.filter` — Filter (Data › Sort & Filter) [Cmd+Shift+F]: {range?} toggles AutoFilter on the current region
+- `data.filter` — Filter (Data › Sort & Filter) [Ctrl+Shift+L]: {range?} toggles AutoFilter on the current region
 - `data.filterBy` — Filter Column: {column: "B" (or 0-based offset), values?: [..], blanks?: bool, custom?: {op: ">", value: "10", op2?, value2?, and?}, top?: {count, bottom?, percent?}, aboveAverage?: bool, clear?: bool}
 - `data.clearFilter` — Clear (Data › Sort & Filter): {}
 - `data.reapply` — Reapply (Data › Sort & Filter): {}
@@ -236,16 +254,18 @@ selection when `range` is omitted.
 - `data.validation` — Data Validation… (Data › Data Tools): {range?, type: any\|whole\|decimal\|list\|date\|time\|textLength\|custom, operator?: between\|notBetween\|equal\|notEqual\|greater\|less\|greaterOrEqual\|lessOrEqual, formula1, formula2?, ignoreBlank?, dropdown?, inputTitle?, inputMessage?, errorStyle?: stop\|warning\|information, errorTitle?, errorMessage?, clear?: bool}
 - `data.validate` — Check Value Against Validation: {cell?, input} → {ok, message?}
 - `data.circleInvalid` — Circle Invalid Data (Data › Data Tools › Data Validation): {} → invalid cells
-- `data.group` — Group (Data › Outline) [Cmd+Shift+K]: {rows?: "2:5" \| cols?: "B:C"}
-- `data.ungroup` — Ungroup (Data › Outline) [Cmd+Shift+J]: {rows? \| cols?}
-- `data.hideDetail` — Hide Detail (Data › Outline): {rows? \| cols?}
-- `data.showDetail` — Show Detail (Data › Outline): {rows? \| cols?}
+- `data.group` — Group (Data › Outline) [Alt+Shift+Right]: {rows?: "2:5" \| cols?: "B:C" \| by?: rows\|cols (the selection's rows or columns; a block of cells groups rows by default)}
+- `data.ungroup` — Ungroup (Data › Outline) [Alt+Shift+Left]: {rows? \| cols? \| by?: rows\|cols}
+- `data.hideDetail` — Hide Detail (Data › Outline): {rows? \| cols? \| by?, level?: 1-7} (the innermost group, or the one at `level`, holding the lines or summarised by them)
+- `data.showDetail` — Show Detail (Data › Outline): {rows? \| cols? \| by?, level?: 1-7}
+- `data.showLevels` — Show Outline Levels: {rows?: 1-8, cols?: 1-8} (1 shows only the top-level summaries, as the outline's level buttons)
 - `data.subtotal` — Subtotal (Data › Outline): {range?, groupBy: "A", function?: sum\|count\|average\|max\|min\|product, columns: ["C"], header?: true}
 - `data.flashFill` — Flash Fill (Data › Data Tools): {range?}
 - `data.fromTextCsv` — From Text/CSV (Data › Get & Transform Data): {path \| text, delimiter?: ",", sheet?: new sheet name} → imports into a new sheet as a table
 - `data.getData` — Get Data (Data › Get & Transform Data): {path \| text} (CSV/TSV/JSON array of objects) → new sheet table
 - `data.fromTableRange` — From Table/Range (Data › Get & Transform Data): {range?} → copies the table/range to a new sheet as a table
 - `data.queriesConnections` — Queries & Connections (Data › Queries & Connections): {} → imported tables
+- `data.solver` — Solver… (Data › Analysis): {objective: "B10" (formula cell), goal?: max\|min\|value (default max), value?: number (for goal value), variables: "B2:B4,D1" (≤200 constant cells, same sheet), constraints?: ["B5 <= 10", "B2:B4 >= C2:C4", "B2 int", "B3 bin", {lhs: "B6", op: "=", rhs: 3 \| "C6"}], nonNegative?: bool (default true: variables without a lower bound get 0), method?: grg\|simplex (default grg), keep?: bool (default true; false restores the original values), saveModel?: bool (default true: hidden solver_* names), maxEvaluations?: 20000, integerOptimality?: percent (default 0), saved?: bool (solve the sheet's saved model; other params override)} → {status: optimal\|converged\|iterationLimit\|infeasible\|unbounded\|notLinear, message, objective, values: {cell: value}, evaluations, changed}. No `objective` → {model: the saved model} (the menu opens the dialog).
 - `data.refreshAll` — Refresh All (Data › Queries & Connections) [Cmd+Alt+F5]: {replace?} refreshes every PivotTable → {refreshed, errors}
 - `data.goalSeek` — Goal Seek… (Data › Forecast › What-If Analysis): {set: "B5" (formula cell), to: number, changing: "B2" (constant cell)} → {value, result, iterations, converged}. Secant search with bisection once the answer is bracketed; stops within Maximum Change (0.001) or after Maximum Iterations (100) from File › Options › Formulas. Writes the found value into `changing`.
 - `data.scenarioManager` — Scenario Manager… (Data › Forecast › What-If Analysis): {sheet?} → {scenarios: [{name, sheet, changing, values, comment}]} (scenarios of the active sheet; `sheet: "*"` lists all)
@@ -256,16 +276,18 @@ selection when `range` is omitted.
 - `data.dataTable` — Data Table… (Data › Forecast › What-If Analysis): {range: "D2:E10", rowInput?: "B1", columnInput?: "B2"} one-variable (values down the first column with columnInput, or across the top row with rowInput; formulas in the other edge) or two-variable (formula in the top-left corner). Computes every result by substitution and writes static values (a snapshot, not a live {=TABLE()}); ≤100,000 cells.
 - `data.advancedFilter` — Advanced… (Data › Sort & Filter): {range? (list with headers; default current region), criteria: "H1:I3" (header row of field names; rows OR'ed, columns AND'ed; ">100", "=abc", "a*", "<>"; blank-headed formula cells are computed criteria for the first data row), copyTo?: "K1" (else filter in place by hiding rows), unique?: bool}
 - `data.consolidate` — Consolidate… (Data › Data Tools): {sources: ["Sheet2!A1:C10", ..], destination?: "A1" (default active cell), function?: sum\|count\|countNums\|average\|max\|min\|product, topRow?: bool, leftColumn?: bool (consolidate by labels; else by position)}
+- `data.forecastSheet` — Forecast Sheet (Data › Forecast): {timeline?: "A2:A25", values?: "B2:B25" (default: the first two columns of `range`, the selection or the current region; a text first cell is the header), end?: timeline value or date text \| periods?: n (default: a third of the history, at least 1; ≤10,000 and history × periods ≤ 500,000; history ≤ 10,000 rows), confidenceInterval?: bool (default true), confidence?: 0.95 or 95, seasonality?: "auto" \| 0 (none) \| 2–8,760, fillMissing?: interpolate\|zeros, aggregate?: average\|count\|counta\|max\|median\|min\|sum, statistics?: bool, chart?: line\|column} → {sheet, table, chart, history, periods}. Inserts a sheet before the active one: timeline, values, Forecast (FORECAST.ETS), Lower/Upper Confidence Bound (FORECAST.ETS.CONFINT), optional FORECAST.ETS.STAT table, and a chart.
+- `data.analysisToolPak` — Data Analysis… (Data › Analysis): {tool: anovaSingle\|correlation\|covariance\|descriptive\|exponentialSmoothing\|fTest\|histogram\|movingAverage\|rankPercentile\|regression\|tTestPaired\|tTestEqual\|tTestUnequal (or the tool's label), output?: "E1" (top-left of the report; default a new sheet), newSheet?: name, outputTo?: range\|newSheet (picks between the two), overwrite?: bool (else non-empty output cells are refused), labels?: bool (first row/column holds names), groupedBy?: columns\|rows, …tool params} — range tools take `range`; descriptive: summary? (default true), confidence?: 95, kthLargest?, kthSmallest?; histogram: bins?: range (default evenly spaced), pareto?, cumulative?; regression: inputY, inputX, constantZero?, confidence?: 95, residuals?, standardizedResiduals?, normalProbability?; movingAverage: interval? (3), standardErrors?; exponentialSmoothing: damping? (0.3), standardErrors?; t-tests and fTest: range1, range2, alpha? (0.05), hypothesizedDifference? (0); anovaSingle: alpha?. Writes static values. No `tool` → {tools} (the menu opens the dialog).
 
 ## formulas
 
 - `formulas.autoSum` — AutoSum (Formulas › Function Library) [Cmd+Shift+T]: {function?: SUM\|AVERAGE\|COUNT\|MAX\|MIN, range?}
 - `formulas.insertFunction` — Insert Function… (Formulas › Function Library) [Shift+F3]: {name?: "VLOOKUP"} (UI opens the dialog; with a name, starts the formula in the active cell)
 - `formulas.functions` — List Functions: {category?, search?} → [{name, category, signature, description}]
-- `formulas.defineName` — Define Name… (Formulas › Defined Names): {name, refersTo?: "=Sheet1!$A$1:$A$10" (default: the selection), scope?: "Workbook"\|sheet name, comment?}
-- `formulas.deleteName` — Delete Name: {name, scope?}
+- `formulas.defineName` — Define Name… (Formulas › Defined Names): {name, refersTo?: "=Sheet1!$A$1:$A$10" (default: the selection), scope?: "Workbook"\|sheet name, comment?, oldName?, oldScope?} (oldName: edit that name (Name Manager › Edit); a new name also renames it in formulas)
+- `formulas.deleteName` — Delete Name: {name, scope?: "Workbook"\|sheet name (default: every scope)}
 - `formulas.nameManager` — Name Manager (Formulas › Defined Names) [Cmd+F3]: {} → names with values
-- `formulas.createFromSelection` — Create from Selection (Formulas › Defined Names) [Cmd+Shift+F3]: {range?, top?: true, left?: false, bottom?, right?}
+- `formulas.createFromSelection` — Create from Selection (Formulas › Defined Names) [Cmd+Shift+F3]: {range?, top?: true, left?: false, bottom?: false, right?: false, replace?: false (existing names are kept and listed in `skipped`)}
 - `formulas.tracePrecedents` — Trace Precedents (Formulas › Formula Auditing): {cell?} → ranges
 - `formulas.traceDependents` — Trace Dependents (Formulas › Formula Auditing): {cell?} → cells
 - `formulas.removeArrows` — Remove Arrows (Formulas › Formula Auditing): {}
@@ -275,7 +297,7 @@ selection when `range` is omitted.
 - `formulas.evaluate` — Evaluate: {formula: "=SUM(A1:A3)", cell?} → value without changing the sheet
 - `formulas.calculateNow` — Calculate Now (Formulas › Calculation) [F9]: {}
 - `formulas.calculateSheet` — Calculate Sheet (Formulas › Calculation) [Shift+F9]: {}
-- `formulas.calculationOptions` — Calculation Options (Formulas › Calculation): {mode: automatic\|automaticExceptTables\|manual, iterative?, maxIterations?, maxChange?}
+- `formulas.calculationOptions` — Calculation Options (Formulas › Calculation): {mode?: automatic\|automaticExceptTables\|manual, iterative?: bool (Enable iterative calculation), maxIterations?: 1–32767 (100), maxChange?: number (0.001)} → the settings. File › Options › Formulas › Calculation options; stored in the workbook.
 - `formulas.recentlyUsed` — Recently Used (Formulas › Function Library): {} → recently used functions in this workbook
 - `formulas.financial` — Financial (Formulas › Function Library): {}
 - `formulas.logical` — Logical (Formulas › Function Library): {}
@@ -298,10 +320,12 @@ selection when `range` is omitted.
 - `view.showZeros` — Show Zeros: {on?}
 - `view.rightToLeft` — Sheet Right-to-Left (Page Layout › Sheet Options): {on?}
 - `view.zoom` — Zoom (View › Zoom): {percent: 10..400}
+- `view.zoom100` — 100% (View › Zoom): {}
+- `view.formulaBar` — Formula Bar (View › Show): {on?: bool}
 - `view.zoomToSelection` — Zoom to Selection (View › Zoom): {viewWidth?, viewHeight?}
-- `view.normal` — Normal (View › Workbook Views): {}
-- `view.pageLayout` — Page Layout (View › Workbook Views): {}
-- `view.pageBreakPreview` — Page Break Preview (View › Workbook Views): {}
+- `view.normal` — Normal (View › Workbook Views): {sheet?} → {view} (per sheet, saved with the file)
+- `view.pageLayout` — Page Layout (View › Workbook Views): {sheet?} → {view}: pages on paper with rulers; headers and footers are edited in place (per sheet, saved with the file)
+- `view.pageBreakPreview` — Page Break Preview (View › Workbook Views): {sheet?} → {view} (per sheet, saved with the file)
 - `view.customViews` — Custom Views… (View › Workbook Views): {save?: name, show?: name, delete?: name} → list
 - `view.split` — Split (View › Window): {} (toggles a split at the active cell; shown as frozen panes in this version)
 - `view.newWindow` — New Window (View › Window): {} opens a second window on the same workbook (a linked copy)
@@ -309,7 +333,7 @@ selection when `range` is omitted.
 - `view.hideWindow` — Hide (View › Window): {}
 - `view.unhideWindow` — Unhide… (View › Window): {index?}
 - `view.switchWindows` — Switch Windows (View › Window): {} → open windows
-- `view.ruler` — Ruler (View › Show): {on?}
+- `view.ruler` — Ruler (View › Show): {on?} → {on}: rulers in Page Layout view (an application option)
 - `view.macros` — Macros (View › Macros): {} → scripts
 
 ## pageLayout
@@ -323,7 +347,7 @@ selection when `range` is omitted.
 - `pageLayout.printGridlines` — Print Gridlines (Page Layout › Sheet Options): {on?}
 - `pageLayout.printHeadings` — Print Headings (Page Layout › Sheet Options): {on?}
 - `pageLayout.breaks` — Breaks (Page Layout › Page Setup): {insert?: bool, remove?: bool, reset?: bool, cell?}
-- `pageLayout.headerFooter` — Header & Footer (Insert › Text): {header?: "&C&P", footer?: "&CPage &P of &N"}
+- `pageLayout.headerFooter` — Header & Footer (Insert › Text): {sheet?, header?: "&C&P", footer?: "&CPage &P of &N", differentFirst?: bool, differentOddEven?: bool, firstHeader?, firstFooter?, evenHeader?, evenFooter?} or one section: {sheet?, page?: odd\|even\|first, part: header\|footer, section: left\|center\|right, text: "Page &[Page] of &[Pages]"} (field names or codes) → {header, footer, differentFirst, differentOddEven, firstHeader, firstFooter, evenHeader, evenFooter}
 - `pageLayout.theme` — Themes (Page Layout › Themes): {name: Craft\|Slate\|Meadow\|Ember\|Ocean\|Orchid\|Graphite, colors?: [12 hex], majorFont?, minorFont?}
 - `pageLayout.themeColors` — Colors (Page Layout › Themes): {name: theme name \| colors: [12 hex]}
 - `pageLayout.themeFonts` — Fonts (Page Layout › Themes): {major, minor}
@@ -370,6 +394,7 @@ selection when `range` is omitted.
 
 ## pivot
 
+- `pivot.calculatedField` — Calculated Field (PivotTable Analyze › Calculations): {pivot?, name, formula?: "=Sales*0.1" (fields bare or 'quoted'; evaluated on each cell's sums), delete?: bool, values?: bool (add a new field to Values, default true)} adds, changes or deletes a calculated field; without `name` opens the dialog → {name, formula, calculatedFields}
 - `pivot.fields` — PivotTable Fields: {pivot?} → source fields (name, numeric, date, samples, areas) and the current layout
 - `pivot.fieldList` — Field List (PivotTable Analyze › Show): {pivot?} (same as pivot.fields)
 - `pivot.list` — PivotTables: {} → every PivotTable in the workbook
@@ -389,3 +414,10 @@ selection when `range` is omitted.
 - `pivot.refresh` — Refresh (PivotTable Analyze › Data) [Alt+F5]: {pivot?, replace?}
 - `pivot.changeSource` — Change Data Source (PivotTable Analyze › Data): {pivot?, source: "Sheet1!$A$1:$E$300" \| table name, replace?} (fields missing from the new source are removed)
 - `pivot.delete` — Delete PivotTable (PivotTable Analyze › Actions): {pivot?} clears the report and removes the PivotTable
+
+## slicer
+
+- `slicer.toggle` — Toggle Slicer Value: {slicer?: id, value: "East", multi?: false}
+- `slicer.selectAll` — Clear Slicer Filter: {slicer?: id}
+- `slicer.clear` — Clear Slicer Filter: {slicer?: id}
+- `slicer.delete` — Delete Slicer: {slicer?: id}

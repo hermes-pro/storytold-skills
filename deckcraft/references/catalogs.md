@@ -1,6 +1,6 @@
 # DeckCraft catalogs
 
-Generated from the live server (DeckCraft 0.3.0): `shape.presets`, `transition.list`, `animation.list`, `design.themes`.
+Generated from the live server (DeckCraft 0.6.1): `shape.presets`, `transition.list`, `animation.list`, `design.themes`.
 Grep for a name rather than reading the file whole.
 
 ## Themes (new_presentation {theme} / design.theme {name})

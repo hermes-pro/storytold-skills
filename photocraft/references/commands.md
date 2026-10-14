@@ -1,33 +1,40 @@
 # PhotoCraft command catalog
 
-Generated from `photocraft-cli commands --json` (PhotoCraft 0.5.0, 817 commands). Run any of them with
+Generated from `photocraft-cli commands --json` (PhotoCraft 0.8.2, 892 commands). Run any of them with
 `command_run {id, params}` (or `command_batch`, or `photocraft-cli run --cmd ID --params JSON`); `command_list {filter}`
-shows the same docs live plus whether each is enabled right now. Param notation: `name:type=default`, `a|b` = choices,
-`?` = optional, `id?` = defaults to the active/selected layer, `→ {...}` = what it returns.
-Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open`/`doc_save`) but work in `photocraft-cli run`.
+(or the `photocraft://commands` resource) shows the same docs live plus whether each is enabled right now and why not
+(`disabledReason`). Param notation: `name:type=default`, `a|b` = choices, `?` = optional, `id?` = defaults to the
+active/selected layer, `→ {...}` = what it returns.
+Commands that take a filesystem `path`/`dir` are refused over MCP; use `doc_open`, `doc_save`, `doc_place`,
+`doc_export_layers`, `doc_import_data_sets` / `doc_export_data_sets`, or `photocraft-cli run`.
 
 ## actions
 
+- `actions.move` Move Action or Step: {"action":name|index, "step":index?, "to":index}. Move a step within its action, or the action itself. to is the final zero-based index. Pending recorded steps can be moved.
 - `actions.list` List Actions: {} → {actions:[{name, steps:count}], recording:name|null}
-- `actions.get` Get Action: {"action":name|index} → {name, steps:[[id, params]…]} (the shape file.automate.batch and droplets take)
+- `actions.get` Get Action: {"action":name|index} → {name, steps:[[id, params]…], disabled:[step…]} (steps is the shape file.automate.batch and droplets take; disabled lists the 0-based steps playback skips)
 - `actions.record` Record Action: {"name":str? (new action, default "Action N")} or {"action":name|index} (append) → {action, index}
-- `actions.stop` Stop Recording: {} → {action, steps:count} (steps recorded since actions.record, queries and actions.* omitted)
-- `actions.play` Play Action: {"action":name|index, "from":step?} → {action, ran, failed?:{step, id, error}}. step and from are 0-based. Stops at the first error (the command still returns ok, with failed set) and leaves one history step per step that ran. Refuses to play while a play is already running. Each step is checked with Session::authorize when one is installed.
-- `actions.delete` Delete Action: {"action":name|index} → {deleted:name}. Refused while recording.
+- `actions.stop` Stop Recording: {} → {action, steps:count} (steps recorded since actions.record, queries and action-editing commands omitted)
+- `actions.play` Play Action: {"action":name|index, "from":step?} → {action, ran, failed?:{step, id, error}}. step and from are 0-based; steps switched off with actions.toggle are skipped. Stops at the first error (the command still returns ok, with failed set) and leaves one history step per step that ran. Nested calls are supported up to 16 levels; cycles are rejected. Recording stores a named call rather than its expanded commands. Each step is checked with Session::authorize when one is installed.
+- `actions.delete` Delete Action: {"action":name|index, "step":index?} → {deleted:name} or {action, deletedStep, steps:count}. step is 0-based, including pending recorded steps. Whole-action deletion is refused while recording.
+- `actions.toggle` Toggle Action Steps: {"action":name|index, "step":index?, "enabled":bool?} → {action, disabled:[step…]}. Switch one 0-based step (including pending recorded steps) on or off for playback, Batch and droplets; omitted enabled flips it. Without step, switch every step: on unless all already are, or as enabled says.
+- `actions.rename` Rename Action: {"action":name|index, "name":str} → {action, index}. The name must not be empty or whitespace-only and must be unique. Nested Play Action steps and the action's function key follow the rename.
 
 ## brush
 
 - `brush.presets.list` List Brush Presets: {"full":bool=false}
 - `brush.presets.save` Save Brush Preset: {"name":string,"brush":{…BrushSettings}?=current brush}
+- `brush.presets.update` Update Brush Preset: {"name":string?=the preset the current brush was picked from,"brush":{…BrushSettings}?=current brush}
 - `brush.presets.delete` Delete Brush Preset: {"name":string}
+- `brush.presets.setCurrent` Set Current Brush Preset: {"name":string}
 - `brush.defineFromSelection` Define Brush Preset…: {"name":string}
 - `brush.get` Get Brush: {}
 - `brush.presets.rename` Rename Brush: {"name":string,"newName":string} → {name}
-- `brush.presets.move` Move Brush: {"name":string,"group":string?=its group ("" = ungrouped),"before":name? (preset to land before) | "index":n? (position in the group)=end} → {name, group, index}
-- `brush.presets.moveGroup` Move Brush Group: {"group":string,"before":group? | "index":n? (group position)=end} → {group, index}
-- `brush.presets.renameGroup` Rename Brush Group: {"group":string,"newName":string} → {group}
-- `brush.presets.deleteGroup` Delete Brush Group: {"group":string} → {deleted, count}
-- `brush.presets.importAbr` Import Brushes…: {"path":".abr file"?,"data":base64 bytes?,"group":string?=file name,"replace":bool=true (replace a group of the same name),"select":bool=false (make the first imported preset current)}
+- `brush.presets.move` Move Brush: {"name":string,"group":string?=its group ("" = ungrouped),"folder":[name]? (nested folder names in the group, outermost first; [] = the group itself)=before's folder, else its own if it stays in its group, else [],"before":name? (preset to land before, in that folder) | "index":n? (position in the group)=end of the folder} → {name, group, folder, index}
+- `brush.presets.moveGroup` Move Brush Group: {"group":string,"folder":[name]? (move this nested folder instead),"into":{"group":string?,"folder":[name]?}? (move it inside that folder of that group, [] = directly in the group; no group = out to the top level as a group of its own; the folder keeps its content),"before":group? (or sibling folder name, in its new place with `into`) | "index":n? (group or sibling folder position, without `into`)=end} → {group, folder?, index}
+- `brush.presets.renameGroup` Rename Brush Group: {"group":string,"folder":[name]? (rename this nested folder instead),"newName":string} → {group, folder?}
+- `brush.presets.deleteGroup` Delete Brush Group: {"group":string,"folder":[name]? (delete this nested folder instead)} → {deleted, count}
+- `brush.presets.importAbr` Import Brushes…: {"path":".abr file"?,"data":base64 bytes?,"group":string?=file name,"replace":bool=true (replace a group of the same name),"select":bool=false (make the first imported preset current)} → {group, imported, count, folders (nested folders kept from the file), version, warnings}
 - `brush.texturePattern` Brush Texture Pattern: {"pattern":id|name,"scale":1..1000?,"enabled":bool=true} (sets the session brush's Texture to that pattern)
 
 ## channel
@@ -38,7 +45,7 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `channel.delete` Delete Channel: {"channel":index|name?=targeted}
 - `channel.rename` Rename Channel: {"channel":index|name,"name":str}
 - `channel.move` Reorder Channel: {"channel":index|name,"to":index}
-- `channel.target` Target Channel: {"channel":"composite"|"red|green|blue|…"|index|name="composite"}
+- `channel.target` Target Channel: {"channel":"composite"|"mask"|"vectorMask"|"red|green|blue|…"|index|name="composite"}
 - `channel.setVisible` Channel Visibility: {"channel":"composite"|"red|…"|index|name|"quickMask","visible":bool?=toggle}
 - `channel.options` Channel Options…: {"channel":index|name|"quickMask","name":str?,"indicates":"masked|selected|spot"?,"color":"#rrggbb"?,"opacity":0..100?,"solidity":0..100?}
 - `channel.mergeSpot` Merge Spot Channel: {"channel":index|name?=targeted or first spot}
@@ -46,6 +53,7 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `channel.merge` Merge Channels…: {"mode":"rgb|cmyk|lab"="rgb","documents":[index,…]?=open grayscale docs of the active size,"name":str?}
 - `channel.list` Channels: {}
 - `channel.target.composite` Target Composite Channel (Cmd+2): {}
+- `channel.target.layerMask` Target Layer Mask (Cmd+\): {}
 - `channel.target.slot3` Target Channel 3 (Cmd+3): {}
 - `channel.target.slot4` Target Channel 4 (Cmd+4): {}
 - `channel.target.slot5` Target Channel 5 (Cmd+5): {}
@@ -56,9 +64,9 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 
 ## cloneSource
 
-- `cloneSource.list` Clone Sources: {} → {active,sources:[{index,source,anchor,offset,layer,width,height,rotation,flipH,flipV}],overlay}
+- `cloneSource.list` Clone Sources: {} → {active,sources:[{index,source,anchor,offset,layer,width,height,linked,rotation,flipH,flipV}],overlay}
 - `cloneSource.select` Select Clone Source: {"index":0..4}
-- `cloneSource.set` Set Clone Source: {"index":0..4?=active,"source":[x,y]? (⌥-click; re-pairs with the next stroke),"offset":[dx,dy]?,"width":%?,"height":%?|"scale":[w%,h%]?,"rotation":deg?,"flipH":bool?,"flipV":bool?,"layer":id?,"clear":bool?,"select":bool=true}
+- `cloneSource.set` Set Clone Source: {"index":0..4?=active,"source":[x,y]? (⌥-click; re-pairs with the next stroke),"offset":[dx,dy]?,"width":%?,"height":%?|"scale":[w%,h%]?,"linked":bool? (W/H link: a lone width or height scales the other by the same factor),"rotation":deg?,"flipH":bool?,"flipV":bool?,"layer":id?,"clear":bool?,"select":bool=true}
 - `cloneSource.resetTransform` Reset Transform: {"index":0..4?=active}
 - `cloneSource.overlay` Clone Source Overlay: {"show":bool?,"opacity":0..100?,"clipped":bool?,"autoHide":bool?,"invert":bool?,"blend":"normal|darken|lighten|difference"?}
 
@@ -86,53 +94,63 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `document.activate` Activate Document: {"document":index}
 - `document.move` Move Document: {"document":index?,"to":index}
 - `document.pixel` Read Composite Pixel: {"x":i32,"y":i32}
+- `document.sampleColor` Sample Color: {"x":f64,"y":f64,"size":"point"|1|3|5|11|31|51|101=1,"sampleLayer":"current"|"currentAndBelow"|"all"|"allNoAdjustments"|"currentAndBelowNoAdjustments"="all"} → [r,g,b,a] (the Eyedropper's Sample Size and Sample: the composite pixel, or the average of the size×size square centred on it, clipped to the canvas; transparent off the canvas)
+- `document.presets.list` List Document Presets: {}
+- `document.presets.get` Get Document Preset: {"name":str} -> {preset,params} (params for file.new; no document is created)
+- `document.presets.save` Save Document Preset: {"name":str (trimmed, ASCII case-insensitive unique, 1..255 characters),"settings":{"width":px,"height":px,"resolution":ppi=72,"mode":"rgb|gray|cmyk|lab"="rgb","depth":8|16|32=8,"background":"white|black|transparent|backgroundColor|#rrggbb"="white","backgroundColor":[r,g,b]?,"unit":"px|in|cm|mm|pt|pica"="px","resolutionUnit":"in|cm"="in"}}
+- `document.presets.delete` Delete Document Preset: {"name":str}
+- `document.recent.list` List Recent Document Settings: {} -> {recent:[settings]} (newest first; each settings.command params minus unit/resolutionUnit go to file.new)
+- `document.recent.add` Add Recent Document Settings: {"settings":{same fields as document.presets.save}} (File › New records each document it creates; newest first, max 20, duplicates collapsed)
 
 ## edit
 
 - `edit.undo` Undo (Edit, Cmd+Z): {}
 - `edit.redo` Redo (Edit, Cmd+Shift+Z): {}
-- `edit.fill` Fill… (Edit, Shift+F5): {"contents":"foreground|background|color|contentAware|pattern|history|black|gray|white"="color","color":"#rrggbb|[r,g,b,a]"=foreground (contents=color),"pattern":id|name (contents=pattern),"scale":%=100,"angle":deg,"state":index? (contents=history; default the oldest state),"colorAdaptation":bool=true (contents=contentAware),"mode":"normal|multiply|…"="normal","opacity":0..100=100,"preserveTransparency":bool=false,"target":"pixels"|{"channel":i}|"quickMask"?}
-- `edit.clear` Clear (Edit, Delete): {}
+- `edit.fill` Fill… (Edit, Shift+F5): {"contents":"foreground|background|color|contentAware|pattern|history|black|gray|white"="color","color":"#rrggbb|[r,g,b,a]"=foreground (contents=color),"pattern":id|name (contents=pattern),"scale":%=100,"angle":deg,"state":index? (contents=history; default the oldest state),"colorAdaptation":bool=true (contents=contentAware),"mode":"normal|multiply|…"="normal","opacity":0..100=100,"preserveTransparency":bool=false,"target":"pixels"|"mask"|"quickMask"|{"channel":i}?}
+- `edit.clear` Clear (Edit, Delete): {} (a targeted channel or Quick Mask is cleared alone)
 - `edit.transform` Free Transform: {"layer":id?,"rect":[x0,y0,x1,y1]? (source frame; default = layer content ∩ selection),"quad":[[x,y]×4]? (where the frame's corners go, clockwise from top-left),"matrix":[a,b,c,d,e,f]? (affine alternative),"interpolation":"bicubic|bilinear|nearest"="bicubic","target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target (an unlinked mask, an alpha channel or the Quick Mask transforms alone; a linked mask moves with its layer)}
-- `edit.cut` Cut (Edit, Cmd+X): {}
-- `edit.copy` Copy (Edit, Cmd+C): {}
+- `edit.cut` Cut (Edit, Cmd+X): {} (a targeted colour channel cuts that channel only)
+- `edit.copy` Copy (Edit, Cmd+C): {"target":"mask"? = the targeted mask, copied as grayscale (#2928)} (a targeted colour or alpha channel copies that channel, as grayscale)
 - `edit.copyMerged` Copy Merged (Edit, Cmd+Shift+C): {}
-- `edit.paste` Paste (Edit, Cmd+V): {"center":[x,y]? (view centre; default keeps the position when it overlaps the canvas)} (with no document open: a new document from the clipboard)
+- `edit.paste` Paste (Edit, Cmd+V): {"center":[x,y]? (view centre; default keeps the position when it overlaps the canvas),"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target (not pixels: the luminosity pasted into that mask or channel)} (with no document open: a new document from the clipboard)
 - `edit.toggleLastState` Toggle Last State (Edit, Cmd+Alt+Z): {}
 - `edit.assignProfile` Assign Profile… (Edit): {"profile":"working|srgb|display-p3|adobe-rgb-compat|prophoto-compat|linear-srgb|rec2020|gray-gamma-2.2|sgray|lab-d50|coated-cmyk|none" (or a path to an .icc file)}
 - `edit.convertToProfile` Convert to Profile… (Edit): {"profile":"srgb|display-p3|adobe-rgb-compat|prophoto-compat|linear-srgb|rec2020|gray-gamma-2.2|sgray|lab-d50|coated-cmyk|working" (or a path to an .icc file),"intent":"perceptual|relative|saturation|absolute"="relative","bpc":bool=true}
 - `edit.colorSettings` Color Settings… (Edit, Cmd+Shift+K): {"workingRgb":"srgb|display-p3|adobe-rgb-compat|prophoto-compat|linear-srgb|rec2020","workingCmyk":"coated-cmyk","workingGray":"sgray|gray-gamma-2.2","policyRgb":"preserve|convert|off","policyCmyk":"preserve|convert|off","policyGray":"preserve|convert|off","askOnMismatch":bool=true,"askOnPaste":bool=true,"askOnMissing":bool=false,"intent":"relative|perceptual|saturation|absolute","blendTextGamma":1.0..2.2|bool=1.45,"bpc":bool=true,"dither":bool=true,"monitorProfile":"auto|srgb|display-p3|adobe-rgb-compat|prophoto-compat|rec2020","reset":bool=false} (working spaces and the monitor profile also accept .icc paths; monitor `auto` = the main display's profile when the platform provides it, else sRGB; the reply's `monitorStatus` says which profile is in use and why: source auto|manual|fallback, reason)
 - `edit.profileInfo` Profile Info: {"profile":"<builtin id>|document|/path/to/profile.icc"=document}
-- `edit.stroke` Stroke… (Edit): {"width":1..250=1,"color":"#rrggbb|[r,g,b,a]"=foreground,"location":"inside|center|outside"="center","opacity":0..100=100}
+- `edit.stroke` Stroke… (Edit): {"width":1..250=1,"color":"#rrggbb|[r,g,b,a]"=foreground,"location":"inside|center|outside"="center","mode":"any layer blend mode"="normal","opacity":0..100=100,"preserveTransparency":bool=false}
 - `edit.checkSpelling` Check Spelling… (Edit): {"action":"list|change|changeAll|addToDictionary|removeFromDictionary|suggest"="list","allLayers":bool=true,"layer":id? (check one layer),"ignore":[word]? (Ignore All for this check),"suggestions":n=5; change: "layer","start","end" (chars),"word"? (verified),"replace"; changeAll: "word","replace"; addToDictionary/removeFromDictionary/suggest: "word"} → list: {"misspellings":[{"layer","start","end","word","suggestions"}],"count"}
-- `edit.keyboardShortcuts` Keyboard Shortcuts… (Edit, Cmd+Alt+Shift+K): {"set":{"<command id>|tools.temporary.hand|zoomIn|zoomOut":"Cmd+Shift+X"|""(remove)|null(default)}?,"reset":true|["<id>",…]?,"removeConflicts":bool=true,"filter":str?,"list":bool=false}
+- `edit.keyboardShortcuts` Keyboard Shortcuts… (Edit, Cmd+Alt+Shift+K): {"set":{"<command id>|tools.temporary.hand|zoomIn|zoomOut":"Cmd+Shift+X"|""(remove)|null(default)}?,"reset":true|["<id>",…]?,"removeConflicts":bool=true,"filter":str?,"list":bool=false,"importKys":"<.kys XML>"?}
 - `edit.menus` Menus… (Edit, Cmd+Alt+Shift+M): {"hide":["<id>",…]?,"show":["<id>",…]?,"color":{"<id>":"red|orange|yellow|green|blue|violet|gray|none"}?,"reset":bool=false}
 - `edit.toolbar` Toolbar… (Edit): {"hidden":["<tool>",…]?,"order":["<tool>",…]?,"reset":bool=false}
 - `edit.fade` Fade… (Edit, Cmd+Shift+F): {"opacity":0..100=100,"mode":"normal|multiply|screen|overlay|softLight|hardLight|darken|lighten|difference|color|luminosity"}
 - `edit.contentAwareFill` Content-Aware Fill… (Edit): {"sampling":"auto|rectangular|custom","margin":px?,"area":[x,y,w,h]?,"channel":index|name?,"colorAdaptation":"default|none|high|veryHigh","rotationAdaptation":"none|low|medium|high|full","scale":bool=false,"mirror":bool=false,"output":"current|new|duplicate","seed":u64=1}
-- `edit.contentAwareScale` Content-Aware Scale (Edit, Cmd+Alt+Shift+C): {"width":px?,"height":px?,"scaleX":1..400=100,"scaleY":1..400=100,"amount":0..100=100,"protect":"none"|channel index|name,"protectSkinTones":bool=false}
+- `edit.deleteAndFillSelection` Delete and Fill Selection: {}
+- `edit.contentAwareScale` Content-Aware Scale (Edit, Cmd+Alt+Shift+C): {"width":px?,"height":px?,"scaleX":1..400=100,"scaleY":1..400=100,"x":px?,"y":px?,"amount":0..100=100,"protect":"none"|channel index|name,"protectSkinTones":bool=false}
 - `edit.defineBrushPreset` Define Brush Preset… (Edit): {"name":text}
 - `edit.defineCustomShape` Define Custom Shape… (Edit): {"name":text,"path":"work|<saved path name>"?}
 - `edit.findAndReplaceText` Find and Replace Text… (Edit): {"find":text,"replace":text,"action":"changeAll|find|change|changeFind","caseSensitive":bool=false,"wholeWord":bool=false,"forward":bool=true,"allLayers":bool=true}
-- `edit.fillForeground` Fill with Foreground Color (Alt+Backspace): {"layer":id?,"target":"pixels"|{"channel":i}|"quickMask"?}
-- `edit.fillBackground` Fill with Background Color (Cmd+Backspace): {"layer":id?,"target":"pixels"|{"channel":i}|"quickMask"?}
-- `edit.fillForegroundPreserve` Fill with Foreground Color, Preserve Transparency (Alt+Shift+Backspace): {"layer":id?,"target":"pixels"|{"channel":i}|"quickMask"?}
-- `edit.fillBackgroundPreserve` Fill with Background Color, Preserve Transparency (Cmd+Shift+Backspace): {"layer":id?,"target":"pixels"|{"channel":i}|"quickMask"?}
-- `edit.autoAlignLayers` Auto-Align Layers… (Edit): {"projection":"auto|perspective|cylindrical|spherical|collage|reposition","reference":layer id?=bottom selected layer,"geometricCorrection":bool=false,"interpolation":"bicubic|bilinear|nearest"}
-- `edit.autoBlendLayers` Auto-Blend Layers… (Edit): {"method":"panorama|stack","seamlessTones":bool=true}
-- `edit.definePattern` Define Pattern… (Edit): {"name":str?,"rect":[x0,y0,x1,y1]? (default: selection bounds, else the canvas)} → {"pattern":id} (added to the library; samples the visible composite)
+- `edit.fillForeground` Fill with Foreground Color (Alt+Backspace): {"layer":id?,"target":"pixels"|"mask"|"quickMask"|{"channel":i}?}
+- `edit.fillBackground` Fill with Background Color (Cmd+Backspace): {"layer":id?,"target":"pixels"|"mask"|"quickMask"|{"channel":i}?}
+- `edit.fillForegroundPreserve` Fill with Foreground Color, Preserve Transparency (Alt+Shift+Backspace): {"layer":id?,"target":"pixels"|"mask"|"quickMask"|{"channel":i}?}
+- `edit.fillBackgroundPreserve` Fill with Background Color, Preserve Transparency (Cmd+Shift+Backspace): {"layer":id?,"target":"pixels"|"mask"|"quickMask"|{"channel":i}?}
+- `edit.fillHistory` Fill from History (Cmd+Alt+Backspace): {"state":n? (default: the History Brush's source, the oldest state still held),"layer":id?,"target":"pixels"|"mask"|"quickMask"|{"channel":i}?,"preserveTransparency":bool?}
+- `edit.autoAlignLayers` Auto-Align Layers… (Edit): {"projection":"auto|perspective|cylindrical|spherical|collage|reposition","reference":layer id?=bottom selected layer,"geometricCorrection":bool=false,"interpolation":"bicubic|bilinear|nearest","registration":"auto|features|intensity"}
+- `edit.autoBlendLayers` Auto-Blend Layers… (Edit): {"method":"panorama|stack","seamlessTones":bool=true,"haloControl":0..8=2}
+- `edit.definePattern` Define Pattern… (Edit): {"name":text,"rect":[x0,y0,x1,y1]?} → {"pattern":id} (name: default the document's name numbered past the library's names; rect: default the selection bounds or else the canvas; added to the library from the visible composite)
 - `edit.puppetWarp` Puppet Warp (Edit): {"pins":[{"src":[x,y],"dst":[x,y],"rotate":deg?,"depth":n?}…],"mode":"rigid|normal|distort"="normal","density":"fewer|normal|more"="normal","expansion":px=2,"interpolation":"bicubic|bilinear|nearest","layer":id?} — mesh over the opaque region, as-rigid-as-possible; on a smart object it becomes a smart filter
 - `edit.perspectiveWarp` Perspective Warp (Edit): {"planes":[{"src":[[x,y]×4],"dst":[[x,y]×4]}…] (corners clockwise from top-left; corners that coincide in src are linked),"straighten":"horizontal|vertical|auto"?,"interpolation":"bicubic|bilinear|nearest","layer":id?}
+- `edit.installedProfiles` Installed Profiles: {"class":"any|input|display|output|deviceLink|colorSpace|abstract|namedColor"="any","colorSpace":"any|rgb|cmyk|gray"="any"} → {profiles: [{path, description, class, colorSpace}], dirs} (the OS profile folders; pass a path as any command's "profile")
 
 ### edit.pasteSpecial
 
-- `edit.pasteSpecial.pasteInPlace` Paste in Place (Edit › Paste Special, Cmd+Shift+V): {}
-- `edit.pasteSpecial.pasteInto` Paste Into (Edit › Paste Special, Cmd+Alt+Shift+V): {"center":[x,y]?}
-- `edit.pasteSpecial.pasteOutside` Paste Outside (Edit › Paste Special): {"center":[x,y]?}
+- `edit.pasteSpecial.pasteInPlace` Paste in Place (Edit › Paste Special, Cmd+Shift+V): {"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target (not pixels: the luminosity pasted into that mask or channel)}
+- `edit.pasteSpecial.pasteInto` Paste Into (Edit › Paste Special, Cmd+Alt+Shift+V): {"center":[x,y]?,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target (not pixels: the luminosity pasted into that mask or channel)}
+- `edit.pasteSpecial.pasteOutside` Paste Outside (Edit › Paste Special): {"center":[x,y]?,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target (not pixels: the luminosity pasted into that mask or channel)}
 
 ### edit.preferences
 
-- `edit.preferences.general` General… (Edit › Preferences): {}
+- `edit.preferences.general` General… (Edit › Preferences, Cmd+K): {}
 - `edit.preferences.interface` Interface… (Edit › Preferences): {}
 - `edit.preferences.workspace` Workspace… (Edit › Preferences): {}
 - `edit.preferences.tools` Tools… (Edit › Preferences): {}
@@ -169,12 +187,12 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 
 - `edit.transform.again` Again (Edit › Transform, Cmd+Shift+T): {}
 - `edit.transform.againCopy` Transform Again on a Copy (Cmd+Alt+Shift+T): {} (duplicates the active layer and repeats the last transform on the copy: step and repeat)
-- `edit.transform.rotate180` Rotate 180° (Edit › Transform): {}
-- `edit.transform.rotate90Cw` Rotate 90° Clockwise (Edit › Transform): {}
-- `edit.transform.rotate90Ccw` Rotate 90° Counter Clockwise (Edit › Transform): {}
-- `edit.transform.flipHorizontal` Flip Horizontal (Edit › Transform): {}
-- `edit.transform.flipVertical` Flip Vertical (Edit › Transform): {}
-- `edit.transform.warp` Warp (Edit › Transform): {"layer":id?,"rect":[x0,y0,x1,y1]? (warp box; default = layer content ∩ selection),"style":"custom|none|arc|arcLower|arcUpper|arch|bulge|shellLower|shellUpper|flag|wave|fish|rise|fisheye|inflate|squeeze|twist","bend":%=50,"hDistort":%,"vDistort":%,"vertical":bool,"mesh":{"us":[0,…,1],"vs":[0,…,1],"points":[[x,y]…]} ((3c+1)×(3r+1) control points, row-major, document px),"grid":[cols,rows]?,"warp":{full warp object}?,"interpolation":"bicubic|bilinear|nearest"}
+- `edit.transform.rotate180` Rotate 180° (Edit › Transform): {"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target (an unlinked mask, an alpha channel or the Quick Mask turns alone)}
+- `edit.transform.rotate90Cw` Rotate 90° Clockwise (Edit › Transform): {"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target (an unlinked mask, an alpha channel or the Quick Mask turns alone)}
+- `edit.transform.rotate90Ccw` Rotate 90° Counter Clockwise (Edit › Transform): {"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target (an unlinked mask, an alpha channel or the Quick Mask turns alone)}
+- `edit.transform.flipHorizontal` Flip Horizontal (Edit › Transform): {"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target (an unlinked mask, an alpha channel or the Quick Mask turns alone)}
+- `edit.transform.flipVertical` Flip Vertical (Edit › Transform): {"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target (an unlinked mask, an alpha channel or the Quick Mask turns alone)}
+- `edit.transform.warp` Warp (Edit › Transform): {"layer":id?,"rect":[x0,y0,x1,y1]? (warp box; default = layer content ∩ selection),"style":"custom|none|arc|arcLower|arcUpper|arch|bulge|shellLower|shellUpper|flag|wave|fish|rise|fisheye|inflate|squeeze|twist","bend":%=50,"hDistort":%,"vDistort":%,"vertical":bool,"mesh":{"us":[0,…,1],"vs":[0,…,1],"points":[[x,y]…]} ((3c+1)×(3r+1) control points, row-major, document px),"grid":[cols,rows]?,"warp":{full warp object}?,"interpolation":"bicubic|bilinear|nearest"} — on a type layer a style (or none) sets its Warp Text and the type stays editable
 - `edit.transform.splitWarpCrosswise` Split Warp Crosswise (Edit › Transform): {"warp":{…}? (the warp being edited; returned split),"rect":[x0,y0,x1,y1]?,"at":[x,y]? (document point; default = middle of the patch)} — without `warp`, edits the active smart object's warp. A 1×1 custom mesh is divided at the thirds first (the guides drawn on the default grid), so splitWarpCrosswise on an identity custom warp returns a 4×4 mesh (knots at 0, 1/3, 1/2, 2/3 and 1), not a 2×2. A preset is fitted as one patch and split without that step.
 - `edit.transform.splitWarpHorizontally` Split Warp Horizontally (Edit › Transform): {"warp":{…}? (the warp being edited; returned split),"rect":[x0,y0,x1,y1]?,"at":[x,y]? (document point; default = middle of the patch)} — without `warp`, edits the active smart object's warp. A 1×1 custom mesh is divided at the thirds first (the guides drawn on the default grid), so splitWarpCrosswise on an identity custom warp returns a 4×4 mesh (knots at 0, 1/3, 1/2, 2/3 and 1), not a 2×2. A preset is fitted as one patch and split without that step.
 - `edit.transform.splitWarpVertically` Split Warp Vertically (Edit › Transform): {"warp":{…}? (the warp being edited; returned split),"rect":[x0,y0,x1,y1]?,"at":[x,y]? (document point; default = middle of the patch)} — without `warp`, edits the active smart object's warp. A 1×1 custom mesh is divided at the thirds first (the guides drawn on the default grid), so splitWarpCrosswise on an identity custom warp returns a 4×4 mesh (knots at 0, 1/3, 1/2, 2/3 and 1), not a 2×2. A preset is fitted as one patch and split without that step.
@@ -183,47 +201,50 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 
 ## file
 
-- `file.new` New… (File, Cmd+N): {"width":u32=1920,"height":u32=1080,"mode":"rgb|gray|cmyk|lab"="rgb","depth":8|16|32=8,"background":"white|black|backgroundColor|transparent|#rrggbb"="white","resolution":ppi=72,"name":str}
+- `file.new` New… (File, Cmd+N): {"width":1..300000=1920,"height":1..300000=1080 (pixel counts are rounded),"mode":"rgb|gray|grayscale|cmyk|lab"="rgb","depth":8|16|32=8,"background":"white|black|backgroundColor|transparent|#rrggbb"="white","backgroundColor":[r,g,b]? (0..1; defaults to toolbox colour),"resolution":1..30000=72 (ppi),"name":str}
 - `file.close` Close (File, Cmd+W): {"document":index?}
 - `file.newFromClipboard` New from Clipboard (File): {} (a new document the size of the clipboard image, holding it as one layer)
 - `file.closeAll` Close All (File, Cmd+Alt+W): {}
 - `file.closeOthers` Close Others (File, Cmd+Alt+P): {"document":index? (the one to keep; default active)}
+- `file.revealInFinder` Reveal in Finder: {"document":index? (default active),"dryRun":bool=false}
 - `file.revert` Revert (File, F12): {} (reloads the saved file as one undoable step)
-- `file.saveACopy` Save a Copy… (File, Cmd+Alt+S): {"path":str (format from the extension),"quality":0..12? (JPEG),"layers":bool=true,"tiffLayers":bool=false (TIFF: keep the layers; flat by default)}
+- `file.saveACopy` Save a Copy… (File, Cmd+Alt+S): {"path":str (format from the extension),"quality":0..12? (JPEG),"layers":bool=true,"tiffLayers":bool=false (TIFF: keep the layers; flat by default),"tgaBits":24|32? (TGA: 32 writes the alpha channel, or else the transparency, as the alpha; unset, 32 with an alpha channel or transparency, else 24)}
 - `file.openAs` Open As… (File, Cmd+Alt+Shift+O): {"path":str,"as":"psd|png|jpg|tiff|…"? (decode as this format)}
-- `file.placeEmbedded` Place Embedded… (File): {"path":str,"scale":%? (default: fit when larger than the canvas),"fit":bool=true,"center":[x,y]?}
-- `file.placeLinked` Place Linked… (File): {"path":str,"scale":%?,"fit":bool=true,"center":[x,y]?}
-- `file.fileInfo` File Info… (File, Cmd+Alt+Shift+I): {"title":str?,"author":str?,"authorTitle":str?,"description":str?,"keywords":[str]|"a; b"?,"copyright":str?,"copyrightStatus":"unknown|copyrighted|publicDomain"?,"copyrightUrl":str?} (no keys: read)
-- `file.print` Print… (File, Cmd+P): {"printer":name? (default printer),"copies":1..999=1,"paper":"letter|legal|tabloid|a3|a4|a5|4x6|5x7"|[w,h] pt="letter","orientation":"portrait|landscape"="portrait","center":bool=true,"top":in?,"left":in?,"scale":%=100,"scaleToFit":bool=false,"colorHandling":"printerManages|photocraftManages|noColorManagement"="printerManages","printerProfile":profile? (photocraftManages),"intent":"perceptual|relative|saturation|absolute"="relative","bpc":bool=true,"cornerCropMarks":bool,"centerCropMarks":bool,"registrationMarks":bool,"description":bool,"labels":bool,"output":pdf path? (print to PDF; then "send" defaults to false),"send":bool?,"dryRun":bool=false (render the PDF, report the lp command, don't spool)} → {pdf, imageRect, command, sent}
+- `file.placeEmbedded` Place Embedded… (File): {"path":str,"scale":%? (default: fit when larger than the canvas),"fit":bool? (default: Preferences > General > Resize Image During Place),"smartObject":bool? (default: Preferences > General > Always Create Smart Objects When Placing),"center":[x,y]?}
+- `file.placeLinked` Place Linked… (File): {"path":str,"scale":%?,"fit":bool? (default: Preferences > General > Resize Image During Place),"center":[x,y]?}
+- `file.fileInfo` File Info… (File, Cmd+Alt+Shift+I): {"title":str?,"author":str?,"authorTitle":str?,"description":str?,"keywords":[str]|"a; b"?,"copyright":str?,"copyrightStatus":"unknown|copyrighted|publicDomain"?,"copyrightUrl":str?} (no keys: read; the result also has read-only "camera":{"make","model","dateTaken","exposure","fNumber","iso","focalLength","focalLength35mm","lens"}, present keys only)
+- `file.exrParts` EXR Parts Info: {"path":str (the EXR file)}
+- `file.openExrParts` Open EXR Parts… (File): {"path":str (the EXR file),"view":"both|left|right"="both","part/<name>":bool (import this part as a layer),"group/<name>":bool (import this channel group as a layer),"precomp":bool=false (add the additive beauty precomp from the AOVs)}
+- `file.print` Print… (File, Cmd+P): {"printer":name? (default printer),"copies":1..999=1,"paper":"letter|legal|tabloid|a3|a4|a5|4x6|5x7"|[w,h] pt="letter","orientation":"portrait|landscape"="portrait","center":bool=true,"top":in?,"left":in?,"scale":%=100,"scaleToFit":bool=false,"colorHandling":"printerManages|photocraftManages|noColorManagement"="printerManages","printerProfile":profile? (photocraftManages),"intent":"perceptual|relative|saturation|absolute"="relative","bpc":bool=true,"cornerCropMarks":bool,"centerCropMarks":bool,"registrationMarks":bool,"description":bool,"labels":bool,"emulsionDown":bool=false (mirror the page left to right, for sublimation and other transfer printing),"output":pdf path? (print to PDF; then "send" defaults to false),"send":bool?,"dryRun":bool=false (render the PDF, report the lp command, don't spool; no temporary PDF is written)} → {pdf:explicit output path or null, imageRect, command, sent}
 - `file.printOneCopy` Print One Copy (File, Cmd+Alt+Shift+P): {} (the last Print settings, one copy; any Print key overrides)
 - `file.package` Package… (File): {"dir":folder,"format":"pcraft|psd|psb"="pcraft"} → {folder, document, links, missing} (copies the document and its linked files into <dir>/<name>/, relinked to Links/)
 
 ### file.automate
 
-- `file.automate.fitImage` Fit Image… (File › Automate): {"width":px,"height":px,"dontEnlarge":bool=false,"resample":"bicubic|bilinear|nearest|lanczos|preserveDetails"="bicubic"}
+- `file.automate.fitImage` Fit Image… (File › Automate): {"width":px,"height":px,"dontEnlarge":bool=false,"resample":"automatic|preserveDetails|bicubicSmoother|bicubicSharper|bicubicAutomatic|bicubic|nearest|bilinear|lanczos"="bicubic"}
 - `file.automate.conditionalModeChange` Conditional Mode Change… (File › Automate): {"from":["rgb","grayscale","cmyk","lab","indexed","bitmap",…]|"any"="any","to":"rgb|grayscale|cmyk|lab"}
-- `file.automate.batch` Batch… (File › Automate): {"steps":[[commandId,params]|{"command":id,"params":{}}…] (a recorded action),"input":folder|[paths],"output":folder,"format":"same|png|jpg|psd|tiff|…"="same","quality":0..12?,"tiffLayers":bool=false} → {files, errors} (an input whose output name was already written in the run goes to errors)
+- `file.automate.batch` Batch… (File › Automate): {"steps":[[commandId,params]|{"command":id,"params":{}}…] (a recorded action),"input":folder|[paths],"output":folder,"format":"same|png|jpg|psd|tiff|…"="same","quality":0..12?,"tiffLayers":bool=false,"tgaBits":24|32?,"calledActions":[{"name","steps"}…]? (the actions Play Action steps call; default: the session's)} → {files, errors} (an input whose output name was already written in the run goes to errors)
 - `file.automate.photomerge` Photomerge… (File › Automate): {"paths":[str]|folder,"useOpenDocuments":bool=false,"layout":"auto|perspective|cylindrical|spherical|collage|reposition","blend":bool=true,"vignetteRemoval":bool=false,"geometricCorrection":bool=false,"contentAwareFill":bool=false,"focalLength":mm=0 (35 mm equivalent; 0 = EXIF or estimated)} → new document, one masked layer per image
 - `file.automate.mergeToHdrPro` Merge to HDR Pro… (File › Automate): {"paths":[str]|folder,"useOpenDocuments":bool=false,"exposures":[ev]? (default EXIF, else estimated),"align":bool=true,"removeGhosts":bool=false,"ghostBase":int?,"mode":"32|16|8","method":"localAdaptation|exposureGamma|highlightCompression|equalizeHistogram","radius":1..500=7,"strength":0.1..4=0.52,"gamma":0.1..2=1,"exposure":-5..5=0,"detail":-100..300=30,"shadow":-100..100=0,"highlight":-100..100=0,"vibrance":-100..100=0,"saturation":-100..100=20} → new document (32-bit linear, or tone-mapped 16/8-bit)
 - `file.automate.cropAndStraightenPhotos` Crop and Straighten Photos (File › Automate): {} → one new document per photo found on the scan
 - `file.automate.lensCorrection` Lens Correction… (File › Automate): {"input":folder|[files],"output":folder,"format":"same|jpg|png|tif|psd","quality":0..12?, …Filter › Lens Correction params ("profile" defaults to "auto")}
 - `file.automate.contactSheetII` Contact Sheet II… (File › Automate): {"input":folder|[paths],"units":"inches|cm|mm|pixels"="inches","width":8,"height":10,"resolution":ppi=300,"mode":"rgb|gray|cmyk|lab"="rgb","depth":8|16=8,"columns":5,"rows":6,"placeAcrossFirst":bool=true,"autoSpacing":bool=true,"horizontal":units?,"vertical":units?,"rotateForBestFit":bool=false,"caption":bool=true (file name as caption),"font":family?,"fontSize":pt=12,"flatten":bool=false} → {documents, pages, images}
-- `file.automate.createDroplet` Create Droplet… (File › Automate): {"path":str (.pcdroplet),"steps":[[id,params]…] (the action),"name":str?,"output":folder?,"format":"same|png|jpg|…"?,"quality":0..12?,"shim":bool=true on Unix (writes <name>.command calling `photocraft-cli droplet`)} → {path, shim}
+- `file.automate.createDroplet` Create Droplet… (File › Automate): {"path":str (.pcdroplet),"steps":[[id,params]…] (the action),"name":str?,"output":folder?,"format":"same|png|jpg|…"?,"quality":0..12?,"shim":bool=true on Unix (writes <name>.command calling `photocraft-cli droplet`)} → {path, shim} (the actions its Play Action steps call are saved in the droplet)
 - `file.automate.runDroplet` Run Droplet: {"droplet":path,"input":[files or folders],"output":folder? (default: droplet's, else <input folder>/droplet-output)} → {files, errors} (an input whose output name was already written in the run goes to errors)
 
 ### file.export
 
-- `file.export.layersToFiles` Layers to Files… (File › Export): {"dir":folder,"format":"png|jpg|psd|tiff|…"="png","prefix":str=document name,"visibleOnly":bool=true,"quality":0..12?,"tiffLayers":bool=false} → {files}
-- `file.export.colorLookupTables` Color Lookup Tables… (File › Export): {"path":str? (.cube; omit to return the text),"size":2..256=33,"title":str?}
+- `file.export.layersToFiles` Layers to Files… (File › Export): {"dir":folder,"format":"png|jpg|psd|tiff|…"="png","prefix":str=document name,"visibleOnly":bool=true,"quality":0..12?,"tiffLayers":bool=false,"tgaBits":24|32?} → {files}
+- `file.export.colorLookupTables` Color Lookup Tables… (File › Export): {"path":str? (.cube; omit to return the text),"size":2..129=33,"title":str?,"scope":"all|selected"="all","layers":[id,…]?} (selected layer IDs use original document stacking; masks are spatial and omitted)
 - `file.export.layerCompsToFiles` Layer Comps to Files… (File › Export): {"dir":folder,"format":"png|jpg|psd|tiff|…"="png","prefix":str=document name,"selectedOnly":bool=false (only the last applied comp),"comps":[id]?,"quality":0..12?} → {files}
 - `file.export.artboardsToFiles` Artboards to Files… (File › Export): {"dir":folder,"format":"png|jpg|psd|tiff|…"="png","prefix":str=document name ("" = none),"artboards":[id]? (default all),"quality":0..12?} → {files}
 - `file.export.artboardsToPdf` Artboards to PDF… (File › Export): {"path":str (.pdf),"artboards":[id]?,"quality":0..12=10} → {path, pages} (one raster page per board)
-- `file.export.saveForWebLegacy` Save for Web (Legacy)… (File › Export, Cmd+Alt+Shift+S): {"preset":"GIF 128 Dithered|JPEG High|PNG-24|…"?,"format":"gif|png8|png24|jpeg|wbmp"="png24","palette":"perceptual|selective|adaptive|restrictive|exact|systemMac|systemWindows|uniform"="selective","colors":2..256=256,"dither":"none|diffusion|pattern|noise"="diffusion","ditherAmount":0..100=88,"transparency":bool=true,"matte":"#rrggbb|none"="#ffffff","interlaced":bool=false,"webSnap":0..100=0,"quality":0..100=60,"progressive":bool=false,"optimized":bool=true,"embedIcc":bool=false,"metadata":"none|copyright|copyrightAndContact|all"="copyright","convertToSrgb":bool=true,"width"|"height"|"percent"? (image size),"resample":"bicubic|bilinear|nearest"?,"path":file? (whole image),"dir":folder? (one file per slice in images/),"html":bool=false,"slices":"all|user"="all","numbers":[n]?} → no path/dir: {bytes,width,height,colors} estimate; else {files, html, bytes}
-- `file.export.exportPreferences` Export Preferences… (File › Export): {"quickExportFormat":"png|jpg|gif|webp"?,"quickExportLocation":"ask|sameFolder"?,"jpegQuality":1..100?,"metadata":"none|copyright|all"?,"convertToSrgb":bool?} → {values}
+- `file.export.saveForWebLegacy` Save for Web (Legacy)… (File › Export, Cmd+Alt+Shift+S): {"preset":"GIF 128 Dithered|JPEG High|PNG-24|…"?,"format":"gif|png8|png24|jpeg|wbmp"="png24","palette":"perceptual|selective|adaptive|restrictive|exact|systemMac|systemWindows|uniform"="selective","colors":2..256=256,"dither":"none|diffusion|pattern|noise"="diffusion","ditherAmount":0..100=88,"transparency":bool=true,"matte":"#rrggbb|none"="#ffffff","interlaced":bool=false,"webSnap":0..100=0,"quality":0..100=60,"progressive":bool=false,"optimized":bool=true,"embedIcc":bool=false,"metadata":"none|copyright|copyrightAndContact|all"="copyright","convertToSrgb":bool=true,"width"|"height"|"percent"? (image size),"resample":"bicubic|bilinear|nearest"?,"path":file? (whole image),"dir":folder? (one file per slice in images/),"imagesFolder":relative-folder?="images","html":bool=false,"trustedSliceHtml":bool=false (only for trusted documents; emit raw no-image cell HTML),"slices":"all|user"="all","numbers":[n]?} → no path/dir: {bytes,width,height,colors} estimate; else {files, html, bytes}
+- `file.export.exportPreferences` Export Preferences… (File › Export): {"quickExportFormat":"png|jpg|gif|webp"?,"quickExportLocation":"ask|sameFolder"?,"jpegQuality":1..100?,"webpLossless":bool?,"webpQuality":1..100?,"metadata":"none|copyright|all"?,"convertToSrgb":bool?} → {values}
 - `file.export.quickExport` Quick Export: {"path":str? (required unless Export Preferences › Location is "sameFolder" and the document is saved)} → {path, format, bytes}
 - `file.export.pathsToIllustrator` Paths to Illustrator… (File › Export): {"path":str? (.ai; omit to return the text),"paths":"all|work|<path name>"="all"} → {path, paths}
 - `file.export.renderVideo` Render Video… (File › Export): {} → {}
-- `file.export.dataSetsAsFiles` Data Sets as Files… (File › Export): {dir, format?:png, dataSets?[names], naming?:"{name}|{index}|{document}"} → {files,count}: apply each data set and export the flattened document
+- `file.export.dataSetsAsFiles` Data Sets as Files… (File › Export): {dir, format?:png, dataSets?[names], naming?:"{name}|{index}|{document}"} → {files,count}: apply each data set and export the flattened document; colliding filenames are rejected before writing (include {index} to disambiguate)
 
 ### file.generate
 
@@ -239,7 +260,7 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 ### file.scripts
 
 - `file.scripts.deleteAllEmptyLayers` Delete All Empty Layers (File › Scripts): {}
-- `file.scripts.imageProcessor` Image Processor… (File › Scripts): {"input":folder|[paths],"output":folder,"format":"jpg|png|psd|tiff|…"="jpg","quality":0..12=8,"tiffLayers":bool=false,"width":px?,"height":px? (fit, never enlarge),"convertToSrgb":bool=false} → {files, errors} (an input whose output name was already written in the run goes to errors)
+- `file.scripts.imageProcessor` Image Processor… (File › Scripts): {"input":folder|[paths],"output":folder,"format":"jpg|png|psd|tiff|…"="jpg","quality":0..12=8,"tiffLayers":bool=false,"tgaBits":24|32?,"width":px?,"height":px? (fit, never enlarge),"convertToSrgb":bool=false} → {files, errors} (an input whose output name was already written in the run goes to errors)
 - `file.scripts.loadFilesIntoStack` Load Files into Stack… (File › Scripts): {"paths":[str]|folder,"createSmartObject":bool=false} → new document with one layer per file (inside one smart object with createSmartObject)
 - `file.scripts.flattenAllLayerEffects` Flatten All Layer Effects (File › Scripts): {}
 - `file.scripts.flattenAllMasks` Flatten All Masks (File › Scripts): {} (pixel layers; masks on other layer kinds are left)
@@ -251,7 +272,7 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 
 - `filter.lastFilter` Last Filter (Filter, Cmd+Alt+F): {}
 - `filter.filterGallery` Filter Gallery… (Filter): {"effects":json,"foreground":json,"background":json,"list":bool}
-- `filter.convertForSmartFilters` Convert for Smart Filters (Filter): {"layer":id?}
+- `filter.convertForSmartFilters` Convert for Smart Filters (Filter): {"layer":id?} (default: combine selected layers)
 - `filter.lensCorrection` Lens Correction… (Filter, Cmd+Shift+R): {"profile":"none|auto|generic","focalLength":mm=0,"correctDistortion":bool=true,"correctVignette":bool=true,"correctCA":bool=true,"autoScale":bool=false,"distortion":-100..100=0,"redCyan":-100..100=0,"blueYellow":-100..100=0,"vignetteAmount":-100..100=0,"vignetteMidpoint":0..100=50,"vertical":-100..100=0,"horizontal":-100..100=0,"angle":-180..180=0,"scale":50..150=100,"edge":"transparency|edgeExtension|black|white","straighten":[[x,y],[x,y]]?}
 - `filter.adaptiveWideAngle` Adaptive Wide Angle… (Filter, Cmd+Alt+Shift+A): {"model":"auto|fisheye|perspective|fullSpherical","focalLength":0..200=0,"cropFactor":0.1..10=1,"scale":50..150=100,"constraints":[{"a":[x,y],"b":[x,y],"orientation":"free|horizontal|vertical"}]}
 - `filter.cameraRaw` Camera Raw Filter… (Filter, Cmd+Shift+A): {"temperature":-100..100=0,"tint":-100..100=0,"exposure":-5..5=0,"contrast":-100..100=0,"highlights":-100..100=0,"shadows":-100..100=0,"whites":-100..100=0,"blacks":-100..100=0,"texture":-100..100=0,"clarity":-100..100=0,"dehaze":-100..100=0,"vibrance":-100..100=0,"saturation":-100..100=0,"curveHighlights":-100..100=0,"curveLights":-100..100=0,"curveDarks":-100..100=0,"curveShadows":-100..100=0,"curveSplits":[25,50,75],"pointCurve":[[in,out]],"pointCurveRed":[[in,out]],"pointCurveGreen":[[in,out]],"pointCurveBlue":[[in,out]],"hslHue":[8],"hslSat":[8],"hslLum":[8],"gradeShadows":{"hue":deg,"sat":0..100,"lum":-100..100},"gradeMidtones":{},"gradeHighlights":{},"gradeGlobal":{},"gradeBlending":0..100=50,"gradeBalance":-100..100=0,"sharpenAmount":0..150=0,"sharpenRadius":0.5..3=1,"sharpenDetail":0..100=25,"sharpenMasking":0..100=0,"noiseLuminance":0..100=0,"noiseLuminanceDetail":0..100=50,"noiseColor":0..100=0,"noiseColorDetail":0..100=50,"grainAmount":0..100=0,"grainSize":0..100=25,"grainRoughness":0..100=50,"vignetteAmount":-100..100=0,"vignetteMidpoint":0..100=50,"vignetteRoundness":-100..100=0,"vignetteFeather":0..100=50,"vignetteHighlights":0..100=0,"vignetteStyle":"highlightPriority|colorPriority|paintOverlay","seed":u32=0}
@@ -265,7 +286,7 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `filter.blur.blurMore` Blur More (Filter › Blur): {}
 - `filter.blur.boxBlur` Box Blur… (Filter › Blur): {"radius":1..2000=1}
 - `filter.blur.motionBlur` Motion Blur… (Filter › Blur): {"angle":-360..360=0,"distance":1..2000=10}
-- `filter.blur.radialBlur` Radial Blur… (Filter › Blur): {"amount":1..100=10,"method":"spin|zoom","centerX":0..1=0.5,"centerY":0..1=0.5}
+- `filter.blur.radialBlur` Radial Blur… (Filter › Blur): {"amount":1..100=10,"method":"spin|zoom","quality":"draft|good|best"="good","centerX":0..1=0.5,"centerY":0..1=0.5}
 - `filter.blur.surfaceBlur` Surface Blur… (Filter › Blur): {"radius":1..100=5,"threshold":2..255=15}
 - `filter.blur.smartBlur` Smart Blur… (Filter › Blur): {"radius":0.1..100=3,"threshold":0.1..100=25,"quality":"high|medium|low","mode":"normal|edgeOnly|overlayEdge"}
 - `filter.blur.lensBlur` Lens Blur… (Filter › Blur): {"radius":0..100=15,"shape":"hexagon|triangle|square|pentagon|heptagon|octagon","bladeCurvature":0..100=0,"rotation":0..360=0,"depthMap":"none|transparency|layerMask","focalDistance":0..255=0,"invert":bool,"brightness":0..100=0,"threshold":0..255=255,"noise":0..100=0,"distribution":"uniform|gaussian","monochromatic":bool,"seed":u32=0}
@@ -358,6 +379,7 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `filter.other.offset` Offset… (Filter › Other): {"horizontal":px=0,"vertical":px=0,"undefinedAreas":"wrap|repeat|transparent"}
 - `filter.other.custom` Custom… (Filter › Other): {"kernel":int[25],"scale":1..9999=1,"offset":-9999..9999=0}
 - `filter.other.hsbHsl` HSB/HSL (Filter › Other): {"inputMode":"rgb|hsb|hsl","rowOrder":"hsb|hsl|rgb"}
+- `filter.other.colorToAlpha` Color to Alpha… (Filter › Other): {"color":color=#ffffff,"transparencyThreshold":0..1=0,"opacityThreshold":0..1=1}
 
 ### filter.pixelate
 
@@ -415,21 +437,34 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `gradient.presets.importGrd` Import Gradients…: {"path":".grd file"?,"data":base64 bytes?,"group":string?=file name,"replace":bool=true (replace a group of the same name)}
 - `gradient.presets.list` Gradient Presets: {} → {groups:[{name,presets:[{name,stops,transparency}]}],current}
 - `gradient.presets.select` Select Gradient: {"preset":name|"stops":[[t 0..1,"#rrggbb"|"foreground"|"background"],…],"transparency":[[t,opacity 0..100],…]?,"group":name?,"applyToLayer":bool=true (also recolours a selected Gradient Fill layer)} → {current,layer?}. The Gradient tool paints with it.
+- `gradient.presets.stop` Edit Gradient Stop: {"action":"add|move|delete|color|opacity","kind":"color|opacity"="color","index":stop number,"location":0..1,"color":"#rrggbb"|"foreground"|"background" (add: default the colour there),"opacity":0..100} → {"current"}. Edits the Gradient tool's current gradient (no layer, midpoints stay centred).
 - `gradient.presets.apply` New Gradient Fill Layer from Preset: {"preset":name?=current|"stops":[[t 0..1,"#rrggbb"|"foreground"|"background"],…],"transparency":[[t,opacity 0..100],…]?,"angle":deg=90,"style":"linear|radial|angle|reflected|diamond"="linear","scale":10..150=100,"reverse":bool} → {layer}
 - `gradient.presets.new` New Gradient Preset: {"name":str="Custom","group":name?=first,"stops":[[t 0..1,"#rrggbb"|"foreground"|"background"],…],"transparency":[[t,opacity 0..100],…]? (default: the current gradient)}
 - `gradient.presets.edit` Edit Gradient Presets: {"action":"rename|delete|move|newGroup|renameGroup|deleteGroup","preset":name|[names] (rename/delete/move),"group":name? (narrows the lookup; the group for renameGroup/deleteGroup),"name":str (rename: new name; newGroup/renameGroup: group name),"to":group (move),"index":n? (move)}
 - `gradient.presets.reset` Restore Default Gradients: {"append":bool=false}
+
+## history
+
+- `history.undo` Undo: {} (the same action as `edit.undo`)
+- `history.redo` Redo: {} (the same action as `edit.redo`)
+- `history.deleteState` Delete State: {"state":index?} (History entry, 0 = oldest; default the current state) → {states,current}: removes the state and every later one
+- `history.newDocument` New Document from State: {"state":index?,"name":str?} (History entry, 0 = oldest; default the current state) → {document,name}
+- `history.newSnapshot` New Snapshot: {"name":str?="Snapshot N","from":"fullDocument"|"mergedLayers"|"currentLayer"="fullDocument"} → {snapshot,name}: a named copy of the document for the session (not a history state)
+- `history.selectSnapshot` Select Snapshot: {"snapshot":id} → {snapshot,name}: the document returns to the snapshot as a new history state named after it
+- `history.renameSnapshot` Rename Snapshot: {"snapshot":id,"name":str} → {snapshot,name}
+- `history.deleteSnapshot` Delete Snapshot: {"snapshot":id} → {snapshot,snapshots}: the document and its history are unchanged
 
 ## image
 
 - `image.autoTone` Auto Tone (Image, Cmd+Shift+L): {}
 - `image.autoContrast` Auto Contrast (Image, Cmd+Alt+Shift+L): {}
 - `image.autoColor` Auto Color (Image, Cmd+Shift+B): {}
-- `image.imageSize` Image Size… (Image): {"width":px,"height":px,"resolution":ppi,"resample":"bicubic|bilinear|nearest|lanczos|preserveDetails|none"="bicubic"}
+- `image.imageSize` Image Size… (Image): {"width":px,"height":px,"resolution":ppi,"resample":"automatic|preserveDetails|bicubicSmoother|bicubicSharper|bicubicAutomatic|bicubic|nearest|bilinear|lanczos|none"="bicubic"} → {width,height} (the document's size after the command; "none" changes the resolution only)
 - `image.canvasSize` Canvas Size… (Image): {"width":px,"height":px,"relative":bool=false,"anchor":"topLeft|top|topRight|left|center|right|bottomLeft|bottom|bottomRight"="center","extensionColor":"background|foreground|white|black|transparent|#rrggbb"="background"}
-- `image.crop` Crop (Image): {"x":px,"y":px,"width":px,"height":px,"deleteCroppedPixels":bool=true}
+- `image.crop` Crop (Image): {"x":px,"y":px,"width":px,"height":px,"angle":-3600..3600=0,"deleteCroppedPixels":bool=true,"targetWidth":px,"targetHeight":px,"resolution":ppi,"resample":"bicubic|bilinear|nearest|lanczos|preserveDetails"="bicubic"} → {x,y,width,height,documentWidth,documentHeight,resolution} (targetWidth/targetHeight, both or neither: the cropped area is resampled to exactly that size, as Image Size, in the same undo step; resolution: the document's new ppi)
 - `image.trim` Trim… (Image): {"basedOn":"transparent|topLeft|bottomRight"="transparent","top":bool=true,"bottom":bool=true,"left":bool=true,"right":bool=true}
 - `image.duplicate` Duplicate… (Image): {"name":str,"mergedOnly":bool=false}
+- `image.perspectiveCrop` Perspective Crop: {"corners":[[x,y],[x,y],[x,y],[x,y]] (top-left, top-right, bottom-right, bottom-left; a convex quad, document px),"width":px,"height":px,"resolution":ppi,"interpolation":"bicubic|bilinear|nearest"="bicubic"} → {width,height,resolution,corners} (the quad is mapped onto an upright width x height canvas, all layers, one undo step; no width/height: the quad's mean side lengths, one alone keeps its proportions; type, shape, fill and smart object layers are rasterized)
 - `image.revealAll` Reveal All (Image): {}
 - `image.applyImage` Apply Image… (Image): {"source":{"document":index?,"layer":id|"merged"="merged","channel":"composite"|"red|…"|index|"selection"|"transparency"|"mask"="composite","invert":bool=false},"blending":"normal|multiply|screen|overlay|softLight|hardLight|colorDodge|colorBurn|darken|lighten|difference|exclusion|linearBurn|linearDodge|add|subtract|…"="multiply","opacity":0..100=100,"scale":1..2=1,"offset":-255..255=0,"preserveTransparency":bool=false,"mask":{"document","layer","channel","invert"}?,"sourceChannel|sourceDocument|sourceLayer|sourceInvert|maskChannel|…":flat form of source/mask?}
 - `image.calculations` Calculations… (Image): {"source1":{"document","layer","channel","invert"},"source2":{…},"blending":"multiply|…"="multiply","opacity":0..100=100,"scale":1..2=1,"offset":-255..255=0,"mask":{…}?,"result":"newChannel|newDocument|selection"="newChannel","name":str?}
@@ -440,8 +475,8 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 
 - `image.adjustments.desaturate` Desaturate (Image › Adjustments, Cmd+Shift+U): {}
 - `image.adjustments.brightnessContrast` Brightness/Contrast… (Image › Adjustments): {"brightness":-150..150=0,"contrast":-50..100=0,"legacy":bool=false}
-- `image.adjustments.levels` Levels… (Image › Adjustments, Cmd+L): {"inBlack":0..253=0,"gamma":0.01..9.99=1,"inWhite":2..255=255,"outBlack":0..255=0,"outWhite":0..255=255,"red":json,"green":json,"blue":json} (top level = composite; per channel {"inBlack","gamma","inWhite","outBlack","outWhite"} under red/green/blue, gray, cyan/magenta/yellow/black or lightness/a/b)
-- `image.adjustments.curves` Curves… (Image › Adjustments, Cmd+M): {"points":json,"red":json,"green":json,"blue":json} (curves as [[in,out],…] in 0..255, 2..19 points: points = composite; red/green/blue, gray, cyan/magenta/yellow/black or lightness/a/b per channel)
+- `image.adjustments.levels` Levels… (Image › Adjustments, Cmd+L): {"inBlack":0..253=0,"gamma":0.01..9.99=1,"inWhite":2..255=255,"outBlack":0..255=0,"outWhite":0..255=255,"red":json,"green":json,"blue":json,"eyedropper":json} (top level = composite; per channel {"inBlack","gamma","inWhite","outBlack","outWhite"} under red/green/blue, gray, cyan/magenta/yellow/black or lightness/a/b; eyedropper = the dialog's Set Black/Neutral Gray/White Point picker {"point":"black|gray|white","at":[x,y],"size":1..101=1} or {"point",…,"color":[r,g,b] 0..1}: black/white set each channel's input black/white to the sample, gray each channel's gamma so the sample turns neutral at its luma; RGB and Grayscale (no gray) only, applied over the given levels)
+- `image.adjustments.curves` Curves… (Image › Adjustments, Cmd+M): {"points":json,"red":json,"green":json,"blue":json,"pencil":bool=false,"smooth":0..10=0,"eyedropper":json} (curves as [[in,out],…] in 0..255, 2..19 points: points = composite; red/green/blue, gray, cyan/magenta/yellow/black or lightness/a/b per channel; pencil = drawn curves (Draw to modify the curve): each curve is 256 output levels in 0..255 (point curves given are drawn in, and turning pencil off fits points to the drawing); smooth = Smooth passes over the drawn curves; eyedropper = the dialog's Set Black/Neutral Gray/White Point picker {"point":"black|gray|white","at":[x,y],"size":1..101=1} or {"point",…,"color":[r,g,b] 0..1}, RGB and Grayscale (no gray) only, applied over the given curves)
 - `image.adjustments.exposure` Exposure… (Image › Adjustments): {"exposure":-20..20=0,"offset":-0.5..0.5=0,"gamma":0.01..9.99=1}
 - `image.adjustments.vibrance` Vibrance… (Image › Adjustments): {"vibrance":-100..100=0,"saturation":-100..100=0}
 - `image.adjustments.hueSaturation` Hue/Saturation… (Image › Adjustments, Cmd+U): {"hue":-180..180=0,"saturation":-100..100=0,"lightness":-100..100=0,"colorize":bool=false,"reds":json,"yellows":json,"greens":json,"cyans":json,"blues":json,"magentas":json} (per range {"hue","saturation","lightness","range":[4 hue degrees]}; colorize: hue 0..360, saturation 0..100)
@@ -513,36 +548,40 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 ## layer
 
 - `layer.groupLayers` Group Layers (Layer, Cmd+G): {"layer":id?,"name":str?} (no layer: every selected layer)
-- `layer.duplicate` Duplicate Layer… (Layer): {"layer":id?} (no layer: every selected layer)
+- `layer.duplicate` Duplicate Layer… (Layer): {"layer":id?,"inPlace":bool=false (artboards: keep the copy on the original instead of beside it),"name":str? (one layer: the copy's name)} (no layer: every selected layer)
 - `layer.delete` Delete Layer (Layer › Delete): {"layer":id?} (no layer: every selected layer)
 - `layer.select` Select Layer: {"layer":id,"mode":"replace|toggle|range|add"="replace"} (toggle = ⌘-click, range = ⇧-click)
 - `layer.setProps` Layer Properties: {"layer":id?,"name":str?,"visible":bool?,"opacity":0..1?,"fill":0..1?,"blend":"Multiply|…"?,"clipped":bool?,"locked":bool?,"locks":{"transparency","pixels","position","artboard","all":bool}?,"channels":[bool,…]? (Advanced Blending: which colour channels blend, R G B / C M Y K / L a b)}
-- `layer.createClippingMask` Create Clipping Mask (Layer, Cmd+Alt+G): {"layer":id?}
-- `layer.releaseClippingMask` Release Clipping Mask (Layer): {"layer":id?}
+- `layer.createClippingMask` Create Clipping Mask (Layer, Cmd+Alt+G): {"layer":id?} (no layer: every selected layer but the lowest clips to the layer below it)
+- `layer.releaseClippingMask` Release Clipping Mask (Layer): {"layer":id?} (no layer: every selected layer)
 - `layer.mergeDown` Merge Down (Layer): {"layer":id?}
+- `layer.mergeGroup` Merge Group (Layer): {"layer":id?}
 - `layer.flattenImage` Flatten Image (Layer): {}
-- `layer.setAdjustment` Adjustment Properties: {"layer":id?, …params of that adjustment kind}
-- `layer.moveTo` Reorder Layer: {"layer":id?,"target":id,"position":"above|below|into"="above"}
-- `layer.translate` Move Layer: {"layer":id?,"dx":i32,"dy":i32} (no layer: every selected layer; linked layers follow)
+- `layer.setAdjustment` Adjustment Properties: {"layer":id?, …params of that adjustment kind} (Levels, Curves: "eyedropper":{"point":"black|gray|white","at":[x,y],"size":1..101=1} or {"point",…,"color":[r,g,b] 0..1} = the Properties panel's Set Black/Neutral Gray/White Point, sampling the image below the layer, RGB and Grayscale (no gray) only)
+- `layer.moveTo` Reorder Layer: {"layer":id?| "layers":[id,…]?, "target":id,"position":"above|below|into"="above","copy":bool=false} (layers: one undoable move, document order preserved; copy: place duplicates there and leave the layers, as ⌥-dragging a Layers panel row)
+- `layer.translate` Move Layer: {"layer":id?,"dx":i32,"dy":i32,"target":"pixels"|"mask"="pixels"} (no layer: every selected layer; linked layers follow; target mask: a layer whose mask is unlinked moves that mask alone, a linked mask moves with the layer)
 - `layer.removeBackground` Remove Background: {"layer":id?,"sampleAllLayers":bool=false,"refine":bool=true} → {layer,bounds} (adds a layer mask from Select Subject; the Background becomes a normal layer)
 - `layer.mergeVisible` Merge Visible (Layer, Cmd+Shift+E): {}
 - `layer.ungroupLayers` Ungroup Layers (Layer, Cmd+Shift+G): {"layer":id?}
-- `layer.hideLayers` Hide Layers (Layer, Cmd+,): {"layer":id?}
+- `layer.hideLayers` Hide Layers (Layer, Cmd+,): {"layer":id?} (shows them instead when every targeted layer is already hidden, so ⌘, toggles)
 - `layer.showLayers` Show Layers: {"layer":id?}
+- `layer.toggleLockTransparency` Lock Transparent Pixels (/): {"layer":id?} (toggles; several layers selected: locks them all unless every one is locked)
 - `layer.showOnly` Show Only This Layer: {"layer":id?} → {shownAlone} (⌥-click a layer's eye; again restores the other layers' visibility)
 - `layer.selectLinkedLayers` Select Linked Layers (Layer): {}
 - `layer.linkLayers` Link Layers (Layer): {} (toggles: unlinks when the selection is already one link group)
 - `layer.mergeLayers` Merge Layers (Layer, Cmd+E): {} (one layer selected: Merge Down)
 - `layer.lockLayers` Lock Layers… (Layer): {"transparency":bool?,"pixels":bool?,"position":bool?,"artboard":bool?,"all":bool?} (none given: toggle lock all)
 - `layer.renameLayer` Rename Layer (Layer): {"layer":id?,"name":str}
-- `layer.copyToDocument` Copy Layers to Document: {"document":index (destination),"layers":[id,…]?=the source's selected layers,"source":index?=active,"center":bool=false (centre on the destination's canvas),"at":[x,y]? (centre the copies on this point),"offset":[dx,dy]?=[0,0] (from their place in the source)}
+- `layer.copyToDocument` Copy Layers to Document: {"document":index (destination),"layers":[id,…]?=the source's selected layers,"source":index?=active,"center":bool=false (centre on the destination's canvas),"at":[x,y]? (centre the copies on this point),"offset":[dx,dy]?=[0,0] (from their place in the source),"name":str? (one layer: the copy's name)}
 - `layer.stampVisible` Stamp Visible (Cmd+Alt+Shift+E): {} → {layer} (every visible layer merged into a new layer above the active one; the originals stay)
 - `layer.stampDown` Stamp Down (Cmd+Alt+E): {} → {layer} (a copy of the active layer merged into the pixel layer below; several selected: into a new layer above them)
 - `layer.maskAllObjects` Mask All Objects (Layer): {"layer":id?}
 - `layer.layerContentOptions` Layer Content Options… (Layer): {}
 - `layer.quickExportAsPng` Quick Export as PNG (Layer): {"layer":id?,"path":text}
 - `layer.exportAs` Export As… (Layer): {"layer":id?,"path":text,"scale":1..1000=100} (format from the path's extension)
+- `layer.setLabelColor` Layer Color: {"color":"none|red|orange|yellow|green|seafoam|blue|indigo|magenta|fuchsia|violet|gray","layer":id?} (no layer: selected layers; groups include descendants)
 - `layer.newLayerBasedSlice` New Layer Based Slice (Layer): {"layer":id?,"name":str?,"url":str?,"alt":str?} (follows the layer's bounds with effects) → {slice, rect}
+- `layer.selectInRect` Select Layers in Marquee: {"x":px,"y":px,"width":px,"height":px,"target":"layer|group"="layer","mode":"replace|add"="replace"} → {layers} (the layers whose content touches the rect, topmost first; none leaves the selection as it is)
 - `layer.pickAt` Auto-Select Layer: {"x":px,"y":px,"target":"layer|group"="layer","select":bool=true,"mode":"replace|toggle|add"="replace","list":bool=false (return every layer with pixels there, topmost first)} → {layer} | {layers}
 - `layer.selectAbove` Select Layer Above (Alt+]): {} (follows the Layers panel's rows; collapsed groups are one row)
 - `layer.selectBelow` Select Layer Below (Alt+[): {} (follows the Layers panel's rows; collapsed groups are one row)
@@ -552,6 +591,8 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `layer.addBelowToSelection` Add Layer Below to Selection (Alt+Shift+[): {} (follows the Layers panel's rows; collapsed groups are one row)
 - `layer.setExpanded` Expand/Collapse Group: {"layer":id?,"expanded":bool?,"all":bool?} (no expanded: toggle; all: every group; not an undo step)
 - `layer.setEffectsExpanded` Expand/Collapse Effects: {"layer":id?,"expanded":bool?,"all":bool?} (no expanded: toggle; all: every layer with effects; view state, not an undo step)
+- `layer.setEffectsVisible` Show/Hide Effects: {"layer":id?,"index":n?,"visible":bool?} (no index: all of the layer's effects, the "Effects" row; index: the effect at that position in the layer's list; no visible: toggle)
+- `layer.toggleMaskOverlay` Toggle Layer Mask Overlay (\): {"layer":id?} (shows or hides the active layer's mask as a 50% red rubylith over the composite, the `\` key; view state, not an undo step; painting while shown paints the mask)
 
 ### layer.align
 
@@ -573,14 +614,15 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 ### layer.artboard
 
 - `layer.artboard.set` Edit Artboard: {"layer":id? (default: the active artboard),"x","y","width","height"?|"rect":[x,y,w,h]?,"preset":str?,"background":"white|black|transparent|custom"?,"color":…?,"name":str?,"moveContents":bool=true} → {layer, rect}
+- `layer.artboard.addBeside` Add Artboard Beside: {"layer":id? (default: the active artboard),"side":"left|right|top|bottom"="right","duplicate":bool=false (copy the board with its contents instead of an empty one)} → {layer, rect} (the Artboard tool's "+" buttons: same size, a 100 px gap away, past any board in the way)
 
 ### layer.combineShapes
 
-- `layer.combineShapes.unite` Unite Shapes: {"layer":id?,"subpath":index? (default all but the first)}
-- `layer.combineShapes.subtractFrontShape` Subtract Front Shape: {"layer":id?,"subpath":index?}
-- `layer.combineShapes.intersectShapeAreas` Intersect Shape Areas: {"layer":id?,"subpath":index?}
-- `layer.combineShapes.excludeOverlappingShapes` Exclude Overlapping Shapes: {"layer":id?,"subpath":index?}
-- `layer.combineShapes.mergeShapeComponents` Merge Shape Components: {"layer":id?,"tolerance":px=0.1} (bakes the path operations into plain combined outlines, traced from the exact coverage)
+- `layer.combineShapes.unite` Unite Shapes: {"layer":id?,"subpath":index? (default all but the first)} (no layer/subpath and two or more shape layers selected: merges them into the top-most, whose components above the bottom layer's take the operation)
+- `layer.combineShapes.subtractFrontShape` Subtract Front Shape: {"layer":id?,"subpath":index? (default all but the first)} (no layer/subpath and two or more shape layers selected: merges them into the top-most, whose components above the bottom layer's take the operation)
+- `layer.combineShapes.intersectShapeAreas` Intersect Shape Areas: {"layer":id?,"subpath":index? (default all but the first)} (no layer/subpath and two or more shape layers selected: merges them into the top-most, whose components above the bottom layer's take the operation)
+- `layer.combineShapes.excludeOverlappingShapes` Exclude Overlapping Shapes: {"layer":id?,"subpath":index? (default all but the first)} (no layer/subpath and two or more shape layers selected: merges them into the top-most, whose components above the bottom layer's take the operation)
+- `layer.combineShapes.mergeShapeComponents` Merge Shape Components: {"layer":id?,"tolerance":px=0.1} (bakes the path operations into plain combined outlines, traced from the exact coverage; no layer and several shape layers selected: merges them into the top-most first)
 
 ### layer.delete
 
@@ -597,42 +639,49 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `layer.distribute.horizontally` Horizontally (Layer › Distribute): {} (equal horizontal gaps)
 - `layer.distribute.vertically` Vertically (Layer › Distribute): {} (equal vertical gaps)
 
+### layer.fill
+
+- `layer.fill.solidColor.set` Solid Color…: {"layer":id? (default active),"document":id? (reject a stale dialog),"color":"#rrggbb"|"#rrggbbaa"|[r,g,b,a?]|{mode,c:[f32;4],alpha:f32}}; RGB values without alpha preserve it; stored Color preserves its model and precision
+- `layer.fill.pattern.set` Pattern Fill…: {"layer":id? (default active; a Pattern Fill layer),"document":id? (reject a stale dialog),"pattern":id|name?,"scale":1..1000?,"angle":-180..180?,"link":bool?,"phase":[x,y]? (Snap to Origin: [0,0])}; omitted values keep the layer's
+
 ### layer.layerMask
 
-- `layer.layerMask.revealAll` Reveal All (Layer › Layer Mask): {"layer":id?}
-- `layer.layerMask.hideAll` Hide All (Layer › Layer Mask): {"layer":id?}
-- `layer.layerMask.revealSelection` Reveal Selection (Layer › Layer Mask): {"layer":id?}
+- `layer.layerMask.revealAll` Reveal All (Layer › Layer Mask): {"layer":id?} (no layer: every selected layer that can take a mask)
+- `layer.layerMask.hideAll` Hide All (Layer › Layer Mask): {"layer":id?} (no layer: every selected layer that can take a mask)
+- `layer.layerMask.revealSelection` Reveal Selection (Layer › Layer Mask): {"layer":id?} (no layer: every selected layer that can take a mask)
 - `layer.layerMask.delete` Delete (Layer › Layer Mask): {"layer":id?}
 - `layer.layerMask.enabled` Disable Layer Mask (Layer › Layer Mask): {"layer":id?,"enabled":bool? (default: toggle)}
 - `layer.layerMask.linked` Unlink Layer Mask (Layer › Layer Mask): {"layer":id?,"linked":bool? (default: toggle)}
 - `layer.layerMask.apply` Apply (Layer › Layer Mask): {"layer":id?}
 - `layer.layerMask.fromTransparency` From Transparency (Layer › Layer Mask): {"layer":id?}
-- `layer.layerMask.hideSelection` Hide Selection (Layer › Layer Mask): {"layer":id?}
+- `layer.layerMask.hideSelection` Hide Selection (Layer › Layer Mask): {"layer":id?} (no layer: every selected layer that can take a mask)
+- `layer.layerMask.edit` Edit Layer Mask: {"layer":id? (default active),"document":id? (reject a stale dialog),"density":0..100?,"feather":0..1000? (pixels)} → {layer,density,feather}; at least one property required; mask pixels are preserved
 
 ### layer.layerStyle
 
-- `layer.layerStyle.dropShadow` Drop Shadow… (Layer › Layer Style): {"color":"#rrggbb","opacity":0..100=75,"blend":str="multiply","angle":deg=120,"useGlobalLight":bool,"distance":px=5,"spread":0..100,"size":px=5,"contour":"Linear|Cone|Cone (Inverted)|Domed|Domed (Inverted)|Diagonal (Descending)"="Linear","noise":0..100,"knocksOut":bool,"add":bool,"layer":id}
-- `layer.layerStyle.innerShadow` Inner Shadow… (Layer › Layer Style): {"color":"#rrggbb","opacity":0..100=75,"blend":str,"angle":deg,"distance":px,"choke":0..100,"size":px,"contour":name,"noise":0..100,"add":bool}
-- `layer.layerStyle.outerGlow` Outer Glow… (Layer › Layer Style): {"color":"#rrggbb","opacity":0..100=75,"blend":str="screen","technique":"softer|precise","spread":0..100,"size":px,"range":0..100,"contour":name,"noise":0..100,"add":bool}
-- `layer.layerStyle.innerGlow` Inner Glow… (Layer › Layer Style): {"color":"#rrggbb","opacity":0..100=75,"blend":str="screen","technique":"softer|precise","source":"edge|center","choke":0..100,"size":px,"contour":name,"noise":0..100,"add":bool}
+- `layer.layerStyle.dropShadow` Drop Shadow… (Layer › Layer Style): {"color":"#rrggbb","opacity":0..100=75,"blend":str="multiply","angle":deg=120,"useGlobalLight":bool,"distance":px=5,"spread":0..100,"size":px=5,"contour":"Linear|Cone|Cone - Inverted|Cove - Deep|Cove - Shallow|Gaussian|Half Round|Ring|Ring - Double|Rolling Slope - Descending|Rounded Steps|Sawtooth 1"|{"name":str,"points":[[in 0..1,out 0..1],…],"corners":[bool,…]}="Linear","antiAlias":bool,"noise":0..100,"knocksOut":bool,"add":bool,"layer":id}
+- `layer.layerStyle.innerShadow` Inner Shadow… (Layer › Layer Style): {"color":"#rrggbb","opacity":0..100=75,"blend":str,"angle":deg,"distance":px,"choke":0..100,"size":px,"contour":name|curve,"antiAlias":bool,"noise":0..100,"add":bool}
+- `layer.layerStyle.outerGlow` Outer Glow… (Layer › Layer Style): {"color":"#rrggbb","opacity":0..100=75,"blend":str="screen","technique":"softer|precise","spread":0..100,"size":px,"range":0..100,"contour":name|curve,"antiAlias":bool,"noise":0..100,"add":bool}
+- `layer.layerStyle.innerGlow` Inner Glow… (Layer › Layer Style): {"color":"#rrggbb","opacity":0..100=75,"blend":str="screen","technique":"softer|precise","source":"edge|center","choke":0..100,"size":px,"contour":name|curve,"antiAlias":bool,"noise":0..100,"add":bool}
 - `layer.layerStyle.stroke` Stroke… (Layer › Layer Style): {"size":px=3,"position":"outside|inside|center","color":"#rrggbb","from":"#rrggbb","to":"#rrggbb","style":str,"angle":deg,"opacity":0..100,"blend":str,"add":bool}
 - `layer.layerStyle.colorOverlay` Color Overlay… (Layer › Layer Style): {"color":"#rrggbb","opacity":0..100=100,"blend":str,"add":bool}
 - `layer.layerStyle.gradientOverlay` Gradient Overlay… (Layer › Layer Style): {"from":"#rrggbb","to":"#rrggbb","style":"linear|radial|angle|reflected|diamond","angle":deg=90,"scale":10..150=100,"reverse":bool,"opacity":0..100,"blend":str,"add":bool}
 - `layer.layerStyle.patternOverlay` Pattern Overlay… (Layer › Layer Style): {"pattern":id|name?=first library pattern,"opacity":0..100=100,"blend":str,"scale":1..1000=100,"angle":deg=0,"link":bool=true,"phaseX":px,"phaseY":px,"add":bool}
-- `layer.layerStyle.bevelEmboss` Bevel & Emboss… (Layer › Layer Style): {"style":"inner|outer|emboss|pillow|stroke","technique":"smooth|chiselHard|chiselSoft","contour":bool,"contourRange":1..100=50,"texture":pattern id|name?,"textureScale":1..1000=100,"textureDepth":-1000..1000=100,"textureInvert":bool,"textureLink":bool=true,"depth":1..1000=100,"direction":"up|down","size":px=5,"soften":px,"angle":deg,"altitude":deg,"add":bool}
-- `layer.layerStyle.satin` Satin… (Layer › Layer Style): {"color":"#rrggbb","opacity":0..100=50,"blend":str,"angle":deg,"distance":px,"size":px,"invert":bool,"add":bool}
+- `layer.layerStyle.bevelEmboss` Bevel & Emboss… (Layer › Layer Style): {"style":"inner|outer|emboss|pillow|stroke","technique":"smooth|chiselHard|chiselSoft","contour":bool,"contourName":name|curve,"contourRange":1..100=50,"contourAntiAlias":bool,"glossContour":name|curve,"texture":pattern id|name?,"textureScale":1..1000=100,"textureDepth":-1000..1000=100,"textureInvert":bool,"textureLink":bool=true,"depth":1..1000=100,"direction":"up|down","size":px=5,"soften":px,"angle":deg,"altitude":deg,"add":bool}
+- `layer.layerStyle.satin` Satin… (Layer › Layer Style): {"color":"#rrggbb","opacity":0..100=50,"blend":str,"angle":deg,"distance":px,"size":px,"contour":name|curve,"antiAlias":bool=true,"invert":bool,"add":bool}
 - `layer.layerStyle.replace` Edit Layer Style: {"layer":id,"effects":[{"kind":"dropShadow|innerShadow|outerGlow|innerGlow|stroke|colorOverlay|gradientOverlay|patternOverlay|satin|bevelEmboss","params":{…layer.layerStyle.<kind> params…},"fx":<effect snapshot carried through the Layer Style dialog, optional>}]} (replaces the layer's whole effect list; an entry with `fx` edits that effect with the params present, one without builds from params)
 - `layer.layerStyle.makeDefault` Make Layer Style Default: {"kind":"stroke|dropShadow|innerShadow|outerGlow|innerGlow|colorOverlay|gradientOverlay|patternOverlay|satin|bevelEmboss","params":{…param set…}} (stores the user default the Layer Style dialog's Reset to Default restores)
 - `layer.layerStyle.defaultFor` Layer Style Default: {"kind":str} → {"params":{…},"user":bool} (the saved user default, else the factory defaults)
-- `layer.layerStyle.clear` Clear Layer Style (Layer › Layer Style): {"layer":id}
+- `layer.layerStyle.clear` Clear Layer Style (Layer › Layer Style): {"layer":id? (no layer: every selected layer that has a style),"effect":index? (only that effect of "layer", as an effect row dropped on the Layers panel's Delete button)}
 - `layer.layerStyle.copyLayerStyle` Copy Layer Style (Layer › Layer Style): {"layer":id?}
-- `layer.layerStyle.pasteLayerStyle` Paste Layer Style (Layer › Layer Style): {"layer":id?}
+- `layer.layerStyle.pasteLayerStyle` Paste Layer Style (Layer › Layer Style): {"layer":id?} (no layer: every selected layer but the Background)
 - `layer.layerStyle.hideAllEffects` Hide All Effects (Layer › Layer Style): {}
 - `layer.layerStyle.showAllEffects` Show All Effects: {}
-- `layer.layerStyle.blendingOptions` Blending Options… (Layer › Layer Style): {"layer":id?,"blend":"normal|multiply|…"?,"opacity":0..100?,"fillOpacity":0..100?,"blendIf":{"channel":"gray|red|green|blue|cyan|…"|index="gray","thisLayer":[black,white]|[blackLo,blackHi,whiteLo,whiteHi]?,"underlying":[…]?}|[{…},…]|null?} (Blend If values 0..255; split points fade; null resets)
+- `layer.layerStyle.blendingOptions` Blending Options… (Layer › Layer Style): {"layer":id?,"blend":"normal|multiply|…"?,"opacity":0..100?,"fillOpacity":0..100?,"blendIf":{"channel":"gray|red|green|blue|cyan|…"|index="gray","thisLayer":[black,white]|[blackLo,blackHi,whiteLo,whiteHi]?,"underlying":[…]?}|[{…},…]|null?,"channels":[bool,…]?,"knockout":"none|shallow|deep"?,"blendInteriorEffectsAsGroup":bool?,"blendClippedLayersAsGroup":bool?,"transparencyShapesLayer":bool?,"layerMaskHidesEffects":bool?,"vectorMaskHidesEffects":bool?} (Blend If values 0..255; split points fade; null resets. Advanced Blending: channels = which colour channels blend (R G B / C M Y K / L a b); PhotoCraft's defaults are knockout none, interior effects off, clipped layers as group on, transparency shapes on, masks hide effects off)
 - `layer.layerStyle.globalLight` Global Light… (Layer › Layer Style): {"angle":-180..180=120,"altitude":0..90=30}
 - `layer.layerStyle.createLayer` Create Layer (Layer › Layer Style): {"layer":id?}
 - `layer.layerStyle.scaleEffects` Scale Effects… (Layer › Layer Style): {"scale":1..1000=100}
+- `layer.layerStyle.transferEffects` Move Layer Effects: {"from":id,"to":id,"effect":index? (default: all effects),"copy":bool=false}
 
 ### layer.matting
 
@@ -643,52 +692,55 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 
 ### layer.new
 
-- `layer.new.layer` Layer… (Layer › New, Cmd+Shift+N): {"name":str?}
+- `layer.new.layer` Layer… (Layer › New, Cmd+Shift+N): {"name":str?,"clipToPrevious":bool=false (Use Previous Layer to Create Clipping Mask; inside a clip group the layer joins it anyway),"color":"none|red|orange|yellow|green|seafoam|blue|indigo|magenta|fuchsia|violet|gray"="none","mode":"Normal|Multiply|…"="Normal","opacity":0..1=1,"fillNeutral":bool=false (fill with the mode's neutral color: modes without one are an error)}
 - `layer.new.group` Group… (Layer › New): {"name":str?}
 - `layer.new.layerViaCopy` Layer via Copy (Layer › New, Cmd+J): {}
 - `layer.new.layerViaCut` Layer via Cut (Layer › New, Cmd+Shift+J): {}
 - `layer.new.layerFromBackground` Layer From Background… (Layer › New): {}
+- `layer.new.backgroundFromLayer` Background From Layer (Layer › New): {"layer":id?} (the active layer by default; transparent pixels take the background colour and the layer drops to the bottom as the locked Background)
 - `layer.new.groupFromLayers` Group from Layers… (Layer › New): {"name":str?}
 - `layer.new.artboard` Artboard… (Layer › New): {"rect":[x,y,w,h]? | "x","y","width","height"? (default: canvas size, right of the last board),"preset":"iPhone 14|Web 1920|A4|…"?,"name":str?,"background":"white|black|transparent|custom"="white","color":[r,g,b]|"#rrggbb"? (custom)} → {layer, rect}
 - `layer.new.artboardFromGroup` Artboard from Group… (Layer › New): {"layer":id? (a top-level group; default active),"background":…?} → {layer, rect}
 - `layer.new.artboardFromLayers` Artboard from Layers… (Layer › New): {"name":str?,"background":…?} (the selected layers) → {layer, rect}
+- `layer.new.frame` New Frame: {"x":i32,"y":i32,"width":u32,"height":u32,"shape":"rectangle|ellipse"="rectangle","layer":id?,"name":str?} → {layer, frame:[x,y,w,h], shape}: Frame tool; a group clipped to the shape, holding pixel layer `layer` if given
 - `layer.new.frameFromLayers` Frame from Layers (Layer › New): {"name":str?} → {layer, frame:[x,y,w,h]}: groups the selected layers and clips them to a frame rect
 
 ### layer.newAdjustmentLayer
 
-- `layer.newAdjustmentLayer.brightnessContrast` Brightness/Contrast… (Layer › New Adjustment Layer): {"brightness":-150..150=0,"contrast":-50..100=0,"legacy":bool=false}
-- `layer.newAdjustmentLayer.levels` Levels… (Layer › New Adjustment Layer): {"inBlack":0..253=0,"gamma":0.01..9.99=1,"inWhite":2..255=255,"outBlack":0..255=0,"outWhite":0..255=255,"red":json,"green":json,"blue":json} (top level = composite; per channel {"inBlack","gamma","inWhite","outBlack","outWhite"} under red/green/blue, gray, cyan/magenta/yellow/black or lightness/a/b)
-- `layer.newAdjustmentLayer.curves` Curves… (Layer › New Adjustment Layer): {"points":json,"red":json,"green":json,"blue":json} (curves as [[in,out],…] in 0..255, 2..19 points: points = composite; red/green/blue, gray, cyan/magenta/yellow/black or lightness/a/b per channel)
-- `layer.newAdjustmentLayer.exposure` Exposure… (Layer › New Adjustment Layer): {"exposure":-20..20=0,"offset":-0.5..0.5=0,"gamma":0.01..9.99=1}
-- `layer.newAdjustmentLayer.vibrance` Vibrance… (Layer › New Adjustment Layer): {"vibrance":-100..100=0,"saturation":-100..100=0}
-- `layer.newAdjustmentLayer.hueSaturation` Hue/Saturation… (Layer › New Adjustment Layer): {"hue":-180..180=0,"saturation":-100..100=0,"lightness":-100..100=0,"colorize":bool=false,"reds":json,"yellows":json,"greens":json,"cyans":json,"blues":json,"magentas":json} (per range {"hue","saturation","lightness","range":[4 hue degrees]}; colorize: hue 0..360, saturation 0..100)
-- `layer.newAdjustmentLayer.colorBalance` Color Balance… (Layer › New Adjustment Layer): {"shadows":json,"midtones":json,"highlights":json,"preserveLuminosity":bool=true} (each tone [cyan-red, magenta-green, yellow-blue] in -100..100)
-- `layer.newAdjustmentLayer.blackWhite` Black & White… (Layer › New Adjustment Layer): {"reds":-200..300=40,"yellows":-200..300=60,"greens":-200..300=40,"cyans":-200..300=60,"blues":-200..300=20,"magentas":-200..300=80,"tint":bool=false,"tintColor":"#rrggbb"}
-- `layer.newAdjustmentLayer.photoFilter` Photo Filter… (Layer › New Adjustment Layer): {"filter":"warming85|warmingLBA|warming81|cooling80|coolingLBB|cooling82|red|orange|yellow|green|cyan|blue|violet|magenta|sepia|deepRed|deepBlue|deepEmerald|deepYellow|underwater","color":"#rrggbb","density":0..100=25,"preserveLuminosity":bool=true}
-- `layer.newAdjustmentLayer.channelMixer` Channel Mixer… (Layer › New Adjustment Layer): {"red":json,"green":json,"blue":json,"gray":json,"monochrome":bool=false} (per output channel [red %, green %, blue %, constant %] in -200..200; gray = the monochrome mix)
-- `layer.newAdjustmentLayer.invert` Invert (Layer › New Adjustment Layer): {}
-- `layer.newAdjustmentLayer.posterize` Posterize… (Layer › New Adjustment Layer): {"levels":2..255=4}
-- `layer.newAdjustmentLayer.threshold` Threshold… (Layer › New Adjustment Layer): {"level":1..255=128}
-- `layer.newAdjustmentLayer.gradientMap` Gradient Map… (Layer › New Adjustment Layer): {"stops":json,"reverse":bool=false,"dither":bool=false} (stops [[location 0..1, "#rrggbb"], …], 2..64)
-- `layer.newAdjustmentLayer.selectiveColor` Selective Color… (Layer › New Adjustment Layer): {"method":"relative|absolute"="relative","colors":"reds|yellows|greens|cyans|blues|magentas|whites|neutrals|blacks"="reds","cyan":-100..100=0,"magenta":-100..100=0,"yellow":-100..100=0,"black":-100..100=0,"reds":json} (per-range [c,m,y,k] arrays: reds yellows greens cyans blues magentas whites neutrals blacks)
-- `layer.newAdjustmentLayer.colorLookup` Color Lookup… (Layer › New Adjustment Layer): {"lut":"none|warm|cool|tealOrange|bleachBypass|fadedFilm|dayForNight|monoContrast|crossProcess"="none","file":text,"interpolation":"trilinear|tetrahedral"="trilinear","dither":bool=false,"data":json} (file: .cube/.3dl/.look path; data: file text + "fileName")
+- `layer.newAdjustmentLayer.brightnessContrast` Brightness/Contrast… (Layer › New Adjustment Layer): {"brightness":-150..150=0,"contrast":-50..100=0,"legacy":bool=false} + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.levels` Levels… (Layer › New Adjustment Layer): {"inBlack":0..253=0,"gamma":0.01..9.99=1,"inWhite":2..255=255,"outBlack":0..255=0,"outWhite":0..255=255,"red":json,"green":json,"blue":json,"eyedropper":json} (top level = composite; per channel {"inBlack","gamma","inWhite","outBlack","outWhite"} under red/green/blue, gray, cyan/magenta/yellow/black or lightness/a/b; eyedropper = the dialog's Set Black/Neutral Gray/White Point picker {"point":"black|gray|white","at":[x,y],"size":1..101=1} or {"point",…,"color":[r,g,b] 0..1}: black/white set each channel's input black/white to the sample, gray each channel's gamma so the sample turns neutral at its luma; RGB and Grayscale (no gray) only, applied over the given levels) + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.curves` Curves… (Layer › New Adjustment Layer): {"points":json,"red":json,"green":json,"blue":json,"pencil":bool=false,"smooth":0..10=0,"eyedropper":json} (curves as [[in,out],…] in 0..255, 2..19 points: points = composite; red/green/blue, gray, cyan/magenta/yellow/black or lightness/a/b per channel; pencil = drawn curves (Draw to modify the curve): each curve is 256 output levels in 0..255 (point curves given are drawn in, and turning pencil off fits points to the drawing); smooth = Smooth passes over the drawn curves; eyedropper = the dialog's Set Black/Neutral Gray/White Point picker {"point":"black|gray|white","at":[x,y],"size":1..101=1} or {"point",…,"color":[r,g,b] 0..1}, RGB and Grayscale (no gray) only, applied over the given curves) + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.exposure` Exposure… (Layer › New Adjustment Layer): {"exposure":-20..20=0,"offset":-0.5..0.5=0,"gamma":0.01..9.99=1} + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.vibrance` Vibrance… (Layer › New Adjustment Layer): {"vibrance":-100..100=0,"saturation":-100..100=0} + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.hueSaturation` Hue/Saturation… (Layer › New Adjustment Layer): {"hue":-180..180=0,"saturation":-100..100=0,"lightness":-100..100=0,"colorize":bool=false,"reds":json,"yellows":json,"greens":json,"cyans":json,"blues":json,"magentas":json} (per range {"hue","saturation","lightness","range":[4 hue degrees]}; colorize: hue 0..360, saturation 0..100) + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.colorBalance` Color Balance… (Layer › New Adjustment Layer): {"shadows":json,"midtones":json,"highlights":json,"preserveLuminosity":bool=true} (each tone [cyan-red, magenta-green, yellow-blue] in -100..100) + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.blackWhite` Black & White… (Layer › New Adjustment Layer): {"reds":-200..300=40,"yellows":-200..300=60,"greens":-200..300=40,"cyans":-200..300=60,"blues":-200..300=20,"magentas":-200..300=80,"tint":bool=false,"tintColor":"#rrggbb"} + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.photoFilter` Photo Filter… (Layer › New Adjustment Layer): {"filter":"warming85|warmingLBA|warming81|cooling80|coolingLBB|cooling82|red|orange|yellow|green|cyan|blue|violet|magenta|sepia|deepRed|deepBlue|deepEmerald|deepYellow|underwater","color":"#rrggbb","density":0..100=25,"preserveLuminosity":bool=true} + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.channelMixer` Channel Mixer… (Layer › New Adjustment Layer): {"red":json,"green":json,"blue":json,"gray":json,"monochrome":bool=false} (per output channel [red %, green %, blue %, constant %] in -200..200; gray = the monochrome mix) + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.invert` Invert (Layer › New Adjustment Layer): {} + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.posterize` Posterize… (Layer › New Adjustment Layer): {"levels":2..255=4} + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.threshold` Threshold… (Layer › New Adjustment Layer): {"level":1..255=128} + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.gradientMap` Gradient Map… (Layer › New Adjustment Layer): {"stops":json,"reverse":bool=false,"dither":bool=false} (stops [[location 0..1, "#rrggbb"], …], 2..64) + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.selectiveColor` Selective Color… (Layer › New Adjustment Layer): {"method":"relative|absolute"="relative","colors":"reds|yellows|greens|cyans|blues|magentas|whites|neutrals|blacks"="reds","cyan":-100..100=0,"magenta":-100..100=0,"yellow":-100..100=0,"black":-100..100=0,"reds":json} (per-range [c,m,y,k] arrays: reds yellows greens cyans blues magentas whites neutrals blacks) + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
+- `layer.newAdjustmentLayer.colorLookup` Color Lookup… (Layer › New Adjustment Layer): {"lut":"none|warm|cool|tealOrange|bleachBypass|fadedFilm|dayForNight|monoContrast|crossProcess"="none","file":text,"interpolation":"trilinear|tetrahedral"="trilinear","dither":bool=false,"data":json} (file: .cube/.3dl/.look path; data: file text + "fileName") + {"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask, or white with no selection)}
 
 ### layer.newFillLayer
 
-- `layer.newFillLayer.solidColor` Solid Color… (Layer › New Fill Layer): {"color":"#rrggbb"=foreground}
-- `layer.newFillLayer.gradient` Gradient… (Layer › New Fill Layer): {"from":"#rrggbb","to":"#rrggbb","angle":deg=90,"style":"linear|radial|angle|reflected|diamond","reverse":bool}
-- `layer.newFillLayer.pattern` Pattern… (Layer › New Fill Layer): {"pattern":id|name?=first library pattern,"scale":1..1000=100,"angle":deg=0,"link":bool=true,"phase":[x,y]?}
+- `layer.newFillLayer.solidColor` Solid Color… (Layer › New Fill Layer): {"color":"#rrggbb"=foreground,"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask, making a shape; else the selection is the layer mask)}
+- `layer.newFillLayer.gradient` Gradient… (Layer › New Fill Layer): {"from":"#rrggbb","to":"#rrggbb","angle":deg=90,"style":"linear|radial|angle|reflected|diamond","reverse":bool,"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask)}
+- `layer.newFillLayer.pattern` Pattern… (Layer › New Fill Layer): {"pattern":id|name?=first library pattern,"scale":1..1000=100,"angle":deg=0,"link":bool=true,"phase":[x,y]?,"path":"work"|saved path name|{…path}? (the active path: becomes the vector mask; else the selection is the layer mask)}
 
 ### layer.rasterize
 
 - `layer.rasterize.vectorMask` Rasterize Vector Mask: {"layer":id?} (multiplied into the layer mask)
-- `layer.rasterize.shape` Rasterize Shape: {"layer":id?}
-- `layer.rasterize.layer` Layer (Layer › Rasterize): {"layer":id?}
+- `layer.rasterize.shape` Rasterize Shape: {"layer":id?} (no layer: every selected shape layer)
+- `layer.rasterize.layer` Layer (Layer › Rasterize): {"layer":id?} (no layer: every selected layer it applies to)
 - `layer.rasterize.allLayers` All Layers (Layer › Rasterize): {}
-- `layer.rasterize.type` Type (Layer › Rasterize): {"layer":id?}
-- `layer.rasterize.fillContent` Fill Content (Layer › Rasterize): {"layer":id?}
-- `layer.rasterize.smartObject` Smart Object (Layer › Rasterize): {"layer":id?}
+- `layer.rasterize.type` Type (Layer › Rasterize): {"layer":id?} (no layer: every selected layer it applies to)
+- `layer.rasterize.fillContent` Fill Content (Layer › Rasterize): {"layer":id?} (no layer: every selected layer it applies to)
+- `layer.rasterize.smartObject` Smart Object (Layer › Rasterize): {"layer":id?} (no layer: every selected layer it applies to)
 - `layer.rasterize.video` Video (Layer › Rasterize): {} → {}
+- `layer.rasterize.layerStyle` Layer Style (Layer › Rasterize): {"layer":id?} (no layer: every selected layer with effects; bakes the effects, fill opacity and masks into the pixels)
 
 ### layer.smartFilter
 
@@ -704,7 +756,7 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 
 ### layer.smartObjects
 
-- `layer.smartObjects.convertToSmartObject` Convert to Smart Object (Layer › Smart Objects): {"layer":id?}
+- `layer.smartObjects.convertToSmartObject` Convert to Smart Object (Layer › Smart Objects): {"layer":id?} (default: combine selected layers)
 - `layer.smartObjects.newSmartObjectViaCopy` New Smart Object via Copy (Layer › Smart Objects): {"layer":id?}
 - `layer.smartObjects.rasterize` Rasterize (Layer › Smart Objects): {"layer":id?}
 - `layer.smartObjects.editContents` Edit Contents (Layer › Smart Objects): {"layer":id?} → opens the contents as a new document; saving (layer.smartObjects.saveContents) or closing it updates the smart object
@@ -713,6 +765,7 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `layer.smartObjects.exportContents` Export Contents… (Layer › Smart Objects): {"layer":id?,"path":str}
 - `layer.smartObjects.relinkToFile` Relink to File… (Layer › Smart Objects): {"layer":id?,"path":str}
 - `layer.smartObjects.updateModifiedContent` Update Modified Content (Layer › Smart Objects): {"layer":id?}
+- `layer.smartObjects.updateChanged` Update Changed Linked Content: {} — re-render the active document's linked smart objects whose files changed on disk since they were last seen (size or modification time); the desktop app does this by itself every two seconds, as Photoshop does while a document is open. Files seen for the first time are only remembered. One Update Modified Content undo step per file → {updated: [layer ids]}
 - `layer.smartObjects.updateAllModifiedContent` Update All Modified Content (Layer › Smart Objects): {}
 - `layer.smartObjects.convertToLayers` Convert to Layers (Layer › Smart Objects): {"layer":id?} (contents unpacked at the placement: one layer, or a group named after the smart object; smart filters are discarded)
 - `layer.smartObjects.convertToEmbedded` Convert to Embedded (Layer › Smart Objects): {"layer":id?}
@@ -730,7 +783,7 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `layer.smartObjects.stackMode.variance` Variance (Layer › Smart Objects › Stack Mode): {"layer":id?}
 - `layer.smartObjects.stackMode.none` None (Layer › Smart Objects › Stack Mode): {"layer":id?}
 - `layer.smartObjects.revealInFinder` Reveal in Finder (Layer › Smart Objects): {"dryRun":bool=false}
-- `layer.smartObjects.warp` Warp (Layer › Smart Objects): {"layer":id?,"rect":[x0,y0,x1,y1]? (warp box; default = layer content ∩ selection),"style":"custom|none|arc|arcLower|arcUpper|arch|bulge|shellLower|shellUpper|flag|wave|fish|rise|fisheye|inflate|squeeze|twist","bend":%=50,"hDistort":%,"vDistort":%,"vertical":bool,"mesh":{"us":[0,…,1],"vs":[0,…,1],"points":[[x,y]…]} ((3c+1)×(3r+1) control points, row-major, document px),"grid":[cols,rows]?,"warp":{full warp object}?,"interpolation":"bicubic|bilinear|nearest"}
+- `layer.smartObjects.warp` Warp (Layer › Smart Objects): {"layer":id?,"rect":[x0,y0,x1,y1]? (warp box; default = layer content ∩ selection),"style":"custom|none|arc|arcLower|arcUpper|arch|bulge|shellLower|shellUpper|flag|wave|fish|rise|fisheye|inflate|squeeze|twist","bend":%=50,"hDistort":%,"vDistort":%,"vertical":bool,"mesh":{"us":[0,…,1],"vs":[0,…,1],"points":[[x,y]…]} ((3c+1)×(3r+1) control points, row-major, document px),"grid":[cols,rows]?,"warp":{full warp object}?,"interpolation":"bicubic|bilinear|nearest"} — on a type layer a style (or none) sets its Warp Text and the type stays editable
 - `layer.smartObjects.puppetWarp` Puppet Warp (Layer › Smart Objects): {"pins":[{"src":[x,y],"dst":[x,y],"rotate":deg?,"depth":n?}…],"mode":"rigid|normal|distort"="normal","density":"fewer|normal|more"="normal","expansion":px=2,"interpolation":"bicubic|bilinear|nearest","layer":id?} — mesh over the opaque region, as-rigid-as-possible; on a smart object it becomes a smart filter
 - `layer.smartObjects.perspectiveWarp` Perspective Warp (Layer › Smart Objects): {"planes":[{"src":[[x,y]×4],"dst":[[x,y]×4]}…] (corners clockwise from top-left; corners that coincide in src are linked),"straighten":"horizontal|vertical|auto"?,"interpolation":"bicubic|bilinear|nearest","layer":id?}
 
@@ -793,27 +846,31 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 
 ## paint
 
-- `paint.stroke` Brush Stroke: {"points":[[x,y,pressure?,tiltX?,tiltY?,rotation?,timeMs?,wheel?],…],"brush":{…BrushSettings}?,"preset":name?,"size":0.5..5000 px?,"hardness":0..1?,"opacity":0..1?,"flow":0..1?,"spacing":0..10?,"color":"#rrggbb"?=foreground,"mode":"normal|multiply|screen|…"="normal","erase":bool?,"smoothing":0..1?,"zoom":number=1,"seed":u64?,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target}
+- `paint.stroke` Brush Stroke: {"points":[[x,y,pressure?,tiltX?,tiltY?,rotation?,timeMs?,wheel?],…],"brush":{…BrushSettings}?,"preset":name?,"size":0.5..5000 px?,"hardness":0..1?,"opacity":0..1?,"flow":0..1?,"spacing":0..10?,"color":"#rrggbb"?=foreground,"mode":"normal|multiply|screen|…|clear (erases with this brush)"="normal","erase":bool?,"smoothing":0..1?,"zoom":number=1,"seed":u64?,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target}
+- `paint.setSymmetry` Set Painting Symmetry: {"mode":"vertical|horizontal|dual|diagonal","center":[x,y]?,"rotation":degrees=0}
 - `paint.symmetryFromPath` Make Symmetry Path: {"name":"work"|"layer"|savedPathName="work"} — mirror Brush, Pencil and Eraser strokes across the path
-- `paint.symmetryDisable` Disable Symmetry Path: {}
-- `paint.pencil` Pencil: {"points":[[x,y,pressure?,tiltX?,tiltY?,rotation?,timeMs?,wheel?],…],"brush":{…}?,"preset":name?,"size":0.5..5000 px?,"opacity":0..1?,"color":"#rrggbb"?=foreground,"mode":"normal|multiply|screen|…"="normal","erase":bool?,"autoErase":bool=false,"seed":u64?,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target}
+- `paint.symmetryDisable` Disable Painting Symmetry: {}
+- `paint.pencil` Pencil: {"points":[[x,y,pressure?,tiltX?,tiltY?,rotation?,timeMs?,wheel?],…],"brush":{…}?,"preset":name?,"size":0.5..5000 px?,"opacity":0..1?,"color":"#rrggbb"?=foreground,"mode":"normal|multiply|screen|…|clear (erases with this brush)"="normal","erase":bool?,"block":bool=false (a hard 16×16 screen-px square, 16/zoom doc px; size, opacity, flow, hardness and dynamics ignored: the Eraser's Block mode),"zoom":view zoom=1,"autoErase":bool=false,"seed":u64?,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target}
 - `paint.mixerBrush` Mixer Brush: {"points":[…],"brush":{…}?,"preset":name?,"size":0.5..5000 px?,"wet":0..100=brush.mixer.wet,"load":0..100=brush.mixer.load,"mix":0..100=brush.mixer.mix,"flow":0..100=brush.mixer.flow,"color":"#rrggbb"?=foreground,"sampleAllLayers":bool=brush.mixer.sampleAllLayers,"cleanAfterStroke":bool=true,"loadAfterStroke":bool=true,"seed":u64?}
-- `paint.colorReplacement` Color Replacement: {"points":[…],"brush":{…}?,"size":px?,"mode":"hue|saturation|color|luminosity"="color","sampling":"continuous|once|backgroundSwatch"="continuous","limits":"contiguous|discontiguous|findEdges"="contiguous","tolerance":0..100=30,"antiAlias":bool=true,"color":"#rrggbb"?=foreground,"seed":u64?}
+- `paint.colorReplacement` Color Replacement: {"points":[…],"brush":{…}?,"size":px?,"mode":"hue|saturation|color|luminosity"="color","sampling":"continuous|once|backgroundSwatch"="continuous","limits":"contiguous|discontiguous|findEdges"="contiguous","tolerance":0..100=30,"antiAlias":bool=true,"color":"#rrggbb"?=foreground,"target":"pixels"="pixels","seed":u64?}
 - `paint.magicEraser` Magic Eraser: {"x":px,"y":px,"tolerance":0..255=32,"antiAlias":bool=true,"contiguous":bool=true,"sampleAllLayers":bool=false,"opacity":1..100=100}
 - `paint.backgroundEraser` Background Eraser: {"points":[[x,y,pressure?],…],"size":px?,"hardness":0..1?,"brush":{…}?,"preset":name?,"sampling":"continuous|once|backgroundSwatch"="continuous","limits":"discontiguous|contiguous|findEdges"="contiguous","tolerance":0..100=50,"protectForegroundColor":bool=false,"seed":u64?}
-- `paint.cloneStamp` Clone Stamp: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=25,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"source":[sx,sy] (sampled under the first point) | "offset":[dx,dy],"aligned":bool=true,"sampleLayer":"current|currentAndBelow|all"="current","mode":"normal|multiply|…"="normal" → {"damage","offset","aligned","nextSource"}}
-- `paint.healingBrush` Healing Brush: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=25,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"source":[sx,sy] | "offset":[dx,dy],"aligned":bool=true,"sampleLayer":"current|currentAndBelow|all"="current","mode":"normal|…"="normal" → {"damage","offset","aligned","nextSource"}}
-- `paint.spotHealing` Spot Healing Brush: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=25,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"type":"contentAware|createTexture|proximityMatch"="contentAware","sampleAllLayers":bool=false}
-- `paint.patch` Patch: {"offset":[dx,dy] (how far the selection was dragged),"mode":"source|destination"="source","layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target} → {"damage","offset"}
-- `paint.contentAwareMove` Content-Aware Move: {"offset":[dx,dy] (how far the selection was dragged),"mode":"move|extend"="move","structure":1..7=4 (7 keeps the content up to its edge, lower blends a wider edge band),"color":0..10=0 (how far the content's colour adapts to its new place),"sampleAllLayers":bool=false,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target} → {"damage","offset","mode"} (a background job; the selection moves with the content)
-- `paint.dodge` Dodge: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=25,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"range":"shadows|midtones|highlights"="midtones","exposure":1..100=50,"protectTones":bool=true}
-- `paint.burn` Burn: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=25,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"range":"shadows|midtones|highlights"="midtones","exposure":1..100=50,"protectTones":bool=true}
-- `paint.sponge` Sponge: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=25,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"mode":"desaturate|saturate"="desaturate","vibrance":bool=true (flow = sponge strength)}
-- `paint.blur` Blur: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=25,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"strength":1..100=50,"sampleAllLayers":bool=false}
-- `paint.sharpen` Sharpen: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=25,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"strength":1..100=50,"protectDetail":bool=true,"sampleAllLayers":bool=false}
-- `paint.smudge` Smudge: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=25,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"strength":1..100=50,"fingerPainting":bool=false (starts with the foreground colour),"sampleAllLayers":bool=false}
-- `paint.historyBrush` History Brush: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=25,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"state":index (into history.entries; default 0 = the oldest held state, normally the Open snapshot)}
-- `paint.bucket` Paint Bucket: {"x":px,"y":px,"tolerance":0..255=32,"contiguous":bool=true,"antiAlias":bool=true,"contents":"foreground|pattern"="foreground","color":"#rrggbb"=foreground,"pattern":id|name (contents=pattern),"scale":%=100,"angle":deg,"opacity":1..100=100,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target}
+- `paint.cloneStamp` Clone Stamp: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=Brush Settings spacing,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"source":[sx,sy] (sampled under the first point) | "offset":[dx,dy],"aligned":bool=true,"sampleLayer":"current|currentAndBelow|all"="current","mode":"normal|multiply|…"="normal" → {"damage","offset","aligned","nextSource"}}
+- `paint.patternStamp` Pattern Stamp: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=Brush Settings spacing,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"pattern":id|name?=Patterns panel current,"scale":1..1000 %=100,"angle":deg=0,"aligned":bool=true,"impressionist":bool=false,"mode":"normal|multiply|…"="normal","phase":[px,py]? → {"damage","phase","aligned","pattern"}}
+- `paint.healingBrush` Healing Brush: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=Brush Settings spacing,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"source":[sx,sy] | "offset":[dx,dy],"aligned":bool=true,"sampleLayer":"current|currentAndBelow|all"="current","mode":"normal|…"="normal" → {"damage","offset","aligned","nextSource"}}
+- `paint.spotHealing` Spot Healing Brush: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=Brush Settings spacing,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"type":"contentAware|createTexture|proximityMatch"="contentAware","sampleAllLayers":bool=false}
+- `paint.patch` Patch: {"offset":[dx,dy] (how far the selection was dragged),"mode":"source|destination"="source","contentAware":bool=false (fill the selection content-aware from the dragged-to place; a background job),"structure":1..7=4 (content-aware: 3..7 copy the middle exactly, 1..2 re-synthesise more of it),"color":0..10=0 (content-aware: how far the copy's level adapts to the selection's surroundings),"sampleAllLayers":bool=false (content-aware),"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target} → {"damage","offset"}
+- `paint.contentAwareMove` Content-Aware Move: {"offset":[dx,dy] (how far the selection was dragged),"mode":"move|extend"="move","structure":1..7=4 (3..7 copy the content exactly but for a band about a patch wide along its edge; 2 widens the band, 1 re-synthesises the content too),"color":0..10=0 (0 keeps the content's level; higher values bring it towards its new place, by up to about 0.04 × color),"sampleAllLayers":bool=false,"scaleX":%=100,"scaleY":%=100 (Transform On Drop: 1..10000, negative flips),"rotate":deg=0 (Transform On Drop, clockwise; scale and rotation are about the selection's centre, before the offset; a transformed patch may reach past the canvas edge),"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target} → {"damage","offset","mode","transformed"?} (a background job; the selection moves, and is transformed, with the content)
+- `paint.remove` Remove: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=Brush Settings spacing,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"strokes":[[[x,y,pressure?],…],…]? (several strokes removed together, as one job and one undo step; else "points"),"closeLoops":bool=true (a stroke around an object removes what it encloses),"sampleAllLayers":bool=false,"newLayer":bool=false (the fill goes to a new layer above the target, which stays as it was) → {"damage","layer"?} (a background job)}
+- `paint.dodge` Dodge: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=Brush Settings spacing,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"range":"shadows|midtones|highlights"="midtones","exposure":1..100=50,"protectTones":bool=true}
+- `paint.burn` Burn: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=Brush Settings spacing,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"range":"shadows|midtones|highlights"="midtones","exposure":1..100=50,"protectTones":bool=true}
+- `paint.sponge` Sponge: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=Brush Settings spacing,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"mode":"desaturate|saturate"="desaturate","vibrance":bool=true (flow = sponge strength)}
+- `paint.blur` Blur: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=Brush Settings spacing,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"strength":1..100=50,"sampleAllLayers":bool=false}
+- `paint.sharpen` Sharpen: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=Brush Settings spacing,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"strength":1..100=50,"protectDetail":bool=true,"sampleAllLayers":bool=false}
+- `paint.smudge` Smudge: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=Brush Settings spacing,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"strength":1..100=50,"fingerPainting":bool=false (starts with the foreground colour),"sampleAllLayers":bool=false}
+- `paint.historyBrush` History Brush: {"points":[[x,y,pressure?],…],"size":1..5000 px=tool size,"hardness":0..100=tool hardness,"opacity":1..100=100,"flow":1..100=100,"spacing":1..1000 (% of size)=Brush Settings spacing,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target,"state":index (into history.entries; default 0 = the oldest held state, normally the Open snapshot)}
+- `paint.redEye` Red Eye: {"x":px, "y":px} | {"points":[[x,y],…] (at most 64)},"pupilSize":1..100=50,"darken":0..100=50,"layer":id?=active,"target":"pixels"|"mask"|"quickMask"|{"channel":i} → {"damage":[x,y,w,h], "pixels":n}
+- `paint.bucket` Paint Bucket: {"x":px,"y":px,"tolerance":0..255=32,"contiguous":bool=true,"antiAlias":bool=true,"sampleAllLayers":bool=false,"contents":"foreground|pattern"="foreground","color":"#rrggbb"=foreground,"pattern":id|name (contents=pattern),"scale":%=100,"angle":deg,"opacity":1..100=100,"target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target}
 - `paint.gradient` Gradient: {"from":[x,y],"to":[x,y],"style":"linear|radial|angle|reflected|diamond"="linear","colors":["#rrggbb",…]? (evenly spaced),"gradient":preset name?,"stops":[[t,"#rrggbb"|"foreground"|"background"],…]?,"transparency":[[t,0..100],…]? (default: the current gradient, see gradient.presets.select),"reverse":bool=false,"dither":bool=true,"opacity":1..100=100,"mode":"normal|multiply|…"="normal","target":"pixels"|"mask"|"quickMask"|{"channel":i}=Channels panel target}
 
 ## path
@@ -822,7 +879,7 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `path.info` Path Info: {"name":str|"work"|"layer"="work"} → {name,path}
 - `path.set` Set Path: {"name":str|"work"="work","path":{…},"op":"combine|subtract|intersect|exclude"? (append to the existing path with this op instead of replacing)}. path: {"subpaths":[{"closed":bool=true,"op":"combine|subtract|intersect|exclude","knots":[[x,y] | {"anchor":[x,y],"in":[x,y],"out":[x,y],"smooth":bool}]}],"fillRule":"nonzero|evenodd","inverted":bool}
 - `path.delete` Delete Path: {"name":str|"work"="work"}
-- `path.transform` Free Transform Path: {"name":str|"work"|"layer"="work","layer":id? (with layer target),"matrix":[a,b,c,d,e,f] | "translateX":px?,"translateY":px?,"scaleX":factor?,"scaleY":factor?,"angle":degrees?} (numeric transforms pivot on path bounds center)
+- `path.transform` Free Transform Path: {"name":str|"work"|"layer"="work","layer":id? (with layer target),"matrix":[a,b,c,d,e,f] | "quad":[[x,y]×4] (Distort/Perspective: where the frame's corners go, clockwise from top-left) | "style"|"mesh"|"warp":… (Warp, as edit.transform.warp) | "translateX":px?,"translateY":px?,"scaleX":factor?,"scaleY":factor?,"angle":degrees?,"rect":[x0,y0,x1,y1]? (the quad's or warp's frame; default = path control bounds)} (numeric transforms pivot on path bounds center)
 - `path.clippingPath.set` Clipping Path: {"name":savedPathName,"flatness":0..100=0} (PSD export clipping path)
 - `path.clippingPath.clear` Clear Clipping Path: {}
 - `path.style.copyFill` Copy Fill: {} (copies active shape layer fill)
@@ -832,11 +889,13 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `path.rename` Rename Path: {"name":str|"work"="work","to":str} (renaming the work path saves it)
 - `path.toSelection` Make Selection from Path (Cmd+Enter): {"name":str|"work"|"layer"="work","feather":px=0,"antiAlias":bool=true,"mode":"replace|add|subtract|intersect"="replace"}
 - `path.fill` Fill Path: {"name":str|"work"|"layer"="work","layer":id? (pixel layer, default active),"color":"#rrggbb"=foreground,"opacity":0..100=100,"mode":"normal|multiply|…"="normal","feather":px=0,"antiAlias":bool=true}
-- `path.stroke` Stroke Path: {"name":str|"work"|"layer"="work","layer":id? (pixel layer),"tool":"brush|pencil|eraser"="brush","size":0.5..5000 px?,"hardness":0..1?,"opacity":0..100?,"color":"#rrggbb"=foreground} (current brush settings otherwise)
+- `path.stroke` Stroke Path: {"name":str|"work"|"layer"="work","layer":id? (pixel layer),"tool":"brush|pencil|eraser|backgroundEraser|cloneStamp|patternStamp|healingBrush|spotHealingBrush|historyBrush|blur|sharpen|smudge|dodge|burn|sponge|colorReplacement|mixerBrush"="brush","simulatePressure":bool=false (taper both ends when the brush follows pen pressure),"size":0.5..5000 px?,"hardness":0..1?,"opacity":0..100?,"color":"#rrggbb"=foreground} (current brush settings otherwise; tools past the Eraser run their paint.* command along the path and take its params)
 - `path.moveAnchors` Drag Anchor Points: {"name":str|"work"|"layer"="work","layer":id? (with "layer": a shape layer's path or a vector mask),"anchors":[[subpath,knot],…],"move":[dx,dy] (anchors move with their handles; Direct Selection drag)} → {name,path}
 - `path.moveHandle` Drag Direction Point: {"name":str|"work"|"layer"="work","layer":id? (with "layer": a shape layer's path or a vector mask),"subpath":i,"knot":j,"handle":"in|out","to":[x,y],"independent":bool=false (a smooth point turns its other handle to stay collinear; independent = ⌥ / Convert Point, makes a corner)} → {name,path}
 - `path.bendSegment` Drag Segment: {"name":str|"work"|"layer"="work","layer":id? (with "layer": a shape layer's path or a vector mask),"subpath":i,"knot":j (the segment leaving it),"t":0..1=0.5 (where it was grabbed),"move":[dx,dy] (a straight segment moves with its anchors; a curve reshapes through the dragged point)} → {name,path}
 - `path.convertPoint` Convert Point: {"name":str|"work"|"layer"="work","layer":id? (with "layer": a shape layer's path or a vector mask),"subpath":i,"knot":j,"out":[x,y]? (none: corner with retracted handles; given: smooth with this out handle and its mirror)} → {name,path}
+- `path.addAnchor` Add Anchor Point: {"name":str|"work"|"layer"="work","layer":id? (with "layer": a shape layer's path or a vector mask),"subpath":i,"knot":j (the segment leaving it),"t":0<t<1=0.5 (where on the segment) (a curve is split there without changing its shape and gets a smooth anchor; a straight segment gets a corner) (the result also has anchor:{subpath,knot})} → {name,path}
+- `path.deleteAnchor` Delete Anchor Point: {"name":str|"work"|"layer"="work","layer":id? (with "layer": a shape layer's path or a vector mask),"subpath":i,"knot":j (its neighbours are joined, keeping their handles; a subpath's last anchor removes the subpath; the path's only anchor is refused) (the result also has subpathRemoved:bool)} → {name,path}
 
 ## pattern
 
@@ -870,23 +929,23 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `select.all` All (Select, Cmd+A): {}
 - `select.deselect` Deselect (Select, Cmd+D): {}
 - `select.inverse` Inverse (Select, Cmd+Shift+I): {}
-- `select.rect` Rectangular Selection: {"x":i32,"y":i32,"width":u32,"height":u32,"mode":"replace|add|subtract|intersect"="replace","ellipse":bool=false,"antiAlias":bool=true,"feather":px=0}
-- `select.float` Float Selection: {"dx":px=0,"dy":px=0} → {layer, offset} (cuts the selected pixels of the active layer into a floating piece the first time, then moves it by whole pixels; dropped by select.drop or any other command, put back by edit.undo)
+- `select.rect` Rectangular Selection: {"x":i32,"y":i32,"width":u32,"height":u32,"mode":"replace|add|subtract|intersect"="replace","ellipse":bool=false,"line":"row|column"?,"antiAlias":bool=true,"feather":px=0}
+- `select.float` Float Selection: {"dx":px=0,"dy":px=0,"copy":bool=false,"target":"pixels"|"mask"="pixels" (mask: float the selected part of the layer's mask, the hole takes the background colour)} → {layer, offset} (cuts the selected pixels of the active layer into a floating piece the first time, or with copy leaves them and floats a duplicate; on the Background the hole takes the background colour; then moves it by whole pixels; dropped by select.drop or any other command, put back by edit.undo)
 - `select.drop` Drop Floating Selection: {} → {dropped, offset} (drops the floating piece into its layer and moves the selection with it: one history step)
 - `select.toWorkPath` Make Work Path: {"tolerance":0.5..10 px=2} → {subpaths,knots}
 - `select.convertToShape` Convert Selection to Shape: {"tolerance":px=2,"fill":"#rrggbb"=foreground,"name":str?} → shape.info
 - `select.quick` Quick Selection: {"points":[[x,y],…],"size":px=30,"mode":"add|subtract|replace"="add","sampleAllLayers":bool=false,"enhanceEdge":bool=false}
 - `select.object` Object Selection: {"rect":[x,y,w,h],"mode":"replace|add|subtract|intersect"="replace","sampleAllLayers":bool=false}
 - `select.subject` Subject (Select): {"sampleAllLayers":bool=true,"mode":"replace|add|subtract|intersect"="replace"}
-- `select.refineEdge` Refine Edge: {"radius":px=0,"smartRadius":bool=false,"smooth":0..100=0,"feather":px=0,"contrast":0..100=0,"shiftEdge":-100..100=0,"decontaminate":bool=false,"amount":0..100=100,"output":"selection|layerMask|newLayer|newLayerWithMask"="selection","sampleAllLayers":bool=false}
+- `select.refineEdge` Refine Edge: {"radius":px=0,"smartRadius":bool=false,"smooth":0..100=0,"feather":px=0,"contrast":0..100=0,"shiftEdge":-100..100=0,"decontaminate":bool=false,"amount":0..100=100,"output":"selection|layerMask|newLayer|newLayerWithMask|newDocument|newDocumentWithMask"="selection","sampleAllLayers":bool=false,"refineStrokes":[{"points":[[x,y],…],"size":px=30,"mode":"add|subtract"="add"},…]=[]} (refineStrokes: the Refine Edge Brush, in painting order: add refines the painted area from the image, subtract keeps the original edge there)
 - `select.focusArea` Focus Area… (Select): {"range":0..1=0.5,"noise":0..1=0,"sampleAllLayers":bool=true,"mode":"replace|add|subtract|intersect"="replace"}
-- `select.magicWand` Magic Wand: {"x":px,"y":px,"tolerance":0..255=32,"contiguous":bool=true,"antiAlias":bool=true,"sampleAllLayers":bool=false,"mode":"replace|add|subtract|intersect"="replace"}
-- `select.colorRange` Color Range… (Select): {"select":"sampledColors|reds|yellows|greens|cyans|blues|magentas|highlights|midtones|shadows|outOfGamut"="sampledColors","color":"#rrggbb"=foreground,"colors":["#rrggbb",…]?,"points":[[x,y],…]? (eyedropper samples),"subtractPoints":[[x,y],…]? (minus eyedropper),"fuzziness":0..200=40 (tones: 0..100 %=20),"localized":bool=false,"range":0..100=100 (% of the longer side),"tonalRange":level|[lo,hi] (shadows 65, highlights 190, midtones [105,150]),"invert":bool=false,"sampleAllLayers":bool=true,"mode":"replace|add|subtract|intersect"="replace"}
+- `select.magicWand` Magic Wand: {"x":px,"y":px,"tolerance":0..255=32,"contiguous":bool=true,"antiAlias":bool=true,"sampleAllLayers":bool=false,"mode":"replace|add|subtract|intersect"="replace"} (samples the visible alpha, Quick Mask, or layer mask when that is the picture)
+- `select.colorRange` Color Range… (Select): {"select":"sampledColors|reds|yellows|greens|cyans|blues|magentas|highlights|midtones|shadows|outOfGamut"="sampledColors","color":"#rrggbb"=foreground,"colors":["#rrggbb",…]?,"points":[[x,y],…]? (eyedropper samples),"subtractPoints":[[x,y],…]? (minus eyedropper),"order":["+"|"-",…]? (click order of points and subtractPoints; default all points first),"fuzziness":0..200=40 (tones: 0..100 %=20),"localized":bool=false,"range":0..100=100 (% of the longer side),"tonalRange":level|[lo,hi] (shadows 65, highlights 190, midtones [105,150]),"invert":bool=false,"sampleAllLayers":bool=true,"mode":"replace|add|subtract|intersect"="replace"}
 - `select.modify.border` Border… (Select › Modify): {"radius":1..200=1}
-- `select.modify.smooth` Smooth… (Select › Modify): {"radius":1..500=1}
-- `select.modify.expand` Expand… (Select › Modify): {"radius":1..500=1}
-- `select.modify.contract` Contract… (Select › Modify): {"radius":1..500=1}
-- `select.modify.feather` Feather… (Select › Modify): {"radius":0.1..1000=1}
+- `select.modify.smooth` Smooth… (Select › Modify): {"radius":1..500=1,"applyAtCanvasBounds":bool=false}
+- `select.modify.expand` Expand… (Select › Modify): {"radius":1..500=1,"applyAtCanvasBounds":bool=false}
+- `select.modify.contract` Contract… (Select › Modify): {"radius":1..500=1,"applyAtCanvasBounds":bool=false}
+- `select.modify.feather` Feather… (Select › Modify): {"radius":0.1..1000=1,"applyAtCanvasBounds":bool=false}
 - `select.grow` Grow (Select): {"tolerance":0..255=32,"sampleAllLayers":bool=false}
 - `select.similar` Similar (Select): {"tolerance":0..255=32,"sampleAllLayers":bool=false}
 - `select.lasso` Lasso: {"points":[[x,y],…],"mode":"replace|add|subtract|intersect"="replace","antiAlias":bool=true,"feather":px=0}
@@ -901,6 +960,7 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `select.saveSelection` Save Selection… (Select): {"name":str?,"channel":"new"|index|name="new","document":index?,"operation":"new|replace|add|subtract|intersect"="new"}
 - `select.loadSelection` Load Selection… (Select): {"channel":index|name|"composite"|"red|green|blue|…"|"transparency"|"mask"|"vectorMask"|"quickMask"|"selection","layer":id?,"document":index?,"invert":bool=false,"operation":"new|add|subtract|intersect"="new"}
 - `select.editInQuickMaskMode` Edit in Quick Mask Mode (Select, Q): {"on":bool?=toggle}
+- `select.loadLuminosity` Load Luminosity (Cmd+Alt+2): {}
 
 ## session
 
@@ -925,7 +985,7 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `slice.set` Slice Options…: {"slice":id | "number":n (an auto slice is promoted), "name"?,"kind":"image|noImage|table"?,"url"?,"target"?,"message"?,"alt"?,"cellText"?,"cellTextIsHtml"?,"horizontalAlign":0..4?,"verticalAlign":0..4?,"background":"none|#rrggbb"?,"outsets":[t,l,b,r]? (layer slices),"rect":[x,y,w,h]? (move/resize; a layer slice becomes a user slice)} → the slice
 - `slice.promote` Promote: {"slice":id | "number":n} (auto or layer-based → user slice) → {slice}
 - `slice.delete` Delete Slice: {"slice":id | "number":n | "slices":[id…]} → {deleted}
-- `slice.divide` Divide Slice…: {"slice":id | "number":n,"horizontal":n=1 (slices down),"vertical":n=1 (slices across)} → {slices}
+- `slice.divide` Divide Slice…: {"slice":id | "number":n,"horizontal":n=1 (slices down),"vertical":n=1 (slices across); at most 10000 parts} → {slices}
 - `slice.list` List Slices: {} → {slices:[{number,id,origin:auto|layer|user,name,rect:[x,y,w,h],kind,layer,url,alt,…}], locked}
 
 ## style
@@ -935,6 +995,21 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `style.presets.new` New Style…: {"name":str="Style","group":name?,"layer":id?,"includeEffects":bool=true,"includeBlending":bool=true,"effects":[[kind, params]]? (explicit list, e.g. the Layer Style dialog's pending state; overrides includeEffects),"blend":str?,"fillOpacity":0..100? (override the layer's blending options)}
 - `style.presets.edit` Edit Style Presets: {"action":"rename|delete|move|newGroup|renameGroup|deleteGroup","preset":name|[names] (rename/delete/move),"group":name? (narrows the lookup; the group for renameGroup/deleteGroup),"name":str (rename: new name; newGroup/renameGroup: group name),"to":group (move),"index":n? (move)}
 - `style.presets.reset` Restore Default Styles: {"append":bool=false}
+
+## swatches
+
+- `swatches.list` Swatches: {} → {groups:[{name,swatches:[{name,model,values,hex,kind?}]}],count}. values are in Color Picker units; hex is the colour in the RGB working space.
+- `swatches.add` New Swatch…: {"color":"#rrggbb"|{"model":"rgb|hsb|cmyk|lab|gray","values":[rgb 0..255 | hue°,s%,b% | c%,m%,y%,k% | L,a,b | k%]}?=foreground,"name":str?="Color Swatch N","group":name?=first (created when missing),"index":n?=end,"kind":"process|global|spot"="process"} → {name,group,index}
+- `swatches.delete` Delete Swatch: {"swatch":name (or "index":n across all groups),"group":name? (narrows the name lookup); "swatch" may be a list of names} → {deleted:[names]}
+- `swatches.rename` Rename Swatch…: {"swatch":name (or "index":n across all groups),"group":name? (narrows the name lookup),"name":str} → {name}
+- `swatches.move` Move Swatch: {"swatch":name (or "index":n across all groups),"group":name? (narrows the name lookup),"to":group?=its own group,"position":n?=end} → {group,position}
+- `swatches.newGroup` New Swatch Group…: {"name":str="Group" (made unique),"swatches":[names]? (moved into the new group)} → {group,moved}
+- `swatches.renameGroup` Rename Swatch Group…: {"group":name,"name":str} → {group}
+- `swatches.deleteGroup` Delete Swatch Group: {"group":name,"keepSwatches":bool=false (move its swatches into the group above)} → {group,deleted|kept}
+- `swatches.use` Use Swatch: {"swatch":name (or "index":n across all groups),"group":name? (narrows the name lookup),"target":"foreground|background"="foreground"} → {swatch,target,hex}. CMYK, Lab and gray swatches are converted to the RGB working space with colour management.
+- `swatches.reset` Reset Swatches: {"append":bool=false (add the defaults instead of replacing the library)} → {groups,count}
+- `swatches.import` Import Swatches…: {"path":".aco or .ase file"?,"data":base64 bytes?,"format":"aco|ase"? (detected),"mode":"append|replace"="append","group":str?=file name (the group for ungrouped colours)} → {format,mode,groups,count,warnings}
+- `swatches.export` Export Swatches…: {"format":"aco|ase"?=from path, else aco,"path":file? (else the bytes come back as base64 `data`),"group":name? (only that group),"swatches":[names]? (only these)} → {format,count,bytes,warnings,path|data}
 
 ## timeline
 
@@ -949,7 +1024,7 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 ## tool
 
 - `tool.presets.list` Tool Presets: {"tool":name? (Current Tool Only)} → {presets:[{name,tool}]}
-- `tool.presets.new` New Tool Preset…: {"name":str?=tool,"tool":name,"options":{…}? (opaque; "brush" defaults to the current brush for painting tools),"includeColor":bool=false}
+- `tool.presets.new` New Tool Preset…: {"name":str?=tool (at most 255 characters; a taken name gets " 2", " 3"…),"tool":name ("crop" for Crop presets),"options":{…}? (opaque; "brush" defaults to the current brush for painting tools),"includeColor":bool=false}
 - `tool.presets.select` Select Tool Preset: {"preset":name} → {name,tool,options} (applies "brush" and "foreground"; the shell switches tool and options)
 - `tool.presets.edit` Edit Tool Presets: {"action":"rename|delete","preset":name|[names],"name":str (rename)}
 - `tool.presets.reset` Reset Tool Presets: {}
@@ -964,27 +1039,33 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `tools.increaseBrushSize` Increase Brush Size (]): {}
 - `tools.decreaseBrushHardness` Decrease Brush Hardness (Shift+[): {}
 - `tools.increaseBrushHardness` Increase Brush Hardness (Shift+]): {}
+- `tools.rotateBrush` Rotate Brush Tip: {"degrees":-360..360 (positive anticlockwise; ← / → while painting send 1, ⇧ 15)}
 
 ## type
 
 - `type.create` New Type Layer (Layer › New): {"x":px,"y":px (baseline anchor of point text),"text":str,"box":[x,y,w,h]? (paragraph text),"name":str?,"align":"left|center|right|justify…"?,"orientation":"horizontal|vertical"="horizontal", …character keys: "font","size":pt=12,"color",…}
-- `type.edit` Edit Type: {"layer":id?,"text":str? (replace all, styles kept),"replace":{"start":char,"end":char,"text":str}?,"runs":[{"start":char,"end":char,…character keys}]?,"box":[x,y,w,h]? (to paragraph text),"point":[x,y]? (to point text),"move":[dx,dy]?,"transform":[a,b,c,d,e,f]?,"antialias":"none|sharp|crisp|strong|smooth"?,"name":str?,"kerning":1/1000em|"metrics"|"optical"|"off"? (with "range":[startChar,endChar]?, default all),"kernPair":{"at":caretChar,"by":1/1000em}? (Photoshop Alt+←/→: the pair before the caret becomes manual, its current kerning + by)}
-- `type.setStyle` Set Type Style: {"layer":id?,"range":[startChar,endChar]? (default all), "font":str,"fontStyle":str,"weight":100..900,"italic":bool,"size":0.1..=1296 pt,"color":"#rrggbb"|[r,g,b,a],"tracking":-1000..=10000 (1/1000 em),"leading":pt|"auto","baselineShift":pt,"horizontalScale":%,"verticalScale":%,"underline":bool,"strikethrough":bool,"fauxBold":bool,"fauxItalic":bool,"kerning":1/1000em (manual, after each character)|"metrics"|"optical"|"off","caps":"normal|small|all","ligatures":bool,"discretionaryLigatures":bool,"features":{"ss01":1},"variations":{"wght":650},"language":str, paragraph keys: "align":"left|center|right|justify|justifyCenter|justifyRight|justifyAll","firstLineIndent":pt,"startIndent":pt,"endIndent":pt,"spaceBefore":pt,"spaceAfter":pt,"autoLeading":%,"direction":"auto|ltr|rtl","hyphenate":bool}
+- `type.edit` Edit Type: {"layer":id?,"text":str? (replace all, styles kept),"replace":{"start":char,"end":char,"text":str}?,"runs":[{"start":char,"end":char,…character keys}]?,"box":[x,y,w,h]? (to paragraph text),"point":[x,y]? (to point text),"move":[dx,dy]?,"transform":[a,b,c,d,e,f]?,"antialias":"none|sharp|crisp|strong|smooth"?,"name":str?,"kerning":1/1000em|"metrics"|"optical"|"off"? (with "range":[startChar,endChar]?, default all),"kernPair":{"at":caretChar,"by":1/1000em}? (Alt+←/→: the pair before the caret becomes manual, its current kerning + by)}
+- `type.setStyle` Set Type Style: {"layer":id? or "layers":[id,…]? (default selected Type layers),"range":[startChar,endChar]? (single layer; default all),"metricsAsShown":bool=false (size/leading include each layer's transform scale), "font":str,"fontStyle":str,"weight":100..900,"italic":bool,"size":0.1..=1296 pt,"color":"#rrggbb"|[r,g,b,a],"tracking":-1000..=10000 (1/1000 em),"leading":pt|"auto","baselineShift":pt,"horizontalScale":%,"verticalScale":%,"underline":bool,"strikethrough":bool,"fauxBold":bool,"fauxItalic":bool,"kerning":1/1000em (manual, after each character)|"metrics"|"optical"|"off","caps":"normal|small|all","ligatures":bool,"discretionaryLigatures":bool,"features":{"ss01":1},"variations":{"wght":650},"language":str, paragraph keys: "align":"left|center|right|justify|justifyCenter|justifyRight|justifyAll","firstLineIndent":pt,"startIndent":pt,"endIndent":pt,"spaceBefore":pt,"spaceAfter":pt,"autoLeading":%,"direction":"auto|ltr|rtl","hyphenate":bool}
 - `type.rasterize` Rasterize Type (Layer › Rasterize): {"layer":id?}
 - `type.info` Type Layer Info: {"layer":id?} → text, runs/paragraphs (char offsets + styles), shape, transform, laid-out lines (text space px), bounds
 - `type.fonts` List Fonts: {"family":str? (faces of one family)}
+- `type.increaseSize` Increase Type Size (Cmd+Shift+.): {"layer":id?,"range":[startChar,endChar]? (default all),"by":pt? (as the layer appears)}
+- `type.decreaseSize` Decrease Type Size (Cmd+Shift+,): {"layer":id?,"range":[startChar,endChar]? (default all),"by":pt? (as the layer appears)}
+- `type.increaseSizeMore` Increase Type Size by 10 (Cmd+Alt+Shift+.): {"layer":id?,"range":[startChar,endChar]? (default all),"by":pt? (as the layer appears)}
+- `type.decreaseSizeMore` Decrease Type Size by 10 (Cmd+Alt+Shift+,): {"layer":id?,"range":[startChar,endChar]? (default all),"by":pt? (as the layer appears)}
+- `type.createSelection` Type Mask: {"layer":id? (a type layer whose glyphs become the selection),"removeLayer":bool=false (delete that layer in the same step: the Type Mask tools' temporary text),"operation":"new|add|subtract|intersect"="new","antialias":"none|sharp|crisp|strong|smooth"?, …without "layer", type.create's keys: "text","x","y" or "box","orientation","font","size","align",…}
 - `type.createWorkPath` Create Work Path (Type): {"layer":id?}
 - `type.convertToShape` Convert to Shape (Type): {"layer":id?}
 - `type.rasterizeTypeLayer` Rasterize Type Layer (Type): {"layer":id?}
 - `type.convertToParagraphText` Convert to Paragraph Text (Type): {"layer":id?}
 - `type.convertToPointText` Convert to Point Text (Type): {"layer":id?}
-- `type.warpText` Warp Text… (Type): {"layer":id?,"style":"none|arc|arcLower|arcUpper|arch|bulge|shellLower|shellUpper|flag|wave|fish|rise|fisheye|inflate|squeeze|twist"="arc","bend":-100..100=50,"horizontalDistortion":-100..100=0,"verticalDistortion":-100..100=0,"orientation":"horizontal|vertical"="horizontal"}
+- `type.warpText` Warp Text… (Type): {"layer":id? or "layers":[id,…]? (default selected Type layers),"style":"none|arc|arcLower|arcUpper|arch|bulge|shellLower|shellUpper|flag|wave|fish|rise|fisheye|inflate|squeeze|twist"="arc","orientation":"horizontal|vertical"="horizontal","bend":-100..100=50,"horizontalDistortion":-100..100=0,"verticalDistortion":-100..100=0}
 - `type.updateAllTextLayers` Update All Text Layers (Type): {}
 - `type.replaceAllMissingFonts` Replace All Missing Fonts (Type): {} (with the default family)
 - `type.resolveMissingFonts` Resolve Missing Fonts… (Type): {"map":{"Missing Family":"Installed Family"}?} (no map: list the missing families)
 - `type.pasteLoremIpsum` Paste Lorem Ipsum (Type): {"layer":id?,"at":char? (default end),"new":bool=false (new paragraph text layer)}
 - `type.saveDefaultTypeStyles` Save Default Type Styles (Type): {} (from the active type layer; new type layers start from them)
-- `type.loadDefaultTypeStyles` Load Default Type Styles (Type): {"layer":id?}
+- `type.loadDefaultTypeStyles` Load Default Type Styles (Type): {"layer":id? or "layers":[id,…]? (default selected Type layers)}
 - `type.insertText` Insert Glyph: {"layer":id?,"text":str,"at":char? (default: end of text),"range":[startChar,endChar]? (replaced),"label":str?} → {"layer","caret"}
 - `type.hitTest` Hit-Test Type: {"layer":id?, "x":px, "y":px} → {"layer","index":char,"line","inside":bool}. No layer: the topmost visible type layer whose laid-out text or rendered pixels contain the point (same order as the Type tool); a miss is an error. With a layer, index is the nearest caret even when inside is false
 - `type.caret` Type Caret: {"layer":id?, "index":char (0..=length; empty text is 0)} → {"index","line","segment":[[x,y],[x,y]]} caret segment in document pixels, for rotated and vertical type too
@@ -992,13 +1073,13 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 
 ### type.antiAlias
 
-- `type.antiAlias.none` None (Type › Anti-Alias): {"layer":id?}
-- `type.antiAlias.sharp` Sharp (Type › Anti-Alias): {"layer":id?}
-- `type.antiAlias.crisp` Crisp (Type › Anti-Alias): {"layer":id?}
-- `type.antiAlias.strong` Strong (Type › Anti-Alias): {"layer":id?}
-- `type.antiAlias.smooth` Smooth (Type › Anti-Alias): {"layer":id?}
-- `type.antiAlias.windowsLcd` Windows LCD (Type › Anti-Alias): {"layer":id?}
-- `type.antiAlias.windows` Windows (Type › Anti-Alias): {"layer":id?}
+- `type.antiAlias.none` None (Type › Anti-Alias): {"layer":id? or "layers":[id,…]? (default selected Type layers)}
+- `type.antiAlias.sharp` Sharp (Type › Anti-Alias): {"layer":id? or "layers":[id,…]? (default selected Type layers)}
+- `type.antiAlias.crisp` Crisp (Type › Anti-Alias): {"layer":id? or "layers":[id,…]? (default selected Type layers)}
+- `type.antiAlias.strong` Strong (Type › Anti-Alias): {"layer":id? or "layers":[id,…]? (default selected Type layers)}
+- `type.antiAlias.smooth` Smooth (Type › Anti-Alias): {"layer":id? or "layers":[id,…]? (default selected Type layers)}
+- `type.antiAlias.windowsLcd` Windows LCD (Type › Anti-Alias): {"layer":id? or "layers":[id,…]? (default selected Type layers)}
+- `type.antiAlias.windows` Windows (Type › Anti-Alias): {"layer":id? or "layers":[id,…]? (default selected Type layers)}
 
 ### type.characterStyle
 
@@ -1014,21 +1095,21 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 
 ### type.openType
 
-- `type.openType.standardLigatures` Standard Ligatures (Type › OpenType): {"layer":id?,"on":bool? (default: toggle),"range":[startChar,endChar]? (default all)}
-- `type.openType.contextualAlternates` Contextual Alternates (Type › OpenType): {"layer":id?,"on":bool? (default: toggle),"range":[startChar,endChar]? (default all)}
-- `type.openType.discretionaryLigatures` Discretionary Ligatures (Type › OpenType): {"layer":id?,"on":bool? (default: toggle),"range":[startChar,endChar]? (default all)}
-- `type.openType.swash` Swash (Type › OpenType): {"layer":id?,"on":bool? (default: toggle),"range":[startChar,endChar]? (default all)}
-- `type.openType.oldstyle` Oldstyle (Type › OpenType): {"layer":id?,"on":bool? (default: toggle),"range":[startChar,endChar]? (default all)}
-- `type.openType.stylisticAlternates` Stylistic Alternates (Type › OpenType): {"layer":id?,"on":bool? (default: toggle),"range":[startChar,endChar]? (default all)}
-- `type.openType.titlingAlternates` Titling Alternates (Type › OpenType): {"layer":id?,"on":bool? (default: toggle),"range":[startChar,endChar]? (default all)}
-- `type.openType.ornaments` Ornaments (Type › OpenType): {"layer":id?,"on":bool? (default: toggle),"range":[startChar,endChar]? (default all)}
-- `type.openType.ordinals` Ordinals (Type › OpenType): {"layer":id?,"on":bool? (default: toggle),"range":[startChar,endChar]? (default all)}
-- `type.openType.fractions` Fractions (Type › OpenType): {"layer":id?,"on":bool? (default: toggle),"range":[startChar,endChar]? (default all)}
+- `type.openType.standardLigatures` Standard Ligatures (Type › OpenType): {"layer":id? or "layers":[id,…]? (default selected Type layers),"on":bool? (default: toggle representative),"range":[startChar,endChar]? (single layer; default all)}
+- `type.openType.contextualAlternates` Contextual Alternates (Type › OpenType): {"layer":id? or "layers":[id,…]? (default selected Type layers),"on":bool? (default: toggle representative),"range":[startChar,endChar]? (single layer; default all)}
+- `type.openType.discretionaryLigatures` Discretionary Ligatures (Type › OpenType): {"layer":id? or "layers":[id,…]? (default selected Type layers),"on":bool? (default: toggle representative),"range":[startChar,endChar]? (single layer; default all)}
+- `type.openType.swash` Swash (Type › OpenType): {"layer":id? or "layers":[id,…]? (default selected Type layers),"on":bool? (default: toggle representative),"range":[startChar,endChar]? (single layer; default all)}
+- `type.openType.oldstyle` Oldstyle (Type › OpenType): {"layer":id? or "layers":[id,…]? (default selected Type layers),"on":bool? (default: toggle representative),"range":[startChar,endChar]? (single layer; default all)}
+- `type.openType.stylisticAlternates` Stylistic Alternates (Type › OpenType): {"layer":id? or "layers":[id,…]? (default selected Type layers),"on":bool? (default: toggle representative),"range":[startChar,endChar]? (single layer; default all)}
+- `type.openType.titlingAlternates` Titling Alternates (Type › OpenType): {"layer":id? or "layers":[id,…]? (default selected Type layers),"on":bool? (default: toggle representative),"range":[startChar,endChar]? (single layer; default all)}
+- `type.openType.ornaments` Ornaments (Type › OpenType): {"layer":id? or "layers":[id,…]? (default selected Type layers),"on":bool? (default: toggle representative),"range":[startChar,endChar]? (single layer; default all)}
+- `type.openType.ordinals` Ordinals (Type › OpenType): {"layer":id? or "layers":[id,…]? (default selected Type layers),"on":bool? (default: toggle representative),"range":[startChar,endChar]? (single layer; default all)}
+- `type.openType.fractions` Fractions (Type › OpenType): {"layer":id? or "layers":[id,…]? (default selected Type layers),"on":bool? (default: toggle representative),"range":[startChar,endChar]? (single layer; default all)}
 
 ### type.orientation
 
-- `type.orientation.horizontal` Horizontal (Type › Orientation): {"layer":id?}
-- `type.orientation.vertical` Vertical (Type › Orientation): {"layer":id?}
+- `type.orientation.horizontal` Horizontal (Type › Orientation): {"layer":id? or "layers":[id,…]? (default selected Type layers)}
+- `type.orientation.vertical` Vertical (Type › Orientation): {"layer":id? or "layers":[id,…]? (default selected Type layers)}
 
 ### type.paragraphStyle
 
@@ -1048,16 +1129,21 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 
 ## view
 
-- `view.newGuide` New Guide… (View): {"orientation":"horizontal|vertical","position":px}
-- `view.moveGuide` Move Guide: {"orientation":"horizontal|vertical","index":n,"position":px}
+- `view.newGuide` New Guide… (View): {"orientation":"horizontal|vertical","position":px or "<number><unit>","color":"lightBlue|lightRed|green|mediumBlue|yellow|magenta|cyan|lightGray|black" or "#rrggbb"?} (units px, in, cm, mm, pt, pc or %; % is of the width for a vertical guide, the height for a horizontal one; without a color the guide uses the guide colour in Preferences)
+- `view.moveGuide` Move Guide: {"orientation":"horizontal|vertical","index":n,"position":px or "<number><unit>"} (units as for view.newGuide)
 - `view.deleteGuide` Delete Guide: {"orientation":"horizontal|vertical","index":n}
 - `view.clearGuides` Clear Guides (View): {}
 - `view.proofSetup` Proof Setup…: {"profile":"working-cmyk|srgb|display-p3|adobe-rgb-compat|prophoto-compat|linear-srgb|rec2020|gray-gamma-2.2|sgray|lab-d50|coated-cmyk" (or a path to an .icc file)="working-cmyk","intent":"perceptual|relative|saturation|absolute"="relative","bpc":bool=true,"simulatePaper":bool=false}
 - `view.proofColors` Proof Colors (View, Cmd+Y): {"on":bool=toggle}
 - `view.gamutWarning` Gamut Warning (View, Cmd+Shift+Y): {"on":bool=toggle,"threshold":deltaE=4,"profile":"<proof profile override>"}
-- `view.newGuideLayout` New Guide Layout… (View): {"columns":n=0,"width":px?,"gutter":px=0,"rows":n=0,"height":px?,"rowGutter":px=gutter,"margin":px|[top,left,bottom,right]=0,"centerColumns":bool=false,"clearExisting":bool=false}
+- `view.newGuideLayout` New Guide Layout… (View): {"columns":n=0,"width":px?,"gutter":px=0,"rows":n=0,"height":px?,"rowGutter":px=gutter,"margin":px|[top,left,bottom,right]=0,"centerColumns":bool=false,"clearExisting":bool=false,"target":"document|selectedArtboards"="document"}
 - `view.newGuidesFromShape` New Guides From Shape (View): {"layer":id?}
 - `view.clearCanvasGuides` Clear Canvas Guides (View): {}
+- `view.colorSamplers.add` Add Color Sampler: {"x":f64,"y":f64} → the new point {index, number, position, rgb, cmyk}; errors at the 10-point limit or off the canvas
+- `view.colorSamplers.move` Move Color Sampler: {"index":n,"x":f64,"y":f64}
+- `view.colorSamplers.delete` Delete Color Sampler: {"index":n}
+- `view.colorSamplers.clear` Clear Color Samplers: {}
+- `view.colorSamplers.list` Color Samplers: {} → {max, samplers:[{index, number, position, rgb, cmyk}]}
 - `view.clearSelectedArtboardGuides` Clear Selected Artboard Guides (View): {} (guides inside the active artboard)
 - `view.proofSetup.workingCyanPlate` Working Cyan Plate (View › Proof Setup): {} (sets the proof and turns Proof Colors on)
 - `view.proofSetup.workingMagentaPlate` Working Magenta Plate (View › Proof Setup): {} (sets the proof and turns Proof Colors on)
@@ -1070,5 +1156,4 @@ Commands that take a filesystem `path`/`dir` are refused over MCP (use `doc_open
 - `view.thirtyTwoBitPreviewOptions` 32-bit Preview Options… (View): {"method":"exposureGamma|highlightCompression"="exposureGamma","exposure":-20..20=0,"gamma":0.1..9.99=1}
 - `view.lockSlices` Lock Slices (View): {"on":bool? (default: toggle)} → {locked}
 - `view.clearSlices` Clear Slices (View): {} (deletes every user and layer-based slice) → {cleared}
-- `view.layerMask` View Layer Mask: {"layer":id?,"mode":"off"|"gray"|"overlay"|"toggleGray"|"toggleOverlay"="toggleGray"} (gray: the mask alone, ⌥-click its thumbnail; overlay: red rubylith over the composite, ⇧⌥-click; view state, not an undo step; painting while shown paints the mask)
-
+- `view.layerMask` View Layer Mask: {"layer":id?,"mode":"off"|"gray"|"overlay"|"toggleGray"|"toggleOverlay"="toggleGray"} (gray: the mask alone, ⌥-click its thumbnail; overlay: red rubylith over the composite, ⇧⌥-click or `\`; view state, not an undo step; painting while shown paints the mask)

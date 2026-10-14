@@ -1,8 +1,12 @@
 # GridCraft worksheet functions
 
-Generated from `gridcraft-cli functions --json` (GridCraft 0.3.0, 501 functions). Grep for a name or a word
+Generated from `gridcraft-cli functions --json` (GridCraft 0.6.1, 513 functions). Grep for a name or a word
 from the description. The `category` filter of `list_functions` takes these exact names:
-`Compatibility`, `Cube`, `Database`, `DateTime`, `Engineering`, `Financial`, `Information`, `Logical`, `Lookup`, `MathTrig`, `Statistical`, `Text`, `Web`.
+`AddIn`, `Compatibility`, `Cube`, `Database`, `DateTime`, `Engineering`, `Financial`, `Information`, `Logical`, `Lookup`, `MathTrig`, `Statistical`, `Text`, `Web`.
+
+## AddIn
+
+- `EUROCONVERT(number, source, target, [full_precision], [triangulation_precision])` — Converts between the euro and the former euro member currencies at the fixed rates.
 
 ## Compatibility
 
@@ -76,7 +80,7 @@ from the description. The `category` filter of `list_functions` takes these exac
 ## DateTime
 
 - `DATE(year, month, day)` — Builds a date serial number from a year, month and day.
-- `DATEDIF(start_date, end_date, unit)` — Counts whole years, months or days between two dates.
+- `DATEDIF(start_date, end_date, unit)` — Counts whole years, months or days between two dates. unit: Y, M, D, MD, YM or YD.
 - `DATEVALUE(date_text)` — Converts a date written as text into a date serial number.
 - `DAY(serial_number)` — Returns the day of the month of a date.
 - `DAYS(end_date, start_date)` — Returns the number of days between two dates.
@@ -190,6 +194,10 @@ from the description. The `category` filter of `list_functions` takes these exac
 - `NOMINAL(effect_rate, npery)` — Nominal annual rate from an effective rate and compounding periods.
 - `NPER(rate, pmt, pv, [fv], [type])` — Number of periods needed to pay off or accumulate an amount.
 - `NPV(rate, value1, [value2], ...)` — Net present value of periodic cash flows at a discount rate.
+- `ODDFPRICE(settlement, maturity, issue, first_coupon, rate, yld, redemption, frequency, [basis])` — Price per 100 face value of a security with an odd first period.
+- `ODDFYIELD(settlement, maturity, issue, first_coupon, rate, pr, redemption, frequency, [basis])` — Yield of a security with an odd first period.
+- `ODDLPRICE(settlement, maturity, last_interest, rate, yld, redemption, frequency, [basis])` — Price per 100 face value of a security with an odd last period.
+- `ODDLYIELD(settlement, maturity, last_interest, rate, pr, redemption, frequency, [basis])` — Yield of a security with an odd last period.
 - `PDURATION(rate, pv, fv)` — Periods needed for an investment to grow to a target value.
 - `PMT(rate, nper, pv, [fv], [type])` — Periodic payment for a loan or annuity with constant payments and rate.
 - `PPMT(rate, per, nper, pv, [fv], [type])` — Principal part of a given period's payment.
@@ -289,6 +297,7 @@ from the description. The `category` filter of `list_functions` takes these exac
 - `TOCOL(array, [ignore], [scan_by_column])` — Flattens an array into a single column, optionally skipping blanks or errors.
 - `TOROW(array, [ignore], [scan_by_column])` — Flattens an array into a single row, optionally skipping blanks or errors.
 - `TRANSPOSE(array)` — Swaps the rows and columns of an array.
+- `TRIMRANGE(range, [trim_rows], [trim_cols])` — A range or array without its blank outer rows and columns.
 - `UNIQUE(array, [by_col], [exactly_once])` — Returns the distinct rows or columns of an array.
 - `VLOOKUP(lookup_value, table_array, col_index_num, [range_lookup])` — Finds a value in the first column of a table and returns the value in the same row of another column.
 - `VSTACK(array1, [array2], ...)` — Stacks arrays on top of each other.
@@ -345,6 +354,7 @@ from the description. The `category` filter of `list_functions` takes these exac
 - `MULTINOMIAL(number1, [number2], ...)` — Ratio of the factorial of a sum to the product of factorials.
 - `MUNIT(dimension)` — Identity matrix of the given size.
 - `ODD(number)` — Rounds away from zero to the nearest odd integer.
+- `PERCENTOF(data_subset, data_all)` — The sum of a subset as a fraction of the sum of all the values.
 - `PI()` — The constant pi to 15 digits.
 - `POWER(number, power)` — Raises a number to a power.
 - `PRODUCT(number1, [number2], ...)` — Multiplies all the numbers in the arguments.
@@ -415,6 +425,10 @@ from the description. The `category` filter of `list_functions` takes these exac
 - `F.TEST(array1, array2)` — Two-tailed probability that two variances do not differ.
 - `FISHER(x)` — Fisher transformation.
 - `FISHERINV(y)` — Inverse of the Fisher transformation.
+- `FORECAST.ETS(target_date, values, timeline, [seasonality], [data_completion], [aggregation])` — Forecasts a value by additive (AAA) exponential smoothing.
+- `FORECAST.ETS.CONFINT(target_date, values, timeline, [confidence_level], [seasonality], [data_completion], [aggregation])` — Half-width of the confidence interval around a FORECAST.ETS value.
+- `FORECAST.ETS.SEASONALITY(values, timeline, [data_completion], [aggregation])` — Length of the repeating pattern detected in a time series.
+- `FORECAST.ETS.STAT(values, timeline, statistic_type, [seasonality], [data_completion], [aggregation])` — A statistic of the FORECAST.ETS model: 1 alpha, 2 beta, 3 gamma, 4 MASE, 5 SMAPE, 6 MAE, 7 RMSE, 8 step size.
 - `FORECAST.LINEAR(x, known_ys, known_xs)` — Predicts a value along a linear trend.
 - `FREQUENCY(data_array, bins_array)` — Counts how many values fall into each bin, as a vertical array.
 - `GAMMA(number)` — The gamma function.
@@ -492,6 +506,7 @@ from the description. The `category` filter of `list_functions` takes these exac
 
 - `ARRAYTOTEXT(array, [format])` — Converts an array to text, either as a comma list or as a strict array constant.
 - `ASC(text)` — Converts full-width characters to half-width (no change for single-byte text).
+- `BAHTTEXT(number)` — Spells out a number in Thai words with Baht.
 - `CHAR(number)` — Returns the character for a code from the Windows-1252 character set.
 - `CLEAN(text)` — Removes non-printable control characters from text.
 - `CODE(text)` — Returns the Windows-1252 code of the first character of a text.

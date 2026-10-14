@@ -1,6 +1,6 @@
 # PdfCraft Action Wizard and app commands
 
-Generated from `action_list` and `command_list` (PdfCraft 0.4.0).
+Generated from `action_list` and `command_list` (PdfCraft 0.7.1).
 
 ## Built-in actions (`action_run {action: <name>, paths, folder}`)
 
@@ -25,14 +25,18 @@ Generated from `action_list` and `command_list` (PdfCraft 0.4.0).
 - `detect_form_fields`: Detect form fields
 - `run_javascript`: Run a JavaScript (takes `arg`)
 
-## App commands (178)
+## App commands (191)
 
 Ids for the live desktop app (`pdfcraft-cli ui --control FILE command id=<id>`). The `tool` column names the
-MCP tool that does the same thing headlessly; prefer the tool.
+MCP tool that does the same thing headlessly; prefer the tool. `command_run {id, params}` runs only the ids that have a
+tool (it calls that tool; `params` are the tool's arguments).
 
 | id | label | menu | shortcut | tool |
 |---|---|---|---|---|
 | `file.open` | Open… | File | Ctrl+O | `doc_open` |
+| `file.open_recent` | Open Recent | File |  |  |
+| `file.clear_recent` | Clear Recent Files |  |  |  |
+| `file.pin_folder` | Pin folder to Home… | File |  |  |
 | `create.blank` | New blank PDF | File |  |  |
 | `measure.distance` | Measure distance |  |  | `measure_distance` |
 | `measure.perimeter` | Measure perimeter |  |  | `measure_perimeter` |
@@ -45,6 +49,8 @@ MCP tool that does the same thing headlessly; prefer the tool.
 | `page.cut` | Cut pages |  |  |  |
 | `page.paste` | Paste pages |  |  |  |
 | `create.file` | Create PDF from file… | File |  |  |
+| `create.multiple` | Create PDF from multiple files… | File |  | `doc_create_multiple` |
+| `create.multiple_separate` | Create separate PDFs… | File |  |  |
 | `create.images` | Create PDF from images… | File |  |  |
 | `create.clipboard` | Create PDF from clipboard | File |  |  |
 | `page.combine` | Combine files… | File |  | `doc_combine` |
@@ -60,17 +66,20 @@ MCP tool that does the same thing headlessly; prefer the tool.
 | `edit.find` | Find… | Edit | Ctrl+F | `text_find` |
 | `edit.advanced_search` | Advanced search… | Edit | Ctrl+Shift+F |  |
 | `view.palette` | Find tools and commands… | View | Ctrl+K |  |
-| `view.layout.continuous` | Continuous scrolling |  |  |  |
 | `view.layout.single` | Single page |  |  |  |
 | `view.layout.two_up` | Two-page view |  |  |  |
+| `view.continuous` | Continuous scrolling |  |  |  |
 | `view.layout.cover` | Show cover page in two-page view |  |  |  |
 | `view.fit_width_scrolling` | Fit to width scrolling |  |  |  |
 | `view.fit_one_page` | Fit one full page |  |  |  |
-| `view.fit_visible` | Fit visible | View | Ctrl+3 |  |
+| `view.fit_visible` | Fit visible |  | Ctrl+3 |  |
 | `view.marquee_zoom` | Marquee zoom | View |  |  |
+| `edit.column_select` | Column select | Edit |  | `text_extract` |
 | `edit.snapshot` | Take a snapshot | Edit |  |  |
 | `view.full_screen` | Full screen mode | View | Ctrl+L |  |
 | `view.read_mode` | Read mode | View | Ctrl+H |  |
+| `view.focus_page_input` | Go to page… | View | Ctrl+Shift+N |  |
+| `ui.dock.reset` | Reset panel layout | View |  |  |
 | `view.theme` | Switch light / dark theme |  |  |  |
 | `view.theme.system` | Use system setting |  |  |  |
 | `view.theme.light` | Light gray |  |  |  |
@@ -142,7 +151,7 @@ MCP tool that does the same thing headlessly; prefer the tool.
 | `form.add.image` | Add an image field |  |  |  |
 | `form.add.date` | Add a date field |  |  |  |
 | `form.add.signature` | Add a digital signature field |  |  |  |
-| `sign.digital` | Digitally sign |  |  | `sign_keychain_ids` |
+| `sign.digital` | Digitally sign |  |  | `sign_windows_ids` |
 | `sign.certify` | Certify (visible signature) |  |  |  |
 | `sign.certify_invisible` | Certify (invisible signature) |  |  |  |
 | `sign.validate` | Validate all signatures |  |  |  |
@@ -164,17 +173,20 @@ MCP tool that does the same thing headlessly; prefer the tool.
 | `optimize.advanced` | Optimize PDF… | File |  | `doc_audit_space` |
 | `export.text` | Export to text… | File |  | `doc_export_text` |
 | `export.docx` | Export to Word… | File |  | `doc_export_office` |
+| `export.pptx` | Export to PowerPoint… | File |  |  |
 | `export.html` | Export to HTML… | File |  |  |
 | `export.rtf` | Export to RTF… | File |  |  |
 | `app.preferences` | Preferences… | Edit | Ctrl+, |  |
 | `tools.js_console` | JavaScript console… |  | Ctrl+J | `js_run` |
 | `tools.document_js` | Document JavaScripts… |  |  | `js_document_scripts` |
 | `ocr.recognize` | Recognize text… |  |  | `ocr_recognize` |
+| `ocr.enhance_camera` | Enhance camera image |  |  | `page_enhance_camera` |
 | `ocr.recognize_batch` | Recognize text in multiple files… |  |  | `ocr_recognize_files` |
 | `a11y.check` | Check for accessibility… |  |  | `accessibility_check` |
 | `a11y.report` | Open accessibility report |  |  | `accessibility_report` |
-| `a11y.reading_options` | Change reading options… |  |  |  |
+| `a11y.reading_options` | Change reading options… |  |  | `view_reading_colors` |
 | `a11y.alt_text` | Add alternate text… |  |  | `accessibility_figures` |
+| `a11y.tags` | Tags panel |  |  | `accessibility_tags` |
 | `export.all_images` | Export all images… | File |  | `doc_export_all_images` |
 | `edit.header_footer` | Add header & footer… |  |  | `doc_header_footer` |
 | `edit.header_footer.update` | Update header & footer… |  |  |  |
@@ -187,9 +199,11 @@ MCP tool that does the same thing headlessly; prefer the tool.
 | `edit.background.remove` | Remove background |  |  |  |
 | `protect.password` | Protect using password… | File |  | `doc_protect` |
 | `protect.remove` | Remove security | File |  | `doc_unprotect` |
+| `protect.unlock` | Enter permissions password… |  |  |  |
 | `protect.properties` | Security properties… | File |  |  |
 | `page.organize` | Organize pages | Pages |  |  |
 | `bookmark.add` | New bookmark | Pages | Ctrl+B |  |
+| `bookmark.from_structure` | New bookmarks from structure | Pages |  |  |
 | `page.rotate` | Rotate pages clockwise | Pages |  | `page_rotate` |
 | `page.rotate_ccw` | Rotate pages counterclockwise | Pages |  |  |
 | `page.delete` | Delete pages | Pages |  | `page_delete` |

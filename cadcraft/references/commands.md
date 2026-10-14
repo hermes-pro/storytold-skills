@@ -1,50 +1,58 @@
 # CADCraft command catalog
 
-Generated from `cadcraft-cli commands` (CADCraft 0.3.0, 295 commands), grouped by menu. Run any of them with
+Generated from `cadcraft-cli commands` (CADCraft 0.6.2, 404 commands), grouped by menu. Run any of them with
 `execute {command, params}` (MCP) or `cadcraft-cli run --cmd 'id {json}'`; type the id or an alias at `command_line`
 for the interactive version. `?` = optional, `a|b` = choices, `→ {...}` = what it returns, `hex` = an entity handle.
 Points are `[x, y]`. Angles are degrees unless noted. *(prompts)* marks commands that also run interactively.
+Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `grep -n 'table[.]' commands.md`.
 
 ## File
 
-- `new` (New Drawing...) — aliases: `qnew`: {metric?: bool}
+- `new` (New Drawing...) — aliases: `qnew`: {metric?: bool, template?: path to a .dwt/.dxf template ("." for none; default QNEWTEMPLATE)}
 - `open` (Open...): {path} \| {data: base64, name}
 - `close` (Close): {index?}
 - `closeall` (Close All): {}
 - `qsave` (Save) — aliases: `save`: {path?}
-- `saveas` (Save As...): {path, format?: dxf\|dwg}
-- `document.switch` (Switch Drawing): {index}
-- `document.bytes` (Drawing as bytes): {format?: dxf} → {data: base64}
-- `pagesetup` (Page Setup Manager...): {layout?: current, paper?: "A4"\|"A3"\|"Letter"\|"ANSI B"\|…, width?, height? (mm), landscape?, margins?: [l,b,r,t] mm, lineweights?, plotArea?, scale?, scaleToFit?, center?, plotStyleTable?}
-- `plot` (Print...) — aliases: `print`: {path? (else returns base64 `data`), layout?: current\|"Model", paper?, landscape?, fit?: bool, scale?, lineweights?: bool}
-- `exportpdf` (Export to PDF...): {path? (else returns base64 `data`), layout?, paper?, landscape?, fit?, lineweights?}
+- `saveas` (Save As...): {path, version?: 2000\|2004\|2007\|2010\|2013\|2018, binary?: bool}
+- `audit` (Audit) *(prompts)*: {fix?: bool} → {errors, fixed, issues: [{kind, location, handle?, message, fix}], message}
+- `recover` (Recover...) *(prompts)*: {path, copy?: bool (an unsaved copy without a file name), title?} \| {data: base64, name} → {index, uid, errors, fixed, issues, message}
+- `drawingrecovery` (Drawing Recovery Manager...): {action?: list\|open\|discard (default list), path? (one of the listed files)} → {files: [{path, drawing, modified, bytes}]} \| (open: as RECOVER)
+- `pagesetup` (Page Setup Manager...): {layout?: current, device?: plotter name (PLOTTERMANAGER) \| "None", paper?: the device's paper \| "A4"\|"A3"\|"Letter"\|"ANSI B"\|…, width?, height? (mm), landscape?, margins?: [l,b,r,t] mm, lineweights?, plotArea?, scale?, scaleToFit?, center?, plotStyleTable?: "monochrome.ctb"\|"grayscale.ctb"\|"default.ctb"\|"None"\|…, displayPlotStyles?: bool}
+- `plot` (Print...) — aliases: `print`: {path? (else returns base64 `data`), layout?: current\|"Model", paper?, landscape?, fit?: bool, scale?: number \| "1:50", lineweights?: bool, plotArea?: extents\|display\|limits\|window (Model) \| layout, window?: [[x1,y1],[x2,y2]]} (typed or from the menu: the Plot dialog)
+- `exportpdf` (Export to PDF...): {path? (else returns base64 `data`), layout?, paper?, landscape?, fit?, scale?, lineweights?, plotArea?, window?} (as PLOT)
+- `stylesmanager` (Plot Style Manager...): {action?: list (default)\|get\|new\|set\|delete\|load\|save, name?: table ("x.ctb"/"x.stb"), kind?: colorDependent\|named (new), from?: table to copy (new), description?, style?: {name, color?: "#rrggbb"\|null, grayscale?, screening?: 0-100, linetype?: name\|null, lineweight?: mm\|null, end?, join?, fill?, description?} (set), removeStyle?: name (set, named tables), path? (load/save; save without one returns `text`), text? (load)}
+- `plottermanager` (Plotter Manager...) *(prompts)*: {action?: list (default)\|get\|new\|set\|delete\|load\|save, name?: device, from?: device to copy (new), output?: pdf\|png\|svg, description?, resolution?: dpi, orientation?: portrait\|landscape, defaultPaper?, paper?: {name, width, height (mm), margins?: [l,b,r,t] mm} (set: add or replace), removePaper?: name (set), text? (load), path? (save: native only; without it returns `text`)} (typed: option prompts)
+- `import` (Import...) — aliases: `imp`: {path \| data: base64, name?: "x.dwg"} (DXF or DWG), at?: [x,y] (default 0,0), scale?: (default 1) → {imported, handles, layers, styles, blocks}
+- `export` (Export...) — aliases: `exp`: {path? (else returns base64 `data`), format?: dxf\|dwg\|svg\|png\|pdf (default: the path's extension)} → {format, bytes, path? \| data}
+- `preview` (Plot Preview) — aliases: `pre`: {layout?: current\|"Model", paper?, landscape?, fit?, scale?, lineweights?, width?: pixels (default 1200)} → {data: base64 PNG, width, height, layout, paper}
+- `publish` (Batch Publish...): {path?: "NAME.pdf" (writes NAME-<sheet>.pdf per sheet; else returns base64 `data` per sheet), layouts?: [name \| "Model"] (default: Model if it has objects, then every layout in tab order)} → {sheets: [{layout, bytes, path? \| data}]}
 
 ## Edit
 
-- `undo` (Undo) — aliases: `u`: {count?: n}
-- `redo` (Redo) — aliases: `mredo`: {count?: n}
-- `cutclip` (Cut): {handles?}
-- `copyclip` (Copy): {handles?}
-- `copybase` (Copy with Base Point): {handles?, base: [x,y]}
-- `pasteclip` (Paste) *(prompts)*: {at?: [x,y]} (default: same offset as copied)
-- `pasteorig` (Paste to Original Coordinates): {}
+- `u` (Undo): {}
+- `redo` (Redo): {count?: n}
+- `cutclip` (Cut) *(prompts)*: {handles?}
+- `copyclip` (Copy) *(prompts)*: {handles?}
+- `copybase` (Copy with Base Point) *(prompts)*: {handles?, base: [x,y]}
+- `pasteclip` (Paste) *(prompts)*: {at?: [x,y]} (where the base point lands; default: the original coordinates)
+- `pasteblock` (Paste as Block) *(prompts)*: {at?: [x,y]} (insertion point; default: the original coordinates)
+- `pasteorig` (Paste to Original Coordinates) *(prompts)*: {} (only into a drawing other than the one copied from)
 - `erase.selection` (Clear): {}
 - `selectall` (Select All) — aliases: `ai_selall`: {}
-- `select` (Select) *(prompts)*: {handles: [hex]} \| {window: [[x,y],[x,y]], crossing?: bool} \| {at: [x,y]} \| {clear: true} \| {add?: bool}
 - `qselect` (Quick Select...) — aliases: `qs`: {type?: "Line"\|"Circle"\|..., property?, operator?: "="\|"!="\|">"\|"<"\|"*" (wildcard), value?, mode?: new\|append\|exclude, applyTo?: drawing\|selection, layer?, color?} → selected handles
-- `selectioncycling` (Selection Cycling): {on?: bool}
 - `find` (Find...): {find, replace?, matchCase?: bool, wholeWord?: bool}
 
 ## View
 
-- `zoom` (Zoom) *(prompts)* — aliases: `z`: {mode: extents\|all\|window\|previous\|in\|out\|center\|scale\|object, p1?, p2?, center?, height?, factor?}
+- `zoom.realtime` (Zoom Realtime) *(prompts)*: {factor} (> 1 zooms in, about the view centre); interactive: drag up to zoom in, down to zoom out, Esc or Enter ends
+- `zoom.dynamic` (Zoom Dynamic) *(prompts)*: {center, height}; interactive: a view box over the drawing extents, a point places it, the next sizes it, Enter accepts
 - `zoom.previous` (Zoom Previous): {}
 - `zoom.window` (Zoom Window) *(prompts)*: {p1, p2}
 - `zoom.in` (Zoom In): {}
 - `zoom.out` (Zoom Out): {}
 - `zoom.all` (Zoom All): {}
 - `zoom.extents` (Zoom Extents): {}
-- `zoom.object` (Zoom Object): {handles?}
+- `zoom.object` (Zoom Object) *(prompts)*: {handles?}
 - `pan` (Pan) *(prompts)* — aliases: `p`: {delta: [dx,dy]} \| {from, to} \| {center}
 - `pan.left` (Pan Left): {}
 - `pan.right` (Pan Right): {}
@@ -53,7 +61,11 @@ Points are `[x, y]`. Angles are degrees unless noted. *(prompts)* marks commands
 - `regen` (Regen) — aliases: `re`: {}
 - `regenall` (Regen All) — aliases: `rea`: {}
 - `redraw` (Redraw) — aliases: `r`: {}
-- `vports` (New Viewports...) *(prompts)*: {count?: 1-4, arrangement?, p1?, p2?, layout?}
+- `view` (Named Views...) *(prompts)* — aliases: `v`: {option: save\|window\|restore\|delete\|list\|settings, name? (save/window/restore), names?: "a,b*" \| [names] (delete/list; wildcards), p1?, p2? (window), layerSnapshot?: bool (save: default the Layer snapshot setting; settings: change it)} (typed VIEW / -VIEW: option prompts)
+- `annovisible.current` (Current Scale Only): {} (ANNOALLVISIBLE 0: annotative objects show only at scales they support)
+- `annovisible.all` (All Scales): {} (ANNOALLVISIBLE 1: every annotative object shows)
+- `mview.polygonal` (Polygonal Viewport) *(prompts)*: {points: [[x,y]…] (at least three), bulges?, layout?}
+- `vports` (New Viewports...) *(prompts)*: {count?: 1-4, arrangement?, p1?, p2?, layout?} (typed in the Model tab: tiled viewports; their JSON form is -vports)
 - `vports.1` (1 Viewport) *(prompts)*: {p1?, p2?, layout?}
 - `vports.2` (2 Viewports) *(prompts)*: {p1?, p2?, arrangement?: vertical\|horizontal, layout?}
 - `vports.3` (3 Viewports) *(prompts)*: {p1?, p2?, arrangement?: right\|left\|above\|below\|vertical\|horizontal, layout?}
@@ -66,16 +78,16 @@ Points are `[x, y]`. Angles are degrees unless noted. *(prompts)* marks commands
 - `circle` (Circle) *(prompts)* — aliases: `c`: {center, radius} \| {center, diameter} \| {p1, p2} \| {p1, p2, p3}
 - `arc` (Arc) *(prompts)* — aliases: `a`: {p1, p2, p3} \| {center, radius, start, end (degrees)} \| {start, center, end}
 - `rectang` (Rectangle) *(prompts)* — aliases: `rec`, `rectangle`: {p1, p2 \| dimensions: [l, w] (p2 picks the quadrant) \| area + length\|breadth, rotation? (deg), fillet?, chamfer?: [d1, d2], width?, elevation?, thickness?}
-- `polygon` (Polygon) *(prompts)* — aliases: `pol`: {sides, center, radius, inscribed?: bool, angle?} \| {sides, edge: [[x,y],[x,y]]}
-- `ellipse` (Ellipse) *(prompts)* — aliases: `el`: {center, major: [dx,dy], ratio, start?, end? (degrees)}
+- `polygon` (Polygon) *(prompts)* — aliases: `pol`: {sides, center, radius, inscribed?: bool, angle?: deg to a vertex (inscribed) or edge midpoint (default: bottom edge horizontal)} \| {sides, edge: [[x,y],[x,y]]}
+- `ellipse` (Ellipse) *(prompts)* — aliases: `el`: {center, major: [dx,dy], ratio, start?, end? (degrees)} \| {isocircle: {center, radius \| diameter, plane?}}
 - `point` (Point) *(prompts)* — aliases: `po`: {at: [x,y]} \| {points: [...]}
 - `point.multiple` (Multiple Point) *(prompts)*: {points: [...]}
 - `xline` (Construction Line) *(prompts)* — aliases: `xl`: {base, through} \| {base, angle (degrees)} \| {base, hor\|ver: true} \| {vertex, start, end} (bisect) \| {handle, distance, side} \| {handle, through} (offset)
 - `ray` (Ray) *(prompts)*: {base, through}
-- `spline` (Spline) *(prompts)* — aliases: `spl`: {fit: [[x,y],...]} \| {control: [...], degree?}
+- `spline` (Spline) *(prompts)* — aliases: `spl`: {fit: [[x,y],...], closed?, knots?: chord\|sqrt\|uniform, startTangent?, endTangent? ([dx,dy]), tolerance?} \| {control: [...], degree?} \| {object: handle\|true, handles?} (polyline to spline)
 - `donut` (Donut) *(prompts)* — aliases: `do`, `doughnut`: {center, inside, outside}
 - `text` (Single Line Text) *(prompts)* — aliases: `dt`, `dtext`: {at, text, height?, rotation? (degrees), justify?: L\|C\|R\|M\|TL\|TC\|TR\|ML\|MC\|MR\|BL\|BC\|BR}
-- `mtext` (Multiline Text) *(prompts)* — aliases: `t`, `mt`: {at, text, height?, width?, attach?: 1..9, rotation?}
+- `mtext` (Multiline Text) *(prompts)* — aliases: `t`, `mt`: {at, text, height?, width?, attach?: 1..9 \| justify?: TL..BR, rotation?, style?, lineSpacing?, lineSpacingExact?, list?: bullet\|number\|lower\|upper, indent?, firstIndent?, rightIndent?, tabs?: [..], align?: left\|center\|right\|justify\|distributed, columns?: {type: static\|dynamic, count?, gutter?, height, heights?, reversed?}} (indents and tabs in text heights; width = one column)
 - `arc.sce` (Start, Center, End) *(prompts)*: {start, center, end}
 - `arc.sca` (Start, Center, Angle) *(prompts)*: {start, center, angle (degrees, + = CCW)}
 - `arc.scl` (Start, Center, Length) *(prompts)*: {start, center, length (chord; negative = major arc)}
@@ -100,32 +112,34 @@ Points are `[x, y]`. Angles are degrees unless noted. *(prompts)* marks commands
 - `revcloud.freehand` (Freehand) *(prompts)*: {freehand: [[x,y],...], arcLength?}
 - `wipeout` (Wipeout) *(prompts)*: {points: [[x,y],...]} \| {handle (closed polyline), erase?: bool} \| {frames: on\|off\|display}
 - `3dpoly` (3D Polyline) *(prompts)* — aliases: `3p`: {points: [[x,y,z?],...], closed?}
-- `mline` (Multiline) *(prompts)* — aliases: `ml`: {points, scale?, justification?: top\|zero\|bottom, closed?} (two offset polylines)
-- `helix` (Helix) *(prompts)*: {center, baseRadius, topRadius?, height?, turns?, ccw?} (3D polyline approximation)
+- `helix` (Helix) *(prompts)*: {center, baseRadius, topRadius?, height?, turns?, ccw?, startAngle? (degrees)} → {handle}
 - `spline.cv` (Control Vertices) *(prompts)*: {control: [[x,y],...], degree?: 1..10 (default 3), closed?}
 - `centermark` (Center Mark) *(prompts)*: {handle \| handles} (circles/arcs; lines on the CENTER linetype)
 - `centerline` (Center Line) *(prompts)*: {h1, h2} (two lines)
-- `hatch` (Hatch...) *(prompts)* — aliases: `h`, `bh`, `-hatch`: {points?: [[x,y]] (internal points) \| handles?: [hex] (closed objects), pattern?: "ANSI31", scale?, angle? (degrees), associative?}
+- `mline` (Multiline) *(prompts)* — aliases: `ml`: {points, scale?, justification?: top\|zero\|bottom, style?, closed?} → {handle}
+- `hatch` (Hatch...) *(prompts)* — aliases: `h`, `bh`, `-hatch`: {points?: [[x,y]] (internal points) \| handles?: [hex] (closed objects), pattern?: "ANSI31", scale?, angle? (degrees), associative? (HPASSOC), separate? (HPSEPARATE: a hatch per point/object), origin?: [x,y] (HPORIGIN) \| originMode?: "current"\|"bottomLeft"\|"bottomRight"\|"topLeft"\|"topRight"\|"center" (HPORIGINMODE), style?: "normal"\|"outer"\|"ignore" (HPISLANDDETECTION)} — gaps up to HPGAPTOL close
 - `gradient` (Gradient...) *(prompts)* — aliases: `gd`: {points? \| handles?, color1?, color2?, angle?}
 - `boundary` (Boundary...) *(prompts)* — aliases: `bo`, `bpoly`: {points: [[x,y]]}
 - `region` (Region) — aliases: `reg`: {handles?}
-- `block` (Make...) *(prompts)* — aliases: `b`, `-block`, `bmake`: {name, base: [x,y], handles?, keep?: "convert"\|"retain"\|"delete", description?}
+- `block` (Make...) *(prompts)* — aliases: `b`, `bmake`: {name, base: [x,y], handles?, keep?: "convert"\|"retain"\|"delete" (default "convert"), description?, annotative?}
 - `attdef` (Define Attributes...) *(prompts)* — aliases: `att`, `-attdef`: {tag, prompt?, default?, at, height?, invisible?}
 - `base` (Base): {at: [x,y]}
 - `table` (Table...) *(prompts)* — aliases: `tb`: {at: [x,y], rows (data rows), cols, rowHeight?, colWidth?, cells?: [[text]], title?: text, header?: [text]}
-- `table.set` (Set Table Cell): {handle, row, col, text}
-- `table.insertrow` (Insert Row): {handle, row? (insert before; default: append), height?}
-- `table.deleterow` (Delete Row): {handle, row}
-- `table.insertcol` (Insert Column): {handle, col? (insert before; default: append), width?}
-- `table.deletecol` (Delete Column): {handle, col}
-- `table.merge` (Merge Cells): {handle, row, col, rows, cols}
-- `table.unmerge` (Unmerge Cells): {handle, row, col}
 
 ## Modify
 
-- `hatchedit` (Hatch Edit) — aliases: `he`: {handles?, pattern?, scale?, angle?}
-- `attedit` (Single...) — aliases: `ate`, `eattedit`: {handle, values: {TAG: value}}
-- `battman` (Block Attribute Manager...): {name}
+- `mledit` (Multiline...) *(prompts)* — aliases: `-mledit`: {tool: cc\|oc\|mc\|ct\|ot\|cj, first, p1, second, p2} \| {tool: av\|dv, handle, point} \| {tool: cs\|ca\|wa, handle, p1, p2} (handles of multilines; points pick segments and sides)
+- `objectscale` (Add/Delete Scales...) *(prompts)* — aliases: `-objectscale`: {handles?, add?: name \| [names], delete?: name \| [names]} (scales of the drawing's list; an object keeps at least one) → changed, objects
+- `aiobjectscaleadd` (Add Current Scale) *(prompts)*: {handles?} (adds the current annotation scale to the annotative objects)
+- `aiobjectscaleremove` (Delete Current Scale) *(prompts)*: {handles?} (removes the current annotation scale from the annotative objects; an object keeps at least one)
+- `annoreset` (Synchronize Multiple-scale Positions) *(prompts)*: {handles?} (every scale of an annotative object shares one position)
+- `hatchedit` (Hatch Edit) *(prompts)* — aliases: `he`, `-hatchedit`: {handles?, pattern?, scale?, angle?, associative?: bool (false unlinks; true links each loop to a closed object of the same shape, or to `boundary` objects), boundary?: [hex], style?, origin? \| originMode?, separate?: true, recreate?: "polyline"\|"region", associate?: bool (link to the recreated boundary)}
+- `overkill` (Delete Duplicate Objects) *(prompts)* — aliases: `-overkill`: {handles? (default: the whole current space), tolerance? (0..1e6, default 1e-6), ignore?: [color\|layer\|linetype\|ltscale\|lineweight\|thickness\|transparency\|plotStyle], plines?: bool (default true), partialOverlap?: bool (default true), endToEnd?: bool (default false), associativity?: bool (keep associated objects, default true)} → {deleted, duplicates, overlapping, segments}
+- `attedit` (Single...) *(prompts)* — aliases: `ate`, `eattedit`: {handle, values: {TAG: value} (tags in any case)} → {changed, unknownTags?}
+- `-attedit` (Global) *(prompts)* — aliases: `-ate`, `atte`: {find, replace?, block?, tag?, value? (wildcard specifications, default *), handles? (default: every block reference in the current space)} → {changed}
+- `battman` (Block Attribute Manager...) *(prompts)*: {name, action?: "list" (default) \| "edit" \| "remove" \| "up" \| "down" \| "order" \| "sync", tag? (the definition to edit, remove or move; any case), newTag?, prompt?, default?, invisible?, constant?, height?, layer?, order?: [every tag, in the new order], sync?: bool (default true: existing references follow, as with ATTSYNC)} → {block, attributes: [{tag, prompt, default, invisible, constant, height, layer}], references, synced?}
+- `attsync` (Synchronize Attributes) *(prompts)*: {name} or {handle} (a reference of the block) → {block, references}
+- `xbind` (Bind...) *(prompts)* — aliases: `-xbind`, `xb`, `-xb`: {type: block\|dimstyle\|layer\|linetype\|style, names: "XREF\|NAME,…" (wildcards) \| [names]} → {bound: [names]}
 - `erase` (Erase) *(prompts)* — aliases: `e`, `delete`: {handles?: [hex]} (default: selection)
 - `move` (Move) *(prompts)* — aliases: `m`: {handles?, from?: [x,y], to?: [x,y] \| delta: [dx,dy]}
 - `copy` (Copy) *(prompts)* — aliases: `co`, `cp`: {handles?, delta: [dx,dy] \| from,to, count?: n}
@@ -133,20 +147,20 @@ Points are `[x, y]`. Angles are degrees unless noted. *(prompts)* marks commands
 - `scale` (Scale) *(prompts)* — aliases: `sc`: {handles?, base: [x,y], factor, copy?: bool}
 - `mirror` (Mirror) *(prompts)* — aliases: `mi`: {handles?, p1, p2, erase?: bool}
 - `stretch` (Stretch) *(prompts)* — aliases: `s`: {window: [[x,y],[x,y]], delta: [dx,dy]}
-- `offset` (Offset) *(prompts)* — aliases: `o`: {handle, distance, side: [x,y]}
-- `trim` (Trim) *(prompts)* — aliases: `tr`: {handle, pick: [x,y], edges?: [hex]}
-- `extend` (Extend) *(prompts)* — aliases: `ex`: {handle, pick: [x,y], edges?: [hex]}
-- `fillet` (Fillet) *(prompts)* — aliases: `f`: {h1, p1, h2, p2, radius?} (lines, arcs, circles) \| {handle, polyline: true, radius?}
-- `chamfer` (Chamfer) *(prompts)* — aliases: `cha`: {h1, p1, h2, p2, d1?, d2?}
+- `offset` (Offset) *(prompts)* — aliases: `o`: {handle, distance, side: [x,y], erase?: bool, layer?: "source"\|"current"}
+- `trim` (Trim) *(prompts)* — aliases: `tr`: {handle, pick: [x,y] \| fence: [[x,y],...] \| crossing: [[x,y],[x,y]], edges?: [hex], edgeMode?: "extend"\|"none", mode?: "quick"\|"standard"}
+- `extend` (Extend) *(prompts)* — aliases: `ex`: {handle, pick: [x,y] \| fence: [[x,y],...] \| crossing: [[x,y],[x,y]], edges?: [hex], edgeMode?: "extend"\|"none"}
+- `fillet` (Fillet) *(prompts)* — aliases: `f`: {h1, p1, h2, p2, radius?, trim?: bool} (lines, arcs, circles) \| {handle, polyline: true, radius?}
+- `chamfer` (Chamfer) *(prompts)* — aliases: `cha`: {h1, p1, h2, p2, d1?, d2? \| length, angle (degrees), trim?: bool} \| {handle, polyline: true, d1?, d2? \| length, angle}
 - `explode` (Explode) *(prompts)* — aliases: `x`: {handles?}
-- `arrayrect` (Rectangular Array) *(prompts)*: {handles?, rows, cols, rowSpacing, colSpacing}
-- `arraypolar` (Polar Array) *(prompts)*: {handles?, center, count, angle? (degrees, default 360), rotate?: bool}
 - `break` (Break) *(prompts)* — aliases: `br`: {handle, p1, p2}
 - `breakatpoint` (Break At Point): {handle, at}
 - `join` (Join) *(prompts)* — aliases: `j`: {handles?}
-- `overkill` (Delete Duplicate Objects): {handles?}
-- `pedit` (Polyline) *(prompts)* — aliases: `pe`: {handle \| handles, option: close\|open\|join\|width\|fit\|spline\|decurve\|reverse\|ltypegen\|vertex, width?, handles2? (join), fuzz?, action?: move\|insert\|straighten\|width, index?, to?, startWidth?, endWidth?, convert?: bool}
-- `splinedit` (Spline) *(prompts)* — aliases: `spe`: {handle, option: close\|open\|reverse\|refit\|purge\|polyline\|move, fit?, index?, to?, precision?}
+- `arrayrect` (Rectangular Array) *(prompts)*: {handles?, rows, cols, rowSpacing, colSpacing, levels? (1), levelSpacing?, rowElevation?, axisAngle? (degrees), base? ([x, y], default the objects' centre), associative?: bool (default ARRAYASSOCIATIVITY, on)} → {handle (the array, when associative), created (copies)}
+- `arraypolar` (Polar Array) *(prompts)*: {handles?, center, count, angle? (degrees, default 360), rotate?: bool, rows? (1), rowSpacing?, rowElevation?, levels? (1), levelSpacing?, base? ([x, y], default the first object's centre), associative?: bool (default ARRAYASSOCIATIVITY, on)} → {handle (the array, when associative), created (copies)}
+- `arrayedit` (Edit Array) *(prompts)*: {handle, cols?, rows?, colSpacing?, rowSpacing?, axisAngle? (degrees), rowElevation?, levels?, levelSpacing?, items?, angle? (fill, degrees), angleBetween?, rotate?: bool, center? ([x, y]), base? ([x, y], the new base point), reset?: bool, replace?: {handles, base? ([x, y], default the objects' centre), items: [[i, j, level]…] \| "source"}, source?: {item? ([i, j, level], default [0, 0, 0])} (places the source objects for editing; ARRAYCLOSE ends)}
+- `pedit` (Polyline) *(prompts)* — aliases: `pe`: {handle \| handles, option: close\|open\|join\|width\|fit\|spline\|decurve\|reverse\|ltypegen\|vertex, width?, handles2? (join), fuzz?, action?: move\|insert\|straighten\|break\|width\|regen, index?, index2? (straighten, break), to?, startWidth?, endWidth?, tangents?: [{index, angle (deg) \| direction}] (fit), convert?: bool}
+- `splinedit` (Spline) *(prompts)* — aliases: `spe`: {handle, option: close\|open\|join\|reverse\|refit\|purge\|polyline\|move\|fitmove\|fitadd\|fitdelete\|kink\|tangents\|tolerance\|vertexadd\|vertexmove\|vertexdelete\|weight\|elevate, handles2? (join), fit?, index?, to?, before?: bool (fitadd), at? (kink, vertexadd), start?, end? (tangent directions; null = default), tolerance?, weight?, order? (elevate), precision?}
 - `lengthen` (Lengthen) *(prompts)* — aliases: `len`: {handle, pick?: [x,y] (end), delta? \| deltaAngle? (deg) \| percent? \| total? \| totalAngle? (deg) \| to?: [x,y]} ({handle} alone measures)
 - `align` (Align) *(prompts)* — aliases: `al`: {handles?, s1, d1, s2?, d2?, scale?: bool}
 - `blend` (Blend) *(prompts)* — aliases: `blendcurves`: {h1, p1, h2, p2, continuity?: tangent\|smooth}
@@ -155,13 +169,12 @@ Points are `[x, y]`. Angles are degrees unless noted. *(prompts)* marks commands
 - `flatten` (Flatten Objects) *(prompts)*: {handles?} (z = 0, 3D polylines become polylines)
 - `arraypath` (Path Array) *(prompts)*: {handles?, path (handle), count? (default 6) \| spacing?, align?: bool (default true)}
 - `textedit` (Edit Text...) *(prompts)* — aliases: `ed`, `ddedit`: {handle, text} (text, mtext, attribute definitions, dimension text override)
-- `grip.move` (Grip Stretch): {handle, index, to} (stretch the grip) \| {handles?, index, baseHandle?, to, mode: "move", copy?} (move about the grip)
-- `grip.stretch` (Grip Stretch): {handle, index, to}
-- `grip.rotate` (Grip Rotate): {handles?, base \| baseHandle+index, angle (degrees) \| to, copy?}
-- `grip.scale` (Grip Scale): {handles?, base \| baseHandle+index, factor \| to, copy?}
-- `grip.mirror` (Grip Mirror): {handles?, base \| baseHandle+index, to (second mirror point), copy?}
+- `vpclip` (Clip Viewport) *(prompts)*: {handle?: viewport (default: selected or active), object?: closed object \| points?: [[x,y]…] + bulges?, delete?: bool, layout?}
 - `properties` (Properties) — aliases: `pr`, `props`, `ch`: {handles?} → properties of the selection
-- `matchprop` (Match Properties) — aliases: `ma`, `painter`: {source, targets: [hex]}
+- `matchprop` (Match Properties) *(prompts)* — aliases: `ma`, `painter`: {source, targets?: [hex] (default: selection), properties?: [name] \| {name: bool} (default: all; names: color, layer, linetype, ltscale, lineweight, transparency, thickness, plotStyle, dimension, text, hatch, polyline, viewport, table, multileader)} → {changed}
+- `union` (Union) *(prompts)* — aliases: `uni`: {handles?} (regions)
+- `subtract` (Subtract) *(prompts)* — aliases: `su`: {from: [handles], remove: [handles]} (regions)
+- `intersect` (Intersect) *(prompts)* — aliases: `in`: {handles?} (regions)
 
 ## Dimension
 
@@ -174,94 +187,96 @@ Points are `[x, y]`. Angles are degrees unless noted. *(prompts)* marks commands
 - `dimordinate` (Ordinate) *(prompts)* — aliases: `dor`, `dimord`: {feature, leader, xtype?: bool}
 - `dimcontinue` (Continue) *(prompts)* — aliases: `dco`, `dimcont`: {points: [[x,y]...]} (continues the last linear dimension)
 - `dimbaseline` (Baseline) *(prompts)* — aliases: `dba`, `dimbase`: {points: [[x,y]...]} (baseline from the last linear dimension)
-- `qdim` (Quick Dimension): {handles?, at: [x,y], vertical?: bool}
+- `qdim` (Quick Dimension) *(prompts)*: {handles?, at: [x,y] (dimension line position), mode?: continuous\|staggered\|baseline\|ordinate\|radius\|diameter (default continuous), vertical?: bool (default: from `at`), datum?: [x,y] (baseline and ordinate; default the first point, or the origin for ordinate), add?: [[x,y]], remove?: [[x,y]] (dimension points; removes those within `tolerance`)}
 - `dim` (Dimension) *(prompts)*: {p1, p2, at}
-- `mleader` (Multileader) *(prompts)* — aliases: `mld`: {points: [[arrow], ..., [landing]], text}
-- `dimstyle.update` (Update): {handles?}
+- `mleader` (Multileader) *(prompts)* — aliases: `mld`: {points: [[arrow], ..., [landing]] ([location] with leaderType none), text?, leaderType?: straight\|spline\|none, block?: name, blockAttach?: center\|insertion}
+- `dimstyle.update` (Update) *(prompts)*: {handles?}
 - `dimoverride` (Override) *(prompts)* — aliases: `dov`, `dimover`: {handles?, <DimStyle fields or DIM* variables: values>, clear?: bool, text?: override text}
 - `dimreassociate` (Reassociate Dimensions) *(prompts)* — aliases: `dre`: {handles?} (dimensions; attaches their definition points to the objects under them)
-- `dimdisassociate` (Disassociate Dimensions) *(prompts)* — aliases: `dda`: {handles?}
 - `dimtedit.home` (Home): {handles?}
-- `dimtedit.angle` (Angle): {handles?, angle: degrees}
+- `dimtedit.angle` (Angle) *(prompts)*: {handles?, angle: degrees}
 - `dimtedit.left` (Left): {handles?}
 - `dimtedit.center` (Center): {handles?}
 - `dimtedit.right` (Right): {handles?}
-- `dimtedit` (Dimension Text Edit): {handles?, at?: [x,y], mode?: home\|angle\|left\|center\|right, angle?}
-- `dimspace` (Dimension Space): {base: hex, handles: [hex], spacing?: number (default DIMDLI)}
+- `dimspace` (Dimension Space) *(prompts)*: {base: hex, handles: [hex], spacing?: number (default DIMDLI)}
+- `dimedit.oblique` (Oblique) *(prompts)*: {handles?, angle?: degrees}
+- `dimjogged` (Jogged) *(prompts)* — aliases: `djo`, `jog`: {handle (arc or circle), centerOverride: [x,y], at: [x,y] (dimension line location), jog?: [x,y], text?}
+- `dimjogline` (Jogged Linear) *(prompts)* — aliases: `djl`: {handle (linear or aligned dimension), at?: [x,y] (jog location; default between the text and the first extension line), remove?: bool}
+- `dimbreak` (Dimension Break) *(prompts)*: {handles?, mode?: auto\|manual\|remove (default auto), objects?: [hex] (auto: the objects that break; default all crossing objects), first?/second?: [x,y] (manual), size?: number (default 0.125 × DIMSCALE)}
+- `diminspect` (Inspection) *(prompts)*: {handles?, shape?: round\|angular\|none (default round), label?: string, rate?: string (default "100%"), remove?: bool}
 - `dimstyle.dimension` (Dimension Style...): same as `dimstyle`
-- `dimstyle.list` (List Dimension Styles): {name?} → styles (with all variables for `name`)
-- `dimstyle.rename` (Rename Dimension Style): {from, to}
-- `dimstyle.delete` (Delete Dimension Style): {name} (not Standard, the current style or one in use)
-- `dimstyle.current` (Set Current Dimension Style): {name}
-- `dimstyle.override` (Dimension Style Override): {handles?, <style fields or DIM* variables: values>, clear?: bool} (per-dimension overrides)
-- `dimconstraint` (Dimensional Constraint) *(prompts)* — aliases: `dcon`: {type: linear\|aligned\|horizontal\|vertical\|angular\|radius\|diameter, h1, p1?, h2?, p2?, expr? \| value?, name?}
+- `tolerance` (Tolerance...) *(prompts)* — aliases: `tol`: {at: [x,y], symbol?: position\|concentricity\|symmetry\|parallelism\|perpendicularity\|angularity\|cylindricity\|flatness\|circularity\|straightness\|surfaceprofile\|lineprofile\|circularrunout\|totalrunout, tol1?: "%%c0.1(M)" \| {value, diameter?, material?: M\|L\|S}, tol2?, datums?: ["A(M)", "B", {letter, material?}] (up to 3), line2?: {symbol?, tol1?, tol2?, datums?}, height? (projected zone), projected?, datumId?, rotation? (degrees), style? (dimension style; default DIMSTYLE), text? (the frame string as in DXF, instead of the fields)}
 
 ## Insert
 
-- `insert` (Block...) *(prompts)* — aliases: `i`, `-insert`, `ddinsert`: {name, at: [x,y], scale?, rotation? (degrees), attribs?: {TAG: value}, explode?: bool}
-- `layout.new` (New Layout): {name?, viewport?: bool (default true)} → {name, viewport}
+- `insert` (Block...) *(prompts)* — aliases: `i`, `-insert`, `ddinsert`: {name ("*NAME": exploded), file?: DXF/DWG path (defines or redefines block `name`, default the file name, from its model space; base point $INSBASE), at: [x,y], scale?: number \| [x, y], rotation? (degrees), basePoint?: [x,y] (block coordinates), attribs?: {TAG: value}, explode?: bool}
+- `xattach` (DWG Reference...) *(prompts)* — aliases: `xa`: {path: DWG/DXF file (saved as given; a relative path is relative to this drawing's folder), name? (default: the file name), overlay?: bool, at?: [x,y] (default 0,0), scale?: number \| [x, y], rotation? (degrees)} → {name, handle, file}
+- `layout.new` (New Layout) *(prompts)*: {name?, viewport?: bool (default true)} → {name, viewport}
+- `datalink` (Data Link...): {handle, path (.csv, .txt/.tsv tab-separated), startRow? (default: below the title), remove?: bool} → {rows, cols}
 
 ## Format
 
-- `layout.set` (Switch Layout): {name: "Model" \| layout name}
-- `layer` (Layers) — aliases: `la`, `layers`: {}
-- `layer.new` (New Layer): {name, color?, linetype?, lineweight? (mm), current?: bool}
-- `layer.set` (Set Layer Properties): {name, on?, frozen?, locked?, plot?, color?, linetype?, lineweight?, transparency?, description?, newVpFreeze?, newName?}
+- `mlstyle` (Multiline Style...): {} → styles \| {name, description?, elements?: [{offset, color?, linetype?}], fill?: color\|false, joints?, startCaps?/endCaps?: {line?, outerArc?, innerArcs?, angle? (degrees)}, copyFrom?, current? (default true)} \| {delete: name} \| {name, rename: newName}
+- `scalelistedit` (Scale List...) *(prompts)* — aliases: `-scalelistedit`: {add?: {name, ratio: "paper:drawing" (e.g. "1:50") \| paperUnits + drawingUnits}, delete?: name \| [names], reset?: true \| "metric" \| "imperial"} → scales, current (no parameters: list only)
+- `layer` (Layers) *(prompts)* — aliases: `la`, `layers`, `-layer`: {} → layers, states (typed -LAYER: option prompts)
 - `layer.current` (Make Current) — aliases: `clayer`: {name}
-- `layer.delete` (Delete Layer): {name}
-- `laymcur` (Make Object's Layer Current): {handles?}
 - `laymch` (Layer Match): {handles?, layer}
-- `laycur` (Change to Current Layer): {handles?}
+- `laycur` (Change to Current Layer) *(prompts)*: {handles?}
 - `layiso` (Isolate Layer): {handles?}
 - `layuniso` (Unisolate Layer): {}
-- `layfrz` (Freeze Layer): {handles?}
-- `layoff` (Layer Off): {handles?}
-- `laylck` (Lock Layer): {handles?}
-- `layulk` (Unlock Layer): {handles?}
-- `layon` (Turn All Layers On): {}
-- `laythw` (Thaw All Layers): {}
+- `layfrz` (Freeze Layer) *(prompts)*: {handles?}
+- `layoff` (Layer Off) *(prompts)*: {handles?}
+- `laylck` (Lock Layer) *(prompts)*: {handles?}
+- `layulk` (Unlock Layer) *(prompts)*: {handles?}
 - `layerp` (Previous Layer): {}
 - `layerstate.save` (Save Layer State): {name}
-- `layerstate.restore` (Restore Layer State): {name}
-- `layerstate.list` (List Layer States): {} → states
-- `layerstate.delete` (Delete Layer State): {name}
-- `layerstate.rename` (Rename Layer State): {from, to}
-- `layout` (Layout) — aliases: `lo`: {option: new\|copy\|delete\|rename\|set\|list, name?, to?}
-- `layout.delete` (Delete Layout): {name}
-- `layout.rename` (Rename Layout): {from?: current layout, to}
-- `layout.copy` (Copy Layout): {from, to?}
-- `layout.list` (List Layouts): → [{name, tabOrder, page, viewports}]
+- `laymrg` (Layer Merge) *(prompts)*: {from: [names], to} (the from layers' objects move to `to`, then the from layers are deleted)
+- `laydel` (Layer Delete) *(prompts)*: {names: [...]} (deletes the layers and every object on them)
+- `plotstyle` (Plot Style...): {name?: "ByLayer"\|"ByBlock"\|style name, handles?\|handle? (default: the selection; nothing selected sets the current plot style for new objects, CPLOTSTYLE)} (no name: reports the current style and the named styles)
 - `color` (Color...) — aliases: `col`, `colour`: {color: "ByLayer" \| "red" \| 1..255 \| "r,g,b"}
-- `linetype` (Linetype...) — aliases: `lt`, `ltype`: {current?: name, load?: name \| "*"}
+- `linetype` (Linetype...) — aliases: `lt`, `ltype`: {current?: name, load?: name \| "*" (with a file: comma-separated names, wildcards), file?: path to a .lin file \| text?: its contents, reload?: bool}
 - `lweight` (Lineweight...) — aliases: `lw`, `lineweight`: {lineweight: mm \| ByLayer}
 - `units` (Units...) — aliases: `un`: {lunits?: 1..5, luprec?: 0..8, aunits?: 0..4, auprec?: 0..8, insunits?}
 - `limits` (Drawing Limits): {min: [x,y], max: [x,y]}
 - `style` (Text Style...) — aliases: `st`: {name, font?, bigFont?, height?, widthFactor?, oblique? (degrees), backwards?, upsideDown?, vertical?, annotative?, current?} → styles
-- `style.list` (List Text Styles): {} → text styles
-- `style.rename` (Rename Text Style): {from, to}
-- `style.delete` (Delete Text Style): {name} (not Standard, the current style or one in use)
-- `style.current` (Set Current Text Style): {name}
 - `dimstyle` (Dimension Style...) — aliases: `d`, `dst`, `ddim`: {name, current?, <style fields or DIM* variables, e.g. arrowSize / DIMASZ, DIMTSZ, DIMBLK, DIMTAD, DIMLUNIT…>} → styles
-- `tablestyle` (Table Style...) — aliases: `ts`: {name, textHeight?, margin?, title?, header?, current?} → styles
-- `mleaderstyle` (Multileader Style...) — aliases: `mls`: {name, arrowSize?, textHeight?, landingGap?, dogleg?, textStyle?, current?} → styles
-- `ddptype` (Point Style...): {pdmode, pdsize}
-- `rename` (Rename...): {table: layer\|linetype\|style\|dimstyle\|block, from, to}
+- `tablestyle` (Table Style...) — aliases: `ts`: {name, textHeight?, margin?, title?, header?, current?, cellStyle?: {name, …} (see tablestyle.cellstyle)} → styles
+- `mleaderstyle` (Multileader Style...) — aliases: `mls`: {name, arrowSize?, textHeight?, landingGap?, dogleg?, textStyle?, annotative?, current?} → styles
+- `ddptype` (Point Style...) — aliases: `ptype`: {pdmode, pdsize}
+- `rename` (Rename...) *(prompts)* — aliases: `ren`, `-rename`: {table: layer\|linetype\|style\|dimstyle\|block\|mleaderstyle\|tablestyle\|view\|ucs, from, to}
 
 ## Tools
 
-- `draworder.front` (Bring to Front): {handles?}
-- `draworder.back` (Send to Back): {handles?}
+- `script` (Run Script...) *(prompts)* — aliases: `scr`: {path: script (.scr) file} \| {data: base64} → {lines}
+- `isolateobjects` (Isolate Objects) *(prompts)*: {handles? (default the selection)} → hides every other object of the current space for this session: {hidden}
+- `hideobjects` (Hide Objects) *(prompts)*: {handles? (default the selection)} → hides these objects for this session: {hidden}
+- `unisolateobjects` (End Object Isolation): {} → shows every object ISOLATEOBJECTS or HIDEOBJECTS hid: {shown}
+- `dataextraction` (Data Extraction...) *(prompts)* — aliases: `dx`: {blocks?: "A*,B" (block names, wildcards, default *), tags?: attribute tags to include (wildcards, default *), handles? (default: the block references in model space and every layout), combine?: bool (default true: identical rows once, with a Count column; false: one row per reference with handle, layer, position and rotation), file?: path (.csv; .txt is tab-separated), at?: [x,y] (insert a table there), title?: table title} → {columns, rows, file?, table?}
+- `xopen` (Open Xref) *(prompts)*: {name} \| {handles: [xref reference]}
+- `draworder.front` (Bring to Front) *(prompts)*: {handles?}
+- `draworder.back` (Send to Back) *(prompts)*: {handles?}
+- `draworder.above` (Bring Above Objects) *(prompts)*: {handles?, reference: [hex]}
+- `draworder.under` (Send Under Objects) *(prompts)*: {handles?, reference: [hex]}
+- `texttofront.text` (Text Objects Only): {} → {moved}
+- `texttofront.dimensions` (Dimension Objects Only): {} → {moved}
+- `texttofront.leaders` (Leaders Only): {} → {moved}
+- `texttofront.all` (All Annotation Objects): {} → {moved}
+- `hatchtoback` (Send Hatches to Back): {} → {moved}
+- `group` (Group) *(prompts)* — aliases: `g`: {name? (default: an unnamed group *A1, *A2…), description?, handles? (default the selection), selectable?: bool (default true)} → {name, members}
+- `ungroup` (Ungroup) *(prompts)*: {name?: "G1" \| "G1,G2" \| [names]} \| {handles?} (default the selection: every group holding one of the objects) → {ungrouped: [names]}
+- `compare` (Compare Drawings...) *(prompts)*: {path} \| {data: base64, name} \| {document: index or title} → {other, added: [{handle, type}], removed, changed: [{handle, other, type, what}], counts: {added, removed, changed, common}, regions, truncated, message}
 - `dist` (Distance) *(prompts)* — aliases: `di`: {p1, p2}
 - `id` (ID Point) *(prompts)*: {at}
 - `list` (List) *(prompts)* — aliases: `li`, `ls`: {handles?}
 - `area` (Area) *(prompts)* — aliases: `aa`: {points: [[x,y],...]} \| {handle}
 - `time` (Time): {}
 - `status` (Status): {}
-- `count` (Count): {block?}
+- `count` (Count) *(prompts)*: {block?, object?: handle (count objects like this one), space?: current\|model\|all\|<layout> (default current), handles?: [...] (count in these objects), nested?: bool (default true), highlight?: bool} → {blocks: {name: n}, nested: {name: n}, spaces: {space: {name: n}}, total} \| {block, count, nested, handles}, plus `message`
+- `massprop` (Region/Mass Properties) *(prompts)*: {handles?} (regions) → properties of each
 - `dsettings` (Drafting Settings...) — aliases: `ds`, `se`: {snapunit?: [x,y], gridunit?: [x,y], polarang? (degrees), gridmajor?}
-- `setvar` (Set Variable) — aliases: `set`: {name, value}
-- `cal` (QuickCalc) — aliases: `quickcalc`, `qc`: {expr: "(3+4)*2^2", vars?: {x: 1}}
-- `massprop` (Region/Mass Properties): {handles?}
+- `setvar` (Set Variable) *(prompts)* — aliases: `set`: {name, value}
+- `options` (Options...) — aliases: `op`, `preferences`: {reset?: bool, OSMODE?, PICKBOX?, APERTURE?, GRIPSIZE?, CURSORSIZE?, PICKFIRST?, PICKADD?, …: any profile variable}
+- `cal` (QuickCalc) *(prompts)* — aliases: `quickcalc`, `qc`: {expr: "(3+4)*2^2" \| "dist([0,0],[3,4])", vars?: {x: 1, p: [x, y]}} → {value} \| {point} \| {convert: {type?: length\|area\|volume\|angle, from, to, value}} → {value} \| {units: true} → unit lists \| {pick: point\|distance\|angle\|intersection, points}
 - `radius.measure` (Radius): {handle}
 - `angle.measure` (Angle): {vertex, p1, p2} \| {h1, h2}
 - `gccoincident` (Coincident) *(prompts)*: {h1, p1?, h2?, p2?, h3?, p3?} (h = handle; p = "start"/"end"/"mid"/"center"/"v<i>"/"seg<i>"/"object" or a pick point [x, y])
@@ -293,33 +308,102 @@ Points are `[x, y]`. Angles are degrees unless noted. *(prompts)* marks commands
 - `parameters` (Parameters Manager) — aliases: `par`, `parametersclose`: {} lists; {name, expr \| value, description?} sets (new name = user parameter) and re-solves; {delete: name}
 - `constraintsettings` (Constraint Settings) — aliases: `csettings`: {infer?, distanceTolerance?, angleTolerance?, autoTypes?: [names], barsVisible?, barTransparency?, dimsVisible?}
 
-## Layouts & plotting
+## Window
 
-- `viewport.set` (Viewport Properties): {handle? (default: selected viewports), scale?: paper units per model unit \| "1:50", viewHeight?, center?: [x,y], locked?, freeze?: [layer], thaw?: [layer], colors?: {layer: color \| null}}
-- `vplayer` (Viewport Layer Freeze): {handle?, freeze?: [layer], thaw?: [layer], colors?: {layer: color ("red" \| 1..255 \| "r,g,b") \| null to clear}}
+- `xref` (Reference Manager) — aliases: `xr`, `externalreferences`: {} → {xrefs: [{name, path, foundAt, type: Attach\|Overlay, status: Loaded\|Unloaded\|Not Found\|Unresolved\|Unreferenced\|Not loaded, references, objects}]} (the app opens the External References palette instead)
 
-## Parametric
+## No menu (command line and JSON only)
 
-- `dclinear` (Linear) *(prompts)*: {h1, p1?, h2?, p2?, expr? \| value?, name?}
-- `constraints.inspect` (Inspect Constraints): {} → constraints, glyph anchors, parameters, settings
-
-## Other
-
+- `document.switch` (Switch Drawing): {index}
+- `document.bytes` (Drawing as bytes): {format?: dxf, version?: 2000…2018, binary?: bool} → {data: base64}
+- `aliasedit` (Command Aliases): {file?: path to a .pgp alias file \| text?: its contents, set?: {alias: command}, remove?: [alias], clear?: bool} → {aliases, file, loaded, warnings}
+- `reinit` (Reinitialize): {file? \| text?} (default: the alias file loaded last)
+- `undo` (Undo) *(prompts)*: {count?: n} \| {mode: mark\|begin\|end} \| {mode: back, confirm?: bool (no mark: undo everything; default true)} \| {mode: auto, on: bool} \| {mode: control, control: all\|none\|one\|combine\|layer, on?: bool (combine/layer)}
+- `mredo` (Redo) *(prompts)*: {count?: n} \| {all: true}
+- `ai_deselect` (Deselect All): {}
+- `select` (Select) *(prompts)*: {handles: [hex]} \| {window: [[x,y],[x,y]], crossing?: bool} \| {at: [x,y]} \| {clear: true} \| {add?: bool}
 - `qselect.info` (Quick Select Properties): {applyTo?: drawing\|selection, type?} → object types with counts and the properties available for `type`
+- `selectsimilar` (Select Similar) *(prompts)*: {handles? (default the selection), mode?: SELECTSIMILARMODE bits (1 colour, 2 layer, 4 linetype, 8 linetype scale, 16 lineweight, 32 plot style, 64 object style, 128 name; default the variable, 130)} → selects every visible object in the current space of the same type with those properties: {selected, handles}
+- `zoom` (Zoom) *(prompts)* — aliases: `z`: {mode: extents\|all\|window\|previous\|in\|out\|center\|dynamic\|scale\|realtime\|object, p1?, p2?, center?, height?, factor?, xp?: bool (scale relative to paper space: in a viewport, `factor` paper units per model unit), limits?: bool (scale relative to the limits)} (center/dynamic: `center` + `height`, or `factor` with `xp`/`limits`; realtime: `factor` about the view centre; typed: Enter at the first prompt starts Realtime)
 - `view.set` (Set View): {center: [x,y], height}
 - `view.get` (Get View): {}
+- `layout.set` (Switch Layout): {name: "Model" \| layout name}
+- `-vports` (Viewports) *(prompts)*: {option: single\|2\|3\|4\|join\|save\|restore\|delete\|list, arrangement?: horizontal\|vertical (2) \| horizontal\|vertical\|above\|below\|left\|right (3; default right), applyTo?: current\|display (default current: split the current tile), name? (save/restore), names? (delete/list; wildcards), dominant?, join? (tile numbers from 1; dominant defaults to the current tile)} (model space; in a layout: MVIEW)
+- `vports.activate` (Set Current Viewport): {index: tile number from 1}
 - `leader` (Leader) — aliases: `lead`: {points: [[x,y]...], text?}
+- `dimdisassociate` (Disassociate Dimensions) *(prompts)* — aliases: `dda`: {handles?}
+- `dimtedit` (Dimension Text Edit) *(prompts)* — aliases: `dimted`: {handles?, at?: [x,y], mode?: home\|angle\|left\|center\|right, angle?}
+- `dimedit` (Dimension Edit) *(prompts)* — aliases: `ded`, `dimed`: {handles?, mode?: home\|new\|rotate\|oblique (default home), text? (new: "" or "<>" = the measurement), angle?: degrees (rotate: text angle; oblique: extension line angle, absent = none)}
+- `annoupdate` (Annotative Update) *(prompts)*: {handles?} (makes text, dimensions, multileaders and block references annotative or not as their style or block is)
+- `annovisible.toggle` (Annotation Visibility): {} (toggles ANNOALLVISIBLE)
+- `-block` (Create Block) *(prompts)* — aliases: `-b`: {name, base: [x,y], handles?, keep?: "delete"\|"retain"\|"convert" (default "delete"), description?}
 - `wblock` (Write Block) — aliases: `w`: {path, name? \| handles?, base?}
-- `purge` (Purge) — aliases: `pu`, `-purge`: {} (unused blocks, layers, linetypes, styles)
+- `purge` (Purge) *(prompts)* — aliases: `pu`, `-purge`: {type?: all\|blocks\|dimstyles\|groups\|layers\|linetypes\|mleaderstyles\|tablestyles\|textstyles\|zerolength\|emptytext (default all: every named type), names?: "A*,B" (default *)} → purged
 - `blocks.list` (List Blocks): {}
+- `attdisp` (Attribute Display) *(prompts)*: {mode: "normal" \| "on" \| "off"} (sets ATTMODE to 1 / 2 / 0) → {attmode}
+- `eattext` (Data Extraction...) *(prompts)*: {blocks?: "A*,B" (block names, wildcards, default *), tags?: attribute tags to include (wildcards, default *), handles? (default: the block references in model space and every layout), combine?: bool (default true: identical rows once, with a Count column; false: one row per reference with handle, layer, position and rotation), file?: path (.csv; .txt is tab-separated), at?: [x,y] (insert a table there), title?: table title} → {columns, rows, file?, table?}
+- `-xref` (External References) *(prompts)* — aliases: `-xr`: {option: "?"\|bind\|detach\|path\|unload\|reload\|overlay\|attach\|type, names?: "A,B*" (default *), path? (path, attach, overlay), insert?: bool (bind: Insert type), overlay?: bool (type), at?, scale?, rotation? (attach)}
+- `draworder` (Draw Order) *(prompts)* — aliases: `dr`: {handles?, order?: "front"\|"back"\|"above"\|"under" (default back), reference?: [hex] (above/under)} → {moved}
+- `texttofront` (Bring Annotations to Front) *(prompts)*: {objects?: "text"\|"dimensions"\|"leaders"\|"all" (default all)} → {moved}
+- `array` (Array) *(prompts)* — aliases: `ar`: {type?: "rectangular" (default) \| "polar" \| "path", ...the parameters of arrayrect, arraypolar or arraypath}
+- `arrayclose` (Close Array Editing) *(prompts)*: {save?: bool (default true)}
 - `reverse` (Reverse) *(prompts)*: {handles?} (lines, polylines, 3D polylines, splines)
-- `mview` (Viewports) *(prompts)* — aliases: `mv`: {p1?, p2? (default: printable area), count?: 1-4, arrangement?: vertical\|horizontal\|left\|right\|above\|below, layout?}
+- `groupedit` (Group Edit) *(prompts)*: {name, add?: [handles], remove?: [handles], rename?: new name} → {name, members}. Removing every member deletes the group.
+- `groups.list` (List Groups): {} → {groups: [{name, description, selectable, unnamed, members: [handles]}]}
+- `-group` (Group Options) *(prompts)* — aliases: `-g`: {option?: "create" (default) \| "?" \| "order" \| "add" \| "remove" \| "explode" \| "rename" \| "selectable", name?, ...}: create {name?, description?, handles?, selectable?}; ? {name?: "A*,B" (default *)} → {groups}; order {name, from, to, count?: 1} (0-based positions); add/remove {name, handles? (default the selection)}; explode {name}; rename {name, newName}; selectable {name, selectable?: bool (default: toggle)}
+- `pickstyle` (Group Selection) *(prompts)*: {value?: 0 none \| 1 group selection \| 2 associative hatch \| 3 both} (no value: group selection on/off) → {value, message}
+- `grip.move` (Grip Stretch): {handle?, handles?, index, to} (stretch the grip) \| {handles?, index, baseHandle?, to, mode: "move", copy?} (move about the grip)
+- `grip.stretch` (Grip Stretch): {handle?, handles?, index, to} \| {grips: [[handle, index], ...] (several hot grips), delta \| to (+ base?), handles?, copy?}
+- `grip.rotate` (Grip Rotate): {handles?, base \| baseHandle+index, angle (degrees) \| to, copy?}
+- `grip.scale` (Grip Scale): {handles?, base \| baseHandle+index, factor \| to, copy?}
+- `grip.mirror` (Grip Mirror): {handles?, base \| baseHandle+index, to (second mirror point), copy?}
+- `grip.option` (Grip Option): {handle, index, option: addVertex\|removeVertex\|toArc\|toLine\|lengthen\|radius, to? (point), value? (lengthen: length change; radius)}
+- `grip` (Grip Edit) *(prompts)*: interactive: select grips, then the grip modes with [Base point/Copy/Undo/Reference/eXit]; JSON: use grip.stretch/move/rotate/scale/mirror
+- `compare.next` (Next Change): → {region, of}: zoom to the next area with changes
+- `compare.previous` (Previous Change): → {region, of}
+- `compareclose` (Close Comparison): {}: end the comparison and its overlay
+- `layer.new` (New Layer): {name, color?, linetype?, lineweight? (mm), current?: bool}
+- `layer.set` (Set Layer Properties): {name, on?, frozen?, locked?, plot?, color?, linetype?, lineweight?, transparency?, description?, newVpFreeze?, plotStyle? (named plot style), newName?}
+- `layer.delete` (Delete Layer): {name}
+- `laymcur` (Make Object's Layer Current): {handles?}
+- `layon` (Turn All Layers On): {}
+- `laythw` (Thaw All Layers): {}
+- `layerstate.restore` (Restore Layer State): {name}
+- `layerstate.list` (List Layer States): {} → states
+- `layerstate.delete` (Delete Layer State): {name}
+- `layerstate.rename` (Rename Layer State): {from, to}
+- `layout` (Layout) *(prompts)* — aliases: `lo`: {option: new\|copy\|delete\|rename\|set\|list, name?, to?} (typed LAYOUT / -LAYOUT: option prompts)
+- `layout.delete` (Delete Layout): {name}
+- `layout.rename` (Rename Layout): {from?: current layout, to}
+- `layout.copy` (Copy Layout): {from, to?}
+- `layout.list` (List Layouts): → [{name, tabOrder, page, viewports}]
+- `mview` (Viewports) *(prompts)* — aliases: `mv`: {option?: fit\|polygonal\|object\|on\|off\|lock\|restore, p1?, p2? (default: printable area), count?: 1-4, arrangement?: vertical\|horizontal\|left\|right\|above\|below, points?: [[x,y]…] + bulges? (polygonal), object? (closed object to clip by), handles? + locked? (on/off/lock), name? (restore: a model space viewport configuration, default *Active; its viewports fill p1-p2 or the printable area), layout?}
+- `viewport.set` (Viewport Properties): {handle? (default: selected viewports), scale?: paper units per model unit \| "1:50", viewHeight?, center?: [x,y], locked?, freeze?: [layer], thaw?: [layer], colors?: {layer: color \| null}}
+- `vplayer` (Viewport Layer Freeze) *(prompts)*: {handle?, freeze?: [layer], thaw?: [layer], colors?: {layer: color ("red" \| 1..255 \| "r,g,b") \| null to clear}} (typed: option prompts)
 - `mspace` (Model Space (in viewport)) — aliases: `ms`: {handle?: viewport, at?: [x,y] paper point inside a viewport} (default: the last active or first viewport)
 - `pspace` (Paper Space) — aliases: `ps`: {}
-- `properties.set` (Set Properties): {handles?, layer?, color?, linetype?, lineweight?, ltscale?, transparency?, visible?, <geometry fields: radius, center, start, end, text, height, rotation…>}
+- `plotwindow` (Plot Window) *(prompts)*: {p1: [x,y], p2: [x,y]} (typed: two corners): the window the Plot dialog's "Window <" plots, kept in the session
+- `-plottermanager` (Plotter Manager) *(prompts)*: as PLOTTERMANAGER (typed: option prompts)
+- `attach` (Attach): not available yet
+- `share` (Share): not available yet
+- `3dorbit` (Orbit) — aliases: `3do`, `orbit`: not available yet
+- `properties.set` (Set Properties): {handles?, layer?, color?, linetype?, lineweight?, ltscale?, transparency?: "ByLayer" \| "ByBlock" \| 0..90, visible?, <geometry fields: radius, center, start, end, text, height, rotation…>}
+- `hatch.patterns` (Hatch Patterns): {file?: path to a .pat file \| text?: its contents, clear?: bool} → {standard, user, added, warnings} (HATCH also takes patternFile \| patternText)
+- `-linetype` (Linetype) *(prompts)*: {current?, load?, file? \| text?, reload?} (as LINETYPE)
 - `ltscale` (Linetype Scale) — aliases: `lts`: {scale}
+- `style.list` (List Text Styles): {} → text styles
+- `style.rename` (Rename Text Style): {from, to}
+- `style.delete` (Delete Text Style): {name} (not Standard, the current style or one in use)
+- `style.current` (Set Current Text Style): {name}
+- `dimstyle.list` (List Dimension Styles): {name?} → styles (with all variables for `name`)
+- `dimstyle.rename` (Rename Dimension Style): {from, to}
+- `dimstyle.delete` (Delete Dimension Style): {name} (not Standard, the current style or one in use)
+- `dimstyle.current` (Set Current Dimension Style): {name}
+- `dimstyle.override` (Dimension Style Override): {handles?, <style fields or DIM* variables: values>, clear?: bool} (per-dimension overrides)
 - `drawing.inspect` (Inspect Drawing): {entities?: bool, limit?: n}
-- `entities` (Query Entities): {type?, layer?, window?: [[x,y],[x,y]], limit?, offset?}
+- `entities` (Query Entities): {type?, layer?, window?: [[x,y],[x,y]], crossing?: bool (default true; false = entirely inside), limit?, offset?} → {count (all matches), returned, offset, entities}
+- `countlist` (Count List): {space?: all (default)\|current\|model\|<layout>, nested?: bool} → per-block counts, as COUNT
+- `counttable` (Count Table) *(prompts)*: {at: [x,y], space?: current (default)\|model\|all\|<layout>, nested?: bool} → {handle}: a table of the block counts
 - `ortho` (Ortho Mode): {on?: bool}
 - `grid` (Grid Display): {on?: bool}
 - `snap` (Snap Mode): {on?: bool}
@@ -327,11 +411,34 @@ Points are `[x, y]`. Angles are degrees unless noted. *(prompts)* marks commands
 - `otrack` (Object Snap Tracking): {on?: bool}
 - `dynmode` (Dynamic Input): {on?: bool}
 - `lwdisplay` (Show/Hide Lineweight): {on?: bool}
-- `isodraft` (Isometric Drafting): {on?: bool}
+- `isodraft` (Isometric Drafting) *(prompts)*: {on?: bool, plane?: "left"\|"top"\|"right"\|"orthographic"} (neither: toggle)
+- `isoplane` (Isometric Plane) *(prompts)*: {plane?: "left"\|"top"\|"right"} (none: the next plane)
 - `transparencydisplay` (Show/Hide Transparency): {on?: bool}
 - `qpmode` (Quick Properties): {on?: bool}
+- `selectioncycling` (Selection Cycling): {on?: bool}
 - `osnap` (Object Snap) — aliases: `os`, `ddosnap`: {on?: bool, modes?: ["end","mid",...] \| osmode?: n}
 - `getvar` (Get Variable): {name}
 - `sysvars` (List System Variables): {}
+- `quickcalc.pick` (QuickCalc Pick) *(prompts)*: {mode: point\|distance\|angle\|intersection, points: [[x,y],...]} → {value} \| {point}
 - `measuregeom` (Measure Geometry): {mode: distance\|radius\|angle\|area, ...}
+- `table.set` (Set Table Cell): {handle, row, col, text? (text starting with = is a formula), formula?: "=Sum(A2:A5)"}
+- `table.insertrow` (Insert Row): {handle, row? (insert before; default: append), height?}
+- `table.deleterow` (Delete Row): {handle, row}
+- `table.insertcol` (Insert Column): {handle, col? (insert before; default: append), width?}
+- `table.deletecol` (Delete Column): {handle, col}
+- `table.merge` (Merge Cells): {handle, row, col, rows, cols}
+- `table.unmerge` (Unmerge Cells): {handle, row, col}
+- `tablestyle.cellstyle` (Table Cell Style) *(prompts)*: {style? (table style; default current), name (cell style: Title, Header, Data or your own), textStyle?, textHeight?, textColor?, fill?: color \| "none", align?: TL\|TC\|TR\|ML\|MC\|MR\|BL\|BC\|BR or 1..9, margin?, marginH?, marginV?, borders?: {all\|outside\|inside\|top\|insideH\|bottom\|left\|insideV\|right: {visible?, color?, lineweight? (mm or ByBlock)}}, format?: general\|decimal\|percent\|text, precision? (0..8), merge?: bool, delete?: bool} → cellStyles
+- `table.cellstyle` (Set Table Cell Style): {handle, style (cell style name; "" = by position), row?, col?, rows?, cols?} (rows without col: the row style)
+- `table.formula` (Insert Table Formula): {handle, row, col, function: sum\|average\|count\|min\|max\|cell\|equation, range?: "A2:B5" (default: the cells above), cell?: "A1", expression?: "A1*2"}
+- `table.recalc` (Recalculate Table Formulas): {handle?} (default: every table) → {changed}
+- `tabledit` (Edit Table Cell) *(prompts)*: {handle?, at: [x,y] \| row+col, text (=… for a formula)}
+- `tableexport` (Export Table) *(prompts)*: {handle, path? (.csv), separator?: "," \| "\t"} → {csv, rows, cols, path?}
+- `table.break` (Table Breaks) *(prompts)*: {handle, enabled?, direction?: right\|left\|down, repeatTop?, repeatBottom?, height? (largest part height), heights?: [first parts], spacing?, resetPositions?: bool} → {parts}
+- `datalinkupdate` (Update Data Links) *(prompts)*: {handles?} (default: every linked table) → {updated}
 - `geomconstraint` (Geometric Constraint) *(prompts)* — aliases: `gcon`: {type: coincident\|collinear\|concentric\|fix\|parallel\|perpendicular\|horizontal\|vertical\|tangent\|smooth\|symmetric\|equal, h1, p1?, h2?, p2?, h3?, p3?}
+- `dimconstraint` (Dimensional Constraint) *(prompts)* — aliases: `dcon`: {type: linear\|aligned\|horizontal\|vertical\|angular\|radius\|diameter, h1, p1?, h2?, p2?, expr? \| value?, name?}
+- `dclinear` (Linear) *(prompts)*: {h1, p1?, h2?, p2?, expr? \| value?, name?}
+- `constraintinfer` (Infer Constraints) *(prompts)*: {value?: 0\|1} sets CONSTRAINTINFER (no value: reports it)
+- `constraints.inspect` (Inspect Constraints): {} → constraints, glyph anchors, parameters, settings, dof
+- `constraints.dof` (Degrees of Freedom): {handles? \| handle?} (default: the selection, else every constrained object) → {dof, status: unconstrained\|under\|fully\|over\|unknown, redundant, constraints, objects: [{handle, type, params, dof, status}], message}

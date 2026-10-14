@@ -1,7 +1,7 @@
 ---
 name: soundcraft
 description: "Audio editing, recording and mixing with SoundCraft (Pro Tools-style DAW): podcast and voice-over cleanup, music mixing and mastering, trimming, fades, crossfades, EQ, compression, reverb, sound effects, stems, loudness (LUFS) and WAV / AIFF / FLAC bounces."
-version: 0.1.0
+version: 0.2.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -23,7 +23,7 @@ Use it for **anything you'd do in a DAW**:
 
 - podcasts, interviews, voice-overs, audiobooks: trim, cut ums and gaps, fade, EQ, compress, de-ess, hit a loudness target
 - music: multitrack mixes, gain and pan, inserts, reverb or delay busses, automation, mastering limiter, stems
-- sound design and effects: layering, pitch shift, time stretch, reverse, built-in synths and drum synth from MIDI notes
+- sound design and effects: layering, pitch shift, time stretch, reverse, built-in synths, drum synth and sampler from MIDI notes
 - converting, resampling or normalizing audio files; measuring peak, true peak and LUFS
 
 Pick a different Crafting App when:
@@ -51,15 +51,16 @@ plays out loud. Everything works except the APP_ONLY tools. For the user to watc
 
 - A **session** (`.scraft` JSON + an `Audio Files/` folder) holds **tracks** (audio, aux, master,
   instrument, midi, vca, folder), **busses**, markers, a tempo/meter map and the edit **selection**.
-  Default: 48 kHz, 24-bit, 120 bpm, Slip mode. Imports are converted to the session rate.
+  Default: 48 kHz, 24-bit, 120 bpm, Slip mode. Imports are converted to the session rate. Importing
+  `kick.wav` a second time makes a track named `kick 1`.
 - **Clips** sit on a track's playlist and point into a **source** with an `offset`. Edits never touch
   the source file. `inspect_session` lists each clip's `id`, `start`, `end`, `length`, `fade_in/out`, `gain_db`.
 - **Positions** are samples (integers), `{"seconds": 2.5}`, or strings: `"0:12.500"`, `"bars_beats:5|1|000"`,
   `"timecode:00:00:10:00"`. MIDI notes use ticks (960 per quarter note).
-- **Every action is a command** (460 of them): `execute {command, params}`, or `batch {calls: [...]}` for
+- **Every action is a command** (469 of them): `execute {command, params}`, or `batch {calls: [...]}` for
   several. Find them with `list_commands {filter: "fade"}` or grep `references/commands.md`.
 - Omitted `tracks` / `start` / `end` / `clips` fall back to the **current selection**. Pass them explicitly.
-  `track` (one name/id) and `tracks` (an **array**) are both accepted by most commands.
+  `track` (one name/id) and `tracks` (an array, or a single name) are both accepted by most commands.
 - Signal flow: clip → track inserts (slots 0–9) → fader/pan → sends to busses → output `Main`.
   An **aux** track whose input is a bus is a return. A **master** track puts inserts on the whole mix.
 - Everything is undoable: `execute edit.undo`; `execute engine.history` lists the undo stack.
@@ -69,33 +70,38 @@ plays out loud. Everything works except the APP_ONLY tools. For the user to watc
 | Tool | Use it for |
 |---|---|
 | `new_session {name?, sample_rate?, template?: blank\|demo}` | Start fresh (the demo is a 9-track song to experiment with) |
-| `open_session {path}` / `save_session {path?}` | `.scraft` files; save copies the audio into `Audio Files/` next to it |
+| `open_session {path}` / `save_session {path?, replace?}` | `.scraft` files; save copies the audio into `Audio Files/` next to it. Saving over a different existing file needs `replace: true` |
 | `import_audio {path, track?, at?}` | WAV AIFF FLAC MP3 OGG AAC/M4A ALAC CAF. New track (named after the file) unless `track`. Returns `track`, `clip`, `source` ids |
 | `execute {command, params}` | Run one command; errors come back as text (see Pitfalls) |
-| `batch {calls, keep_going?}` | Several commands in order, stops at the first error |
+| `batch {calls, keep_going?}` | Several commands in order, stops at the first error. With `keep_going` it runs them all and returns `{command, ok, result\|error}` per call (flagged as an error if any failed) |
 | `list_commands {filter?}` | Command ids, menu path, params doc, `enabled` + `disabled_reason` |
 | `inspect_session {detail?: summary\|full}` | Verify work. `full` adds every insert's params |
-| `bounce_mix {path, format?, bit_depth?, start?, end?, normalize?}` | Render to WAV/AIFF/FLAC; returns `seconds`, `peak_db`, `true_peak_db`, `lufs` |
+| `bounce_mix {path, format?, bit_depth?, start?, end?, normalize?}` | Render to WAV/AIFF/FLAC; returns `seconds`, `peak_db`, `true_peak_db`, `lufs`. For one bus alone: `execute file.bounce_mix {path, source:"Verb", start, end}` |
 | `parity` | Feature-parity report (rarely needed) |
 | `screenshot`, `ui_inspect`, `ui_set`, `menu_invoke`, `click`, `drag`, `key` | APP_ONLY (with `--connect`) |
 
 Resources: `soundcraft://session` (session JSON), `soundcraft://commands` (the catalog).
-Handy queries: `execute track.inspect {track}`, `clip.inspect {clip}`, `engine.plugins` (plugin params).
+Handy queries: `execute track.inspect {track}`, `clip.inspect {clip}`, `engine.plugins` (plugin params),
+`session.audio_health` (clips pointing at missing or short audio; `healthy: true` when fine).
 
 ## Plugins and Processing
 
 Built-ins (`references/plugins.md` has every param, default and range): `eq_1band`, `eq_7band`, `compressor`,
 `expander_gate`, `de_esser`, `maximizer`, `channel_strip`, `room_reverb`, `plate_reverb`, `mod_delay`,
 `chorus`, `flanger`, `phaser`, `saturator`, `lofi`, `rectifier`, `pitch_shifter`, `time_shift`, `gain`,
-`trim`, `invert`, `dc_offset_removal`, `signal_generator`, `dither`, instruments `subtractive_synth`, `drum_synth`.
+`trim`, `invert`, `dc_offset_removal`, `signal_generator`, `dither`, instruments `subtractive_synth`, `drum_synth`,
+`sampler` (plays an audio file across the keyboard).
 There is **no noise-reduction plugin**: use `expander_gate` or `edit.strip_silence`, or ffmpeg `afftdn` before import.
 
 - **Live insert:** `mix.insert {track, plugin, params}` → returns its `slot`. Change later with
   `mix.insert_param {track, slot, param, value}` / `mix.insert_params`; `mix.insert_bypass`, `mix.insert_remove`.
+- **Instruments:** `mix.instrument {track, plugin}` swaps an instrument track's instrument;
+  `mix.instrument_param {track, param, value}` sets one of its params (clamped into range).
 - **Choice params take the index** (`eq_1band type: 3` = High Pass). Toggles are `0/1` (`hpf_on: 1`).
 - **AudioSuite (offline render into a new clip):** `audiosuite.process {process, params, clips: [id]}` with any
   plugin id, or `normalize {target_db}`, `gain {db}`, `reverse`, `invert`, `time_stretch {ratio}`,
-  `pitch_shift {semitones}`, `varispeed {speed}`.
+  `pitch_shift {semitones}`, `varispeed {speed}`. The new clip is named `<clip>-<proc>` (`voice-reve`); on save,
+  same-named renders get their own files (`tone-reve.wav`, `tone-reve_01.wav`), so nothing is overwritten.
 
 ## Procedure
 
@@ -126,13 +132,14 @@ execute mix.insert {track:"Host", plugin:"de_esser", params:{freq:6500, threshol
 execute track.new {kind:"master", format:"stereo"}        → id; named "Master 1"
 execute mix.insert {track:"Master 1", plugin:"maximizer", params:{threshold:-4, ceiling:-1.5}}
 execute edit.select_none
-bounce_mix {path:"/abs/probe.wav", start:0, end:"0:08.400"}   → lufs −18.55, peak −3.5
-execute mix.volume {tracks:["Host"], delta_db: 2.55}       # target − measured; re-bounce and nudge until ±0.5
-bounce_mix {path:"/abs/episode.wav", start:0, end:"0:08.400", bit_depth:"16"}   → −16.0 LUFS, peak −1.5
+bounce_mix {path:"/abs/probe.wav", start:0, end:"0:08.400"}   → lufs −18.0, peak −12.6
+execute mix.volume {tracks:["Host"], delta_db: 2.0}        # target − measured; re-bounce and nudge until ±0.5
+bounce_mix {path:"/abs/episode.wav", start:0, end:"0:08.400", bit_depth:"16"}   → −16.0 LUFS, peak −10.6
 ```
 
-Checked with ffmpeg `ebur128`: −16.0 LUFS, −1.5 dBFS, 8.4 s, 48 kHz stereo 16-bit. Without the master
-maximizer the same chain measured −22.4 LUFS / −7.5 dBFS. A limiter makes gain changes non-linear, so
+Checked on 0.6.1 with ffmpeg `ebur128` and ffprobe: −16.0 LUFS, −10.6 dBFS, 8.4 s, 48 kHz stereo
+`pcm_s16le`; the waveform shows the fade-in and fade-out. (The test voice was a −20 LUFS synthetic signal;
+real speech has more peak, so the maximizer works harder.) A limiter makes gain changes non-linear, so
 iterate rather than computing once.
 
 ### Recipe: music mix with a reverb bus (tested)
@@ -146,41 +153,66 @@ execute track.input {tracks:["Verb Return"], input:"Verb"}
 execute mix.insert {track:"Verb Return", plugin:"plate_reverb", params:{mix:100, decay:2.0}}   # 100% wet on a return
 execute mix.send {track:"pad", bus:"Verb", level_db:-6}
 execute mix.send {track:"kick", bus:"Verb", level_db:-14}
-execute mix.volume {tracks:["kick"], db:-3} · {tracks:["bass"], db:-4} · {tracks:["pad"], db:-8}
+batch {calls:[{command:"mix.volume", params:{tracks:["kick"], db:-3}}, …bass -4, pad -8]}
 execute mix.pan {tracks:["bass"], pan:-0.3}
 execute mix.insert {track:"bass", plugin:"saturator", params:{drive:9}}
 execute automation.set_point {track:"pad", param:"volume", at:{seconds:6}, value:-8}
 execute automation.set_point {track:"pad", param:"volume", at:{seconds:8}, value:-60}   # fade-out ride
 execute markers.add {name:"Drop", at:"bars_beats:3|1|000"}
-execute track.new {kind:"master", format:"stereo"}        # without it this mix peaked +0.57 dBFS (clipped)
+execute track.new {kind:"master", format:"stereo"}        # a hot mix without a limiter clips (see Pitfalls)
 execute mix.insert {track:"Master 1", plugin:"maximizer", params:{threshold:-2, ceiling:-1}}
 bounce_mix {path:"/abs/song.wav", start:0, end:{seconds:10}}   # 8 s of clips; the extra 2 s keep the reverb tail
-                                                                # → −8.0 LUFS, peak −1.0
 bounce_mix {path:"/abs/song.flac", format:"flac", bit_depth:"16", start:0, end:{seconds:10}}
-execute file.bounce_stems {dir:"/abs/stems"}               → "Song - kick.wav", … (source tracks only)
+execute file.bounce_stems {dir:"/abs/stems"}               → "Song - kick.wav", … (source tracks only, 8 s each)
+execute file.bounce_mix {path:"/abs/verb.wav", source:"Verb", start:0, end:{seconds:10}}   # the bus alone
 ```
+
+On 0.6.1: 10.0 s 48 kHz stereo WAV (24-bit) and FLAC, three stems, and the reverb tail visible after 8 s
+in the waveform. The maximizer added 2 dB (−21.4 → −19.4 LUFS with quiet test tones). An unknown
+`source` fails with ``unknown bus `Nope` ``.
+
+### Recipe: play a sample from MIDI with the Sampler (tested)
+
+```text
+execute event.tempo {bpm:100}
+execute track.new {kind:"instrument", instrument:"sampler", name:"Keys"}       → track id
+execute mix.sampler_load {track:"Keys", path:"/abs/note.wav", params:{root_note:60}}   → {source, frames, …}
+execute midi.new_clip {track:"Keys", start:0, length:"bars_beats:3|1|000"}       → {clip: 9, …}
+batch {calls:[{command:"midi.note_add", params:{clip:9, pitch:60, start_ticks:0, length_ticks:480}},
+              … pitch 64 at 960, 67 at 1920, 72 at 2880]}
+bounce_mix {path:"/abs/keys.wav", start:0, end:{seconds:3}}
+```
+
+The four notes came out at 263, 333, 390 and 527 Hz (C4 E4 G4 C5 from a C4 sample), each cut to the note
+length (`play_mode` 0 = Gate; 1 = One Shot plays the whole sample). Other params (`loop_mode`,
+`key_low`/`key_high`, `attack`, `release`, …) are in `references/plugins.md`. `mix.sampler_clear {track}`
+unloads the sample.
 
 ### More building blocks (tested)
 
 - **Split / move / crossfade:** `edit.separate {tracks, at}` splits (new clip id in `track.inspect`);
   `edit.move_clips {clips, by | to}` (`by` in samples or `{seconds}`); `edit.fades_create` over a range that
-  spans the boundary of two butted clips gives a fade-out + fade-in pair (`shape: "equal power"`).
-- **Remove silences:** `edit.select {tracks, start, end}` then `edit.strip_silence {threshold_db:-40, min_length_ms:200}`.
-- **Clip gain:** `clip.gain {clips:[id], db:-6}` (or `delta_db`).
+  spans the boundary of two butted clips gives a fade-out + fade-in pair (`shape: "equal power"`): a 3.8–4.2 s
+  range over a split at 4 s made a 0.4 s overlap.
+- **Remove silences:** `edit.select {tracks, start, end}` then `edit.strip_silence {threshold_db:-40, min_length_ms:200}`
+  (tone-gap-tone-gap-tone → 3 clips). Run `edit.select_none` afterwards.
+- **Clip gain:** `clip.gain {clips:[id], db:-6}` (or `delta_db`); `clip.gain_nudge_up` / `_down {clips}` step 1 dB.
 - **Offline effects:** `audiosuite.process {process:"time_stretch", params:{ratio:1.1}, clips:[3]}` → clip 10 % longer;
-  `{process:"normalize", params:{target_db:-1}}`; `{process:"eq_1band", params:{type:3, freq:100}}`.
+  `{process:"normalize", params:{target_db:-1}}`; `{process:"eq_1band", params:{type:3, freq:100}}`; `reverse`, `invert`.
 - **Synth parts / sound effects from MIDI:** `event.tempo {bpm:100}`; `track.new {kind:"instrument",
   instrument:"subtractive_synth", name:"Lead"}`; `midi.new_clip {track:"Lead", start:0, length:"bars_beats:3|1|000"}`
   → clip id (use the returned one); `midi.note_add {clip, pitch:60, start_ticks:0, length_ticks:960, velocity?}`.
-  A `drum_synth` track played notes 36, 38 and 42 (kick, snare, hat). `file.export_midi {path}` writes a `.mid`.
-  The synth is quiet by default (−29 LUFS for a 3-note line), so raise the fader or the synth's `level`.
+  A `drum_synth` track played notes 36, 42 and 38 (kick, hat, snare). `file.export_midi {path}` writes a `.mid`.
+  The synths are quiet by default (`level` −6 dB): `mix.instrument_param {track:"Lead", param:"level", value:0}`
+  brought a 3-note line to −20 LUFS.
 
 ## Formats
 
 - **Import:** WAV/BWF/RF64, AIFF, FLAC, MP3, OGG Vorbis, AAC/M4A, ALAC, CAF, and the audio of MP4/MOV.
 - **Bounce / convert output:** WAV, AIFF, FLAC only, 16 / 24 / 32f bit (`bit_depth` is a string: `"16"`).
-  The format follows `format` or the `.flac`/`.aiff` extension. **No MP3/AAC/OGG output** — make those with
-  ffmpeg from the WAV: `ffmpeg -i mix.wav -b:a 192k mix.mp3`.
+  The format follows `format` or the `.flac`/`.aiff` extension. Other extensions are refused:
+  ``cannot write `mp3` files (supported: wav, aif, aiff, flac)``. Make MP3/AAC/OGG with ffmpeg from the WAV:
+  `ffmpeg -i mix.wav -b:a 192k mix.mp3`.
 - `normalize: true` on a bounce is a **peak** normalize to −0.1 dBFS, not loudness.
 
 ## CLI (no MCP needed)
@@ -191,37 +223,43 @@ soundcraft-cli convert in.wav out.flac [--bit-depth 16|24|32f] [--rate 48000] [-
 soundcraft-cli run [--in S.scraft | --demo] --cmd 'file.import_audio={"path":"/abs/v.wav"}' \
     --cmd 'mix.insert={"track":"v","plugin":"compressor","params":{"threshold":-24}}' \
     --bounce out.flac [--start 0:00.000 --end 0:12.000] [--save S.scraft] [--inspect]
-soundcraft-cli script cmds.txt [--in S] --bounce out.wav     # one `ID {json}` per line
-soundcraft-cli commands [FILTER] · describe ID · plugins
+soundcraft-cli script cmds.txt [--in S] [--save S] --bounce out.wav     # one `ID {json}` per line
+soundcraft-cli commands [FILTER] · describe ID · plugins · parity [--write PATH]
+soundcraft-cli app [--port P] METHOD [JSON]              # call a running app's control channel
 ```
 
 `run`/`script` print one JSON result per command plus the bounce report. `--start/--end` take time
-strings (`0:04.000`), not JSON (`{"seconds":4}` fails with `cannot parse position`).
+strings (`0:04.000`), not JSON (`{"seconds":4}` fails with `cannot parse position`). Malformed `--cmd` JSON
+stops the run (`mix.insert: bad JSON: key must be a string at line 1 column 2`). `--save` over an existing
+session replaces it and keeps the old one in `Backups/S backup N.scraft` next to it.
 
 ## Pitfalls
 
 - **A live edit selection limits the bounce.** After `edit.select` or `edit.strip_silence`, `bounce_mix` without
   `start`/`end` renders only the selection. Run `edit.select_none` and always pass **both** `start` and `end`
-  — `end` alone is ignored, and the session end cuts off reverb/delay tails.
-- **Clipping is reported, not prevented.** `peak_db: 0.57` came back while the 24-bit WAV was hard-clipped
-  at 0 dBFS. Keep `peak_db` ≤ −1 (master `maximizer` with `ceiling: -1`) before delivering.
-- **`.mp3` paths silently get WAV data** from both `bounce_mix` and `convert`. Bounce WAV, then use ffmpeg.
-- **AudioSuite file-name collisions lose audio.** The rendered file is `<clip name>-<process>.wav`, so two
-  clips with the same name (splits, strip-silence pieces, the same file imported twice) overwrite each other on
-  `save_session`; after reopening, both clips play the last render. `clip.rename` each clip uniquely first.
-- **AudioSuite drops clip gain** (renders without it and resets `gain_db` to 0) and **ignores unknown params**
-  (normalize's is `target_db`, not `level_db`). Apply clip gain afterwards.
-- **Names aren't unique.** Importing `kick.wav` twice makes two tracks named `kick`; `track.new {kind:"master",
-  name:"Master"}` ignores the name (it's `Master 1`). Use the returned ids.
+  — `end` alone is ignored (asked for 4 s, got the full 12 s), and the session end cuts off reverb/delay tails.
+- **Clipping is reported, not prevented.** `peak_db: 2.98` came back while the 24-bit WAV was hard-clipped
+  at 0 dBFS (ffmpeg `volumedetect`: 108 480 samples at 0 dB). Keep `peak_db` ≤ −1 (master `maximizer` with
+  `ceiling: -1`) before delivering.
+- **AudioSuite drops clip gain** for most processes (`reverse`, `normalize`, `time_stretch`, plugin renders):
+  it renders without it and resets `gain_db` to 0. `invert` keeps it. It also **ignores unknown params**
+  (normalize's is `target_db`, not `level_db`). Apply clip gain after the render.
+- **Unknown clip ids don't error** in most edit commands: `clip.gain {clips:[999]}` returns `{"clips":1}`,
+  `edit.move_clips` returns `moved: 0`, `audiosuite.process` returns `processed: 0`. Check those counts.
+  (`clip.inspect` does fail: `no such clip`.)
+- **Saving over another existing file is refused:** ``… already exists: pass `replace: true` to replace it``.
+  Re-saving the session's own file is fine.
+- **Master names are fixed:** `track.new {kind:"master", name:"Master"}` ignores the name (it's `Master 1`).
+  Use the returned ids.
+- **Slip mode overwrites.** `edit.move_clips` onto a neighbour trims it (moving back leaves a gap), and
+  `edit.duplicate` lays the copy right after the range over whatever was there.
 - **Mono tracks panned centre are −3 dB** per side in the stereo bounce (pan law).
 - `edit.fades_create` needs a range covering a clip start, end or boundary, otherwise:
   `the selection must cover a clip start, end or the boundary between two clips`.
-- `edit.duplicate` in Slip mode lays the copy right after the range and **overwrites** what was there.
-- `tracks` must be an array: `{tracks:"tone"}` fails with `no tracks: pass track/tracks or select tracks`.
 - Relative paths resolve against the server's working directory. Use absolute paths everywhere.
-- Error texts are precise — read them: `unknown command`, `unknown plugin`, `` `compressor` has no parameter `thresh` ``,
-  `no track named …`, `no such clip`, `make an edit selection first`.
-- `soundcraft-cli --help` ends with a few stray lines of Rust source; that's cosmetic.
+- Error texts are precise — read them: ``unknown command `edit.x` ``, ``unknown plugin `noise_reduction` ``,
+  `` `compressor` has no parameter `thresh` ``, `unknown track "Nope"`, `no such clip`,
+  `` `edit.cut` is not available: make an edit selection first ``.
 
 ## Verification
 
@@ -231,10 +269,14 @@ strings (`0:04.000`), not JSON (`{"seconds":4}` fails with `cannot parse positio
   `ffmpeg -i out.wav -af ebur128=peak=true -f null -` (LUFS, true peak), and
   `ffmpeg -i out.wav -lavfi showwavespic=s=1200x300 wave.png`, then **look** at the PNG for cut words, clicks,
   missing fades or a flat-topped (clipped) waveform.
-- After `save_session`, `soundcraft-cli info Session.scraft` lists tracks, clips and files.
+- `execute session.audio_health` before saving or delivering: `healthy: true`, `issue_count: 0`.
+- After `save_session`, `soundcraft-cli info Session.scraft` lists tracks, clips and files. `open_session`
+  returns `missing: []` when every audio file was found.
 
 ## References
 
-- `references/commands.md`: all 460 commands with params, grouped by area. Grep it rather than reading it whole.
-- `references/plugins.md`: all 26 built-in plugins with param ids, defaults and ranges, plus the AudioSuite-only processes.
+Grep these rather than reading them whole, e.g. `grep -n sampler ${HERMES_SKILL_DIR}/references/commands.md`.
+
+- `references/commands.md`: all 469 commands with params, grouped by area.
+- `references/plugins.md`: all 27 built-in plugins with param ids, defaults and ranges, plus the AudioSuite-only processes.
 - Upstream docs: https://github.com/storytold/soundcraft/tree/main/docs (`mcp.md`, `control-protocol.md`).

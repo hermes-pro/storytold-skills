@@ -1,6 +1,6 @@
 # FilmCraft command catalog
 
-Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these with `command_run {id, params}` (or several with `command_batch`); `filmcraft-cli describe <id>` shows one in full. Times: 254016000000 ticks per second; most time params also accept `seconds`, `frame` or `timecode`. `params` are the engine's own docs (`str`, `int`, `?` = optional).
+Generated from `command_list` (FilmCraft 0.7.2, 700 commands). Run any of these with `command_run {id, params}` (or several with `command_batch`); `filmcraft-cli describe <id>` shows one in full. Times: 254016000000 ticks per second; most time params also accept `seconds`, `frame` or `timecode`. `params` are the engine's own docs (`str`, `int`, `?` = optional).
 
 ## audio
 
@@ -56,7 +56,7 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `clip.generateAudioWaveform` Generate Audio Waveform (Clip): {"items":[id]?}
 - `clip.group` Group (Clip) [Cmd+G]
 - `clip.insertFrameHoldSegment` Insert Frame Hold Segment (Clip › Video Options): {"clip":id?,"time":ticks?,"seconds":f64=2}
-- `clip.interpretFootage` Interpret Footage… (Clip › Modify): {"items":[id]?,"colorSpace":"auto"\|"<color space id>"}
+- `clip.interpretFootage` Interpret Footage… (Clip › Modify): {"items":[id]?,"colorSpace":"auto"\|"<color space id>"?,"pixelAspect":[num,den]\|"file"?}
 - `clip.link` Link (Clip) [Cmd+L]: {"clips":[id]?}
 - `clip.makeSubclip` Make Subclip… (Clip) [Cmd+U]: {"item":id?,"clip":id?,"name":str?,"start":ticks?,"end":ticks?,"startFrame":i64?,"endFrame":i64?,"restrictTrims":bool=true}
 - `clip.mergeClips` Merge Clips… (Clip): {"items":[id]?,"method":"in\|out\|timecode\|marker\|audio","name":str?,"removeVideoAudio":bool?,"ignoreHours":bool?,"marker":str?,"offset":frames?}
@@ -141,6 +141,7 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `edit.paste` Paste (Edit) [Cmd+V]
 - `edit.pasteAttributes` Paste Attributes… (Edit) [Cmd+Alt+V]: {"clips":[id]?,"motion":bool=true,"opacity":bool=true,"timeRemapping":bool=true,"volume":bool=true,"channelVolume":bool=true,"panner":bool=true,"effects":bool\|[effectId]=true,"scaleTimes":bool=true}
 - `edit.pasteInsert` Paste Insert (Edit) [Cmd+Shift+V]
+- `edit.pasteMedia` Paste Media: {"paths":[str],"insert":bool?,"place":bool=true,"bin":binId?}
 - `edit.redo` Redo (Edit) [Cmd+Shift+Z]
 - `edit.removeAttributes` Remove Attributes… (Edit): {"clips":[id]?,"motion":bool=true,"opacity":bool=true,"timeRemapping":bool=true,"volume":bool=true,"channelVolume":bool=true,"panner":bool=true,"effects":bool\|[effectId]=true}
 - `edit.removeUnused` Remove Unused (Edit)
@@ -156,13 +157,16 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `effects.apply` Apply Effect: {"clips":[id]?,"effect":"gaussian_blur\|Gaussian Blur\|…"}
 - `effects.deleteKeyframe` Delete Keyframe: {"clip":id,"effect":str\|index,"param":str,"mediaTime":ticks}
 - `effects.list` List Effects: {"kind":"Video"\|"Audio"\|"VideoTransition"\|"AudioTransition"?,"folder":"Video Transitions/Wipe"?,"detail":bool?}
-- `effects.moveKeyframe` Move Keyframe: {"clip":id,"effect":str\|index,"param":str,"mediaTime":ticks,"to":ticks}
+- `effects.moveKeyframe` Move Keyframe: {"clip":id,"effect":str\|index,"param":str,"mediaTime":ticks,"to":ticks,"value":any?,"merge":bool?,"begin":bool?}
+- `effects.moveKeyframes` Move Keyframes: {"keyframes":[{"clip":id,"effect":index,"param":str,"mask":n?,"time":mediaTicks}],"delta":timelineTicks}
 - `effects.remove` Remove Effect: {"clip":id,"index":n}
 - `effects.reset` Reset Effect: {"clip":id,"index":n}
+- `effects.resetParam` Reset Parameter: {"clip":id,"effect":str\|index,"param":str}
+- `effects.select` Select Effect: {"clip":id,"effect":index\|id}\|{"none":true}
 - `effects.setDefaultTransition` Set Selected as Default Transition: {"effect":"constant_power\|constant_gain\|exponential_fade\|<video transition>"}
 - `effects.setInterpolation` Keyframe Interpolation: {"clip":id,"effect":str\|index,"param":str,"mediaTime":ticks,"interpolation":"linear\|bezier\|autoBezier\|continuousBezier\|hold\|easeIn\|easeOut"}
-- `effects.setKeyframe` Edit Keyframe: {"clip":id,"effect":str\|index,"param":str,"mediaTime":ticks,"value":any?,"inInfluence":0..1?,"outInfluence":0..1?}
-- `effects.setParam` Set Effect Parameter: {"clip":id,"effect":"motion"\|index,"param":str,"mask":n?,"value":num\|[x,y]\|"#rrggbb"\|bool\|path,"time":ticks?,"merge":bool?,"begin":bool?}
+- `effects.setKeyframe` Edit Keyframe: {"clip":id,"effect":str\|index,"param":str,"mediaTime":ticks,"value":any?,"inInfluence":0..1?,"outInfluence":0..1?,"merge":bool?,"begin":bool?}
+- `effects.setParam` Set Effect Parameter: {"clip":id,"effect":"motion"\|index,"param":str,"mask":n?,"value":num\|[x,y]\|"#rrggbb"\|bool\|path\|"option name" (a choice takes its index or its name),"time":ticks? (where the keyframe goes when the parameter is animated, kept there even outside the clip; default: the playhead, pinned to the clip; a parameter that is not animated gets a new static value whatever the time),"keyframe":bool? (true: write a keyframe at `time` and animate the parameter),"merge":bool\|key?,"begin":bool?}
 - `effects.toggleAnimation` Toggle Animation: {"clip":id,"effect":str\|index,"param":str,"mask":n?}
 - `effects.toggleEnabled` Toggle Effect: {"clip":id,"index":n}
 
@@ -219,14 +223,14 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `file.exportEdl` EDL… (File › Export): {"path":str}
 - `file.exportFcp7Xml` Final Cut Pro XML… (File › Export): {"path":str}
 - `file.exportFcpxml` FCPXML… (File › Export): {"path":str}
-- `file.exportFrame` Export Frame: {"path":str?,"format":"png\|tiff\|bmp"?,"import":bool?}
+- `file.exportFrame` Export Frame: {"path":str?,"format":"png\|jpeg\|tiff\|bmp"?,"depth":8\|16?,"import":bool?,"target":"source\|program"?,"item":id?,"sequence":id?,"time":ticks?}
 - `file.exportGraphicsTemplate` Motion Graphics Template… (File › Export): as graphics.template.export
 - `file.exportInterchange` Export Interchange: {"format":"edl\|xml\|fcpxml\|otio\|aaf\|omf"=xml,"path":str,"sequence":id?}
-- `file.exportMedia` Media… (File › Export): {"path":str,"preset":str?,"settings":ExportSettings?,"format":"h264\|hevc\|prores\|dnxhr\|apv\|mjpeg\|mxf-op1a\|mxf-opatom\|png\|tiff\|bmp\|gif\|wav\|aiff"?,"width":u32?,"height":u32?,"fps":f64?,"bitrateKbps":u32?,"bitrateMode":"cbr\|vbr1Pass\|vbr2Pass"?,"hardwareEncoding":"off\|auto"?,"scale":f32=1,"audio":bool=true,"quality":0..100,"burnCaptions":bool=false,"captionSidecar":"srt\|vtt"?,"loudnessLufs":f64?,"proresProfile":"proxy\|lt\|standard\|hq"?,"dnxProfile":"lb\|sq\|hq\|hqx"?,"apvProfile":"422-10\|422-12\|444-10\|444-12"?,"mxfVideoCodec":"dnxhr\|proRes\|h264"?,"sequence":id?,"range":"entire\|inOut\|workArea\|custom"?,"startSeconds":f64?,"endSeconds":f64?,"wait":bool=false}
+- `file.exportMedia` Media… (File › Export): {"path":str,"preset":str?,"settings":ExportSettings?,"format":"h264\|hevc\|prores\|dnxhr\|apv\|mjpeg\|mxf-op1a\|mxf-opatom\|png\|tiff\|bmp\|jpg\|tga\|dpx\|exr\|gif\|wav\|aiff\|aac\|flac"?,"audioCodec":"auto\|aac\|pcm\|flac"?,"flacLevel":0..8=5,"width":u32?,"height":u32?,"fps":f64?,"bitrateKbps":u32?,"bitrateMode":"cbr\|vbr1Pass\|vbr2Pass\|crf"?,"crf":0..51=23,"hardwareEncoding":"off\|auto"?,"scale":f32=1,"audio":bool=true,"quality":0..100,"burnCaptions":bool=false,"alpha":bool=false,"exrCompression":"none\|rle\|zips\|zip"?,"captionSidecar":"srt\|vtt"?,"loudnessLufs":f64?,"proresProfile":"proxy\|lt\|standard\|hq\|4444\|4444xq"?,"dnxProfile":"lb\|sq\|hq\|hqx"?,"apvProfile":"422-10\|422-12\|444-10\|444-12"?,"mxfVideoCodec":"dnxhr\|proRes\|h264"?,"sequence":id?,"range":"entire\|inOut\|workArea\|custom"?,"startSeconds":f64?,"endSeconds":f64?,"wait":bool=false}
 - `file.exportOmf` OMF… (File › Export): {"path":str,"sequence":id?,"title":str?,"audio":"embedded\|separate"?,"audioFormat":"wav\|aiff"?,"sampleRate":int?,"bitDepth":"16\|24"?,"trimAudio":bool?,"handles":frames?,"renderAudioEffects":bool?,"breakoutToMono":bool?}
 - `file.exportOtio` OpenTimelineIO… (File › Export): {"path":str}
 - `file.exportSelectionProject` Selection as FilmCraft Project… (File › Export): {"path":str,"items":[id]?}
-- `file.import` Import… (File) [Cmd+I]: {"paths":[str],"bin":binId?,"imageSequence":bool?}
+- `file.import` Import… (File) [Cmd+I]: {"paths":[str],"bin":binId?,"imageSequence":bool?,"replace":bool?}
 - `file.importAaf` Import AAF…: {"path":str}
 - `file.importDemoFootage` Demo Footage (File › Import From): {"scene":"OceanSunset\|Aurora\|CityNight\|Dunes\|Plasma\|Forest"}
 - `file.importFromMediaBrowser` Import from Media Browser (File) [Cmd+Alt+I]: {"paths":[str]?,"imageSequence":bool?}
@@ -245,7 +249,7 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `file.newProject` Project… (File › New) [Cmd+Alt+N]: {"name":str}
 - `file.newProjectFromTemplate` New Project from Template: {"template":name\|path,"name":str?}
 - `file.newSearchBin` Search Bin (File › New): {"name":str?,"column":str?,"operator":str?,"text":str?,"rows":[..]?,"matchAll":bool?,"caseSensitive":bool?}
-- `file.newSequence` Sequence… (File › New) [Cmd+N]: {"name":str,"width":u32=1920,"height":u32=1080,"fps":f64=23.976,"sampleRate":u32=48000,"video":n=3,"audio":n=3,"mix":"Stereo\|Mono\|5.1\|Adaptive"?,"trackType":"Standard\|Mono\|5.1\|Adaptive"?,"fromItem":itemId?}
+- `file.newSequence` Sequence… (File › New) [Cmd+N]: {"name":str,"width":u32=1920,"height":u32=1080,"fps":f64=23.976,"sampleRate":u32=48000,"video":n=3,"audio":n=3,"mix":"Stereo\|Mono\|5.1\|Adaptive"?,"trackType":"Standard\|Mono\|5.1\|Adaptive"?,"fromItem":itemId?,"fromItems":[itemId]?}
 - `file.newSequenceFromClip` Sequence From Clip (File › New): {"items":[id]?}
 - `file.newTransparentVideo` Transparent Video… (File › New)
 - `file.open` Open Project… (File) [Cmd+O]: {"path":str}
@@ -256,6 +260,7 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `file.recover` Recover Unsaved Changes… (File): {"id":str?}
 - `file.recoveryList` List Recoverable Sessions
 - `file.replaceFonts` Replace Fonts in Projects… (Graphics and Titles): {"from":family\|{"family","style"?},"to":family\|{"family","style"?},"toStyle":str?}
+- `file.reveal` Reveal in Finder: {"items":[id]?}
 - `file.revert` Revert (File)
 - `file.save` Save (File) [Cmd+S]: {"path":str?}
 - `file.saveAll` Save All (File)
@@ -311,11 +316,11 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `graphics.leadingUp` Increase Leading by One Unit [Alt+Up]
 - `graphics.leadingUp5` Increase Leading by Five Units [Alt+Shift+Up]
 - `graphics.list` List Graphic Layers: {"clip":id?}
-- `graphics.newEllipse` Ellipse (Graphics and Titles › New Layer) [Cmd+Alt+E]: {"position":[x,y]?,"size":[w,h]=[400,200],"clip":id?}
+- `graphics.newEllipse` Ellipse (Graphics and Titles › New Layer) [Cmd+Alt+E]: {"position":[x,y]?,"size":[w,h]=[400,200],"clip":id?,"seconds":f64=5,"track":index?,"time":ticks?}
 - `graphics.newFromFile` From file… (Graphics and Titles › New Layer): {"path":str,"time":ticks?,"track":index?} (imports the image or video and places it above the clips at the playhead)
-- `graphics.newPolygon` Polygon (Graphics and Titles › New Layer): {"position":[x,y]?,"size":[w,h]=[300,300],"sides":n=6,"clip":id?}
-- `graphics.newRectangle` Rectangle (Graphics and Titles › New Layer) [Cmd+Alt+R]: {"position":[x,y]?,"size":[w,h]=[400,200],"clip":id?}
-- `graphics.newShape` Shape: {"shape":"rectangle\|ellipse\|polygon\|path","position":[x,y]?,"size":[w,h]=[400,200],"points":[[x,y],…]?,"clip":id?,"seconds":f64=5}
+- `graphics.newPolygon` Polygon (Graphics and Titles › New Layer): {"position":[x,y]?,"size":[w,h]=[300,300],"sides":n=6,"clip":id?,"seconds":f64=5,"track":index?,"time":ticks?}
+- `graphics.newRectangle` Rectangle (Graphics and Titles › New Layer) [Cmd+Alt+R]: {"position":[x,y]?,"size":[w,h]=[400,200],"clip":id?,"seconds":f64=5,"track":index?,"time":ticks?}
+- `graphics.newShape` Shape: {"shape":"rectangle\|ellipse\|polygon\|path","position":[x,y]? (the shape's centre),"size":[w,h]=[400,200],"points":[[x,y],…]?,"clip":id? (add the shape to this graphic),"seconds":f64=5,"track":index?,"time":ticks?}
 - `graphics.newText` Text (Graphics and Titles › New Layer) [Cmd+T]: {"text":str="New Text","position":[x,y]? (point text: its alignment point on the first baseline; with `box`: the box's top-left corner),"box":[w,h]? (paragraph text wrapped in a box this size),"clip":id?,"newClip":bool?,"vertical":bool=false,"size":px=100,"font":str?,"fontStyle":str?,"seconds":f64=5,"track":index?,"time":ticks?}
 - `graphics.newVerticalText` Vertical Text (Graphics and Titles › New Layer): {"text":str="New Text","position":[x,y]?,"clip":id?,"size":px=100,"seconds":f64=5,"time":ticks?}
 - `graphics.nudgeDown` Nudge Selected Object down by one
@@ -336,7 +341,7 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `graphics.selectPreviousLayer` Select Previous Layer (Graphics and Titles › Select) [Cmd+Alt+[]
 - `graphics.sendBackward` Send Backward (Graphics and Titles › Arrange) [Cmd+[]: {"clip":id?,"layer":n?}
 - `graphics.sendToBack` Send to Back (Graphics and Titles › Arrange) [Cmd+Shift+[]: {"clip":id?,"layer":n?}
-- `graphics.set` Set Graphic Properties: {"clip":id?,"layer":n\|name?,"props":{"font":"Inter","font_style":"Bold","size":120,"align":"center","tracking":50,"leading":0,"fill_color":"#ffcc00","stroke":true,"stroke_width":6,"background":true,"shadow":true,"position":[x,y],"scale":100,"rotation":0,"opacity":100,…},"time":ticks?}
+- `graphics.set` Set Graphic Properties: {"clip":id?,"layer":n\|name?,"props":{"font":"Inter","font_style":"Bold","size":120,"align":"center","tracking":50,"leading":0,"fill_color":"#ffcc00","stroke":true,"stroke_width":6,"background":true,"shadow":true,"position":[x,y],"scale":100,"rotation":0,"opacity":100,…},"time":ticks?,"merge":bool?,"begin":bool?}
 - `graphics.setCharStyle` Character Style: {"clip":id?,"layer":n\|name?,"start":char=0,"end":char=len,"style":{"font":str,"fontStyle":str,"size":px,"color":"#rrggbb","bold":bool,"italic":bool,"underline":bool,"tracking":n,"baselineShift":px,"caps":"normal\|all caps\|small caps"},"clear":bool? (remove styles from the range)}
 - `graphics.setResponsiveTime` Responsive Design - Time: {"clip":id?,"introFrames":n?,"outroFrames":n? (or introSeconds / outroSeconds, or ticks as intro / outro)}
 - `graphics.setRoll` Roll/Crawl Options: {"clip":id?,"mode":"off\|roll\|crawlLeft\|crawlRight"?,"startOffScreen":bool?,"endOffScreen":bool?,"prerollFrames":n?,"easeInFrames":n?,"easeOutFrames":n?,"postrollFrames":n? (or …Seconds, or ticks as preroll/easeIn/easeOut/postroll)}
@@ -366,6 +371,13 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `jobs.cancel` Cancel Job: {"job":id}
 - `jobs.list` List Jobs
 
+## labels
+
+- `labels.deletePreset` Delete Label Color Preset: {"name":str}
+- `labels.exportPreset` Export Label Color Preset: {"path":str}
+- `labels.importPreset` Import Label Color Preset: {"path":str}
+- `labels.presets` Label Color Presets
+
 ## lumetri
 
 - `lumetri.applyMatch` Apply Match: {"clip":id?,"referenceTime":ticks?\|"referenceFrame":n?\|"referenceTimecode":str?,"faceDetection":bool=true}
@@ -385,46 +397,48 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 
 ## markers
 
-- `markers.add` Add Marker (Markers) [M]: {"time":ticks?,"name":str?,"comment":str?,"color":label?,"durationFrames":i64?}
+- `markers.add` Add Marker (Markers) [M]: {"target":"program\|source","time":ticks?,"name":str?,"comment":str?,"color":label?,"durationFrames":i64?}
 - `markers.addChapter` Add Chapter Marker… (Markers): {"time":ticks?,"name":str?,"comment":str?,"color":label?}
 - `markers.addFlashCue` Add Flash Cue Marker… (Markers): {"time":ticks?,"name":str?,"comment":str?,"color":label?}
-- `markers.addRange` Add Range Marker (Markers) [Ctrl+Shift+M]: {"time":ticks?,"durationFrames":i64=1s,"duration":ticks?,"name":str?,"comment":str?,"color":label?}
+- `markers.addRange` Add Range Marker (Markers): {"time":ticks?,"durationFrames":i64=1s,"duration":ticks?,"name":str?,"comment":str?,"color":label?}
 - `markers.addRangeInOut` Add Range Marker to In and Out (Markers) [Ctrl+M]: {"name":str?,"comment":str?,"color":label?}
-- `markers.clearAll` Clear Markers (Markers) [Cmd+Alt+Shift+M]
-- `markers.clearCurrent` Clear Selected Marker (Markers) [Cmd+Alt+M]
-- `markers.clearIn` Clear In (Markers) [Cmd+Shift+I]
-- `markers.clearInOut` Clear In and Out (Markers) [Cmd+Shift+X]
-- `markers.clearOut` Clear Out (Markers) [Cmd+Shift+O]
+- `markers.clearAll` Clear Markers (Markers) [Cmd+Alt+Shift+M]: {"target":"program\|source"}
+- `markers.clearCurrent` Clear Selected Marker (Markers) [Cmd+Alt+M]: {"target":"program\|source"}
+- `markers.clearIn` Clear In (Markers) [Cmd+Shift+I]: {"target":"program\|source"}
+- `markers.clearInOut` Clear In and Out (Markers) [Cmd+Shift+X]: {"target":"program\|source"}
+- `markers.clearOut` Clear Out (Markers) [Cmd+Shift+O]: {"target":"program\|source"}
 - `markers.copyPasteIncludesSequenceMarkers` Copy Paste Includes Sequence Markers (Markers): {"on":bool?}
-- `markers.edit` Edit Marker…: {"marker":id,"name":str?,"comment":str?,"color":label?,"durationFrames":i64?}
+- `markers.edit` Edit Marker…: {"target":"program\|source","marker":id,"name":str?,"comment":str?,"color":label?,"durationFrames":i64?}
+- `markers.exportCsv` Export Markers as CSV… (Markers): {"path":str} (all markers in the active sequence)
 - `markers.filterColors` Marker Colour Filter: {"hidden":[label]}\|{"color":label,"visible":bool?}
-- `markers.goNext` Go to Next Marker (Markers) [Shift+M]
-- `markers.goPrev` Go to Previous Marker (Markers) [Cmd+Shift+M]
-- `markers.goToIn` Go to In (Markers) [Shift+I]
-- `markers.goToOut` Go to Out (Markers) [Shift+O]
+- `markers.goNext` Go to Next Marker (Markers) [Shift+M]: {"target":"program\|source"}
+- `markers.goPrev` Go to Previous Marker (Markers) [Cmd+Shift+M]: {"target":"program\|source"}
+- `markers.goToIn` Go to In (Markers) [Shift+I]: {"target":"program\|source"}
+- `markers.goToOut` Go to Out (Markers) [Shift+O]: {"target":"program\|source"}
 - `markers.goToSplitAudioIn` Audio In (Markers › Go to Split): {"target":"program\|source"}
 - `markers.goToSplitAudioOut` Audio Out (Markers › Go to Split): {"target":"program\|source"}
 - `markers.goToSplitVideoIn` Video In (Markers › Go to Split): {"target":"program\|source"}
 - `markers.goToSplitVideoOut` Video Out (Markers › Go to Split): {"target":"program\|source"}
 - `markers.markClip` Mark Clip (Markers) [X]
-- `markers.markIn` Mark In (Markers) [I]: {"time":ticks?,"target":"program\|source"}
-- `markers.markOut` Mark Out (Markers) [O]: {"time":ticks?,"target":"program\|source"}
+- `markers.markIn` Mark In (Markers) [I]: {"time":ticks?,"frame":i64?,"seconds":f64?,"timecode":str?,"target":"program\|source"}
+- `markers.markOut` Mark Out (Markers) [O]: {"time":ticks?,"frame":i64?,"seconds":f64?,"timecode":str?,"target":"program\|source"}
 - `markers.markSelection` Mark Selection (Markers) [/]
-- `markers.markSplitAudioIn` Audio In (Markers › Mark Split): {"time":ticks?,"target":"program\|source"}
-- `markers.markSplitAudioOut` Audio Out (Markers › Mark Split): {"time":ticks?,"target":"program\|source"}
-- `markers.markSplitVideoIn` Video In (Markers › Mark Split): {"time":ticks?,"target":"program\|source"}
-- `markers.markSplitVideoOut` Video Out (Markers › Mark Split): {"time":ticks?,"target":"program\|source"}
+- `markers.markSplitAudioIn` Audio In (Markers › Mark Split): {"time":ticks?,"frame":i64?,"seconds":f64?,"timecode":str?,"target":"program\|source"}
+- `markers.markSplitAudioOut` Audio Out (Markers › Mark Split): {"time":ticks?,"frame":i64?,"seconds":f64?,"timecode":str?,"target":"program\|source"}
+- `markers.markSplitVideoIn` Video In (Markers › Mark Split): {"time":ticks?,"frame":i64?,"seconds":f64?,"timecode":str?,"target":"program\|source"}
+- `markers.markSplitVideoOut` Video Out (Markers › Mark Split): {"time":ticks?,"frame":i64?,"seconds":f64?,"timecode":str?,"target":"program\|source"}
 - `markers.rippleSequenceMarkers` Ripple Sequence Markers (Markers): {"on":bool?}
 - `markers.showAllMarkerColors` Show All Marker Colors (Markers)
 
 ## masks
 
-- `masks.add` Create Mask: {"clip":id?,"effect":index\|id?="opacity","shape":"ellipse"\|"polygon"\|"bezier","path":[[x,y]…]\|{vertices}?,"center":[x,y]?,"size":[w,h]?}
+- `masks.add` Create Mask: {"clip":id?,"effect":index\|id?="opacity","shape":"ellipse"\|"polygon"\|"rectangle"\|"bezier","path":[[x,y]…]\|{vertices}?,"center":[x,y]?,"size":[w,h]?,"cornerRadius":px?}
 - `masks.addVertex` Add Mask Vertex: {"clip":id?,"effect":index\|id?,"mask":n?,"after":n,"at":[x,y]}
 - `masks.list` List Masks: {"clip":id?,"time":ticks?}
 - `masks.moveVertex` Move Mask Vertex: {"clip":id?,"effect":index\|id?,"mask":n?,"vertex":n,"handle":"point"\|"in"\|"out"?,"to":[x,y]?\|"delta":[dx,dy]?,"breakHandles":bool?,"merge":key?}
 - `masks.remove` Delete Mask: {"clip":id?,"effect":index\|id?,"mask":n?}
 - `masks.removeVertex` Delete Mask Vertex: {"clip":id?,"effect":index\|id?,"mask":n?,"vertex":n}
+- `masks.roundCorners` Round Mask Corners: {"clip":id?,"effect":index\|id?,"mask":n?,"radius":px,"vertices":[n]?}
 - `masks.select` Select Mask: {"clip":id,"effect":index\|id,"mask":n}\|{"none":true}
 - `masks.set` Change Mask: {"clip":id?,"effect":index\|id?,"mask":n?,"name":str?,"inverted":bool?,"mode":"none\|add\|subtract\|intersect\|lighten\|darken\|difference"?,"trackMethod":"position\|positionRotation\|positionScaleRotation"?,"feather":px?,"opacity":pct?,"expansion":px?,"path":path?,"time":ticks?,"merge":key?}
 - `masks.toggleVertexSmooth` Convert Mask Vertex: {"clip":id?,"effect":index\|id?,"mask":n?,"vertex":n}
@@ -444,6 +458,7 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `media.offlineAll` Offline All: {}  (leave every missing file offline and close the Link Media dialog)
 - `media.proxyPresets` Proxy Presets
 - `media.reconnectFullRes` Reconnect Full Resolution Media… (Clip › Proxy): {"item":id,"path":str}
+- `media.refreshChanged` Refresh Changed Media
 - `media.relink` Relink Media: {"item":id,"path":str,"force":bool=false,"relinkOthers":bool=true,"alignTimecode":bool=false,"match":{"fileName":bool,"extension":bool,"clipId":bool,"duration":bool,"mediaStart":bool,"metadata":bool}?}
 - `media.replaceFootage` Replace Footage…: {"item":id,"path":str}
 - `media.search` Search for Media: {"folder":str,"item":id?,"exactName":bool=true}
@@ -510,7 +525,7 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `multicam.cutToCamera6` Cut to Camera 6 [Ctrl+6]: {"videoOnly":bool?}
 - `multicam.cutToCamera7` Cut to Camera 7 [Ctrl+7]: {"videoOnly":bool?}
 - `multicam.cutToCamera8` Cut to Camera 8 [Ctrl+8]: {"videoOnly":bool?}
-- `multicam.cutToCamera9` Cut to Camera 9 [Ctrl+9]: {"videoOnly":bool?}
+- `multicam.cutToCamera9` Cut to Camera 9: {"videoOnly":bool?}
 - `multicam.editCameras` Edit Cameras…: {"sequence":id?,"cameras":[{"angle":0-based,"name":str?,"enabled":bool?}]?,"audio":"camera1\|all\|switch"?}
 - `multicam.grid` Multi-Camera Grid: {"time":ticks?,"playing":bool?,"cellPixels":f32?,"playbackScale":f32?}
 - `multicam.gridLayout` Multi-Camera Layout: {"layout":"auto\|2x2\|3x3\|4x4"}
@@ -597,12 +612,14 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `project.inspect` Inspect Project
 - `project.items` List Project Panel Rows: {"bin":binId?,"recursive":bool?}
 - `project.matteColor` Color Matte Color…: {"item":id?,"color":"#rrggbb"}
-- `project.moveToBin` Move to Bin: {"items":[id]?,"bin":binId\|null}
+- `project.moveToBin` Move to Bin: {"items":[id\|binId]?,"bin":binId\|null}
+- `project.notes` Get Project Notes
 - `project.renameBin` Rename Bin: {"bin":binId,"name":str}
 - `project.searchBinItems` Search Bin Contents: {"bin":id}
 - `project.select` Select Project Items: {"items":[id]}
-- `project.selectAll` Select All Project Items
+- `project.selectAll` Select All Project Items: {"bin":binId?,"expanded":[binId]?}
 - `project.setMarks` Set Source In/Out: {"item":id,"in":ticks?\|null,"out":ticks?\|null}
+- `project.setNotes` Edit Project Notes: {"text":str,"merge":str?}
 - `project.sort` Sort Project Items: {"column":str,"descending":bool?}
 - `project.view.get` Project Panel View
 - `project.view.set` Set Project Panel View: {"view":"list\|icon\|freeform"?,"iconSize":f32?,"fontSize":"small\|medium\|large\|extraLarge"?,"previewArea":bool?,"thumbnails":bool?,"thumbnailsShowEffects":bool?,"hoverScrub":bool?,"thumbnailControlsAllDevices":bool?,"iconSort":column\|{"column":str,"descending":bool}?}
@@ -622,23 +639,23 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `sequence.addEdit` Add Edit (Sequence) [Cmd+K]: {"time":ticks?}
 - `sequence.addEditAllTracks` Add Edit to All Tracks (Sequence) [Cmd+Shift+K]: {"time":ticks?}
 - `sequence.addTracks` Add Tracks… (Sequence): {"video":n=1,"audio":n=0,"submix":n=0,"videoAfter":"first"\|"V2"\|n?,"audioAfter":"first"\|"A2"\|n?,"submixAfter":"first"\|"S1"\|n?,"audioType":"standard\|5.1\|adaptive\|mono"?,"submixType":"stereo\|5.1\|adaptive\|mono"?}
-- `sequence.applyAudioTransition` Apply Audio Transition (Sequence) [Cmd+Shift+D]: {"clip":id?,"effect":str?,"frames":i64?}
+- `sequence.applyAudioTransition` Apply Audio Transition (Sequence) [Cmd+Shift+D]: {"clip":id?,"effect":"constant_power\|Constant Power\|…"?,"frames":i64?,"edge":"in"\|"out"?,"params":{param:value}?,"reverse":bool?}
 - `sequence.applyVideoTransition` Apply Video Transition (Sequence) [Cmd+D]: {"clip":id?,"effect":"cross_dissolve\|Cross Dissolve\|…"?,"frames":i64?,"edge":"in"\|"out"?,"params":{param:value}?,"reverse":bool?}
-- `sequence.close` Close Sequence: {"item":id?}
-- `sequence.closeGap` Close Gap (Sequence): {"track":"V1"\|id,"time":ticks}
+- `sequence.close` Close Sequence [Cmd+W]: {"item":id?}
+- `sequence.closeGap` Close Gap (Sequence): {"track":"V1"\|id?,"time":ticks?}
 - `sequence.closeOthers` Close Other Timeline Panels: {"item":id?}
 - `sequence.colorSettings` Color Management… (Sequence): {"workingSpace":"rec709"\|"rec2100-pq"\|"rec2100-hlg"?,"wideGamut":bool?,"autoToneMap":bool?}
 - `sequence.deleteRenderFiles` Delete Render Files (Sequence)
 - `sequence.deleteRenderFilesInToOut` Delete Render Files In to Out (Sequence)
 - `sequence.deleteTrack` Delete Track: {"track":"V3"\|id}
-- `sequence.deleteTracks` Delete Tracks… (Sequence): {"video":"empty"\|"V2"\|id?,"audio":"empty"\|"A2"\|id?}
+- `sequence.deleteTracks` Delete Tracks… (Sequence): {"video":"empty"\|"V2"\|id?,"audio":"empty"\|"A2"\|id?,"captions":"empty"\|"C2"\|id?}
 - `sequence.extract` Extract (Sequence) [']
 - `sequence.goToNextGap` Next in Sequence (Sequence › Go to Gap) [Shift+;]
 - `sequence.goToNextGapInTrack` Next in Track (Sequence › Go to Gap): {"track":"V1"\|id?}
 - `sequence.goToPrevGap` Previous in Sequence (Sequence › Go to Gap) [Cmd+Shift+;]
 - `sequence.goToPrevGapInTrack` Previous in Track (Sequence › Go to Gap): {"track":"V1"\|id?}
 - `sequence.inspect` Inspect Sequence: {"item":id?}
-- `sequence.joinThroughEdits` Join Through Edits: {"clips":[id]?,"all":bool?}
+- `sequence.joinThroughEdits` Join Through Edits: {"clips":[id]?,"cut":[id,id]?,"all":bool?}
 - `sequence.lift` Lift (Sequence) [;]
 - `sequence.linkedSelection` Linked Selection (Sequence): {"on":bool?}
 - `sequence.makeSubsequence` Make Subsequence (Sequence) [Shift+U]: {"name":str?}
@@ -647,6 +664,7 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `sequence.nestSequences` Insert and overwrite sequences as nests or individual clips: {"on":bool?}
 - `sequence.normalizeMixTrack` Normalize Mix Track… (Sequence): {"db":f64=0}
 - `sequence.open` Open in Timeline: {"item":id}
+- `sequence.removeTransition` Clear Transition: {"transitions":[id]?}
 - `sequence.renderAudio` Render Audio (Sequence): {"wait":bool=false}
 - `sequence.renderBar` Render Bar
 - `sequence.renderEffectsInToOut` Render Effects In to Out (Sequence) [Enter]: {"wait":bool=false}
@@ -656,8 +674,8 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `sequence.revealNested` Reveal Nested Sequence [Cmd+Alt+F]
 - `sequence.reverseMatchFrame` Reverse Match Frame (Sequence) [Shift+R]
 - `sequence.selectionFollowsPlayhead` Selection Follows Playhead (Sequence): {"on":bool?}
-- `sequence.setTransition` Edit Transition Settings: {"transition":id,"params":{param:value}?,"reverse":bool?,"reset":bool?}
-- `sequence.settings` Sequence Settings… (Sequence): {"width":u32?,"height":u32?,"fps":f64?,"name":str?,"sampleRate":u32?,"mix":"Stereo\|Mono\|5.1\|Adaptive"?}
+- `sequence.setTransition` Edit Transition Settings: {"transition":id,"params":{param:value}?,"reverse":bool?,"reset":bool?,"duration":ticks?\|"frames":n?,"align":"center"\|"start"\|"end"?\|"start":ticks?,"merge":bool?,"begin":bool?}
+- `sequence.settings` Sequence Settings… (Sequence): {"width":u32?,"height":u32?,"fps":f64?,"name":str?,"sampleRate":u32?,"mix":"Stereo\|Mono\|5.1\|Adaptive"?,"dropFrame":bool?,"maxRenderQuality":bool?,"workingSpace":"rec709"\|"rec2100-pq"\|"rec2100-hlg"?,"wideGamut":bool?,"autoToneMap":bool?,"scaleMotion":bool=false}
 - `sequence.showThroughEdits` Show Through Edits (Sequence): {"on":bool?}
 - `sequence.simplify` Simplify Sequence… (Sequence): {"name":str?,"removeDisabled":bool=true,"removeEmptyTracks":bool=true,"closeGaps":bool=false,"moveClipsDown":bool=false,"removeVideoEffects":bool=false,"removeAudioEffects":bool=false,"removeText":bool=false,"keep":"both\|video\|audio"}
 - `sequence.snap` Snap in Timeline (Sequence) [S]: {"on":bool?}
@@ -685,9 +703,11 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 
 ## source
 
+- `source.close` Close
+- `source.closeAll` Close All
 - `source.insert` Insert (Clip) [,]
 - `source.inspect` Inspect Source Monitor
-- `source.open` Open in Source Monitor: {"item":id?}
+- `source.open` Open in Source Monitor: {"item":id?,"clip":id?}
 - `source.overwrite` Overwrite (Clip) [.]
 - `source.setPlayhead` Set Source Playhead: {"time":ticks\|"frame":i64\|"seconds":f64}
 
@@ -697,7 +717,7 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 
 ## timeline
 
-- `timeline.move` Move Clips: {"moves":[{"clip":id,"track":id\|"V2","time":ticks}],"insert":bool,"linked":bool?}
+- `timeline.move` Move Clips: {"moves":[{"clip":id,"track":id\|"V2"\|"new" (after the last of its kind),"time":ticks}],"insert":bool,"linked":bool?,"copy":bool?}
 - `timeline.moveAudioTargetsDown` Move All Audio Targets Down
 - `timeline.moveAudioTargetsUp` Move All Audio Targets Up
 - `timeline.moveVideoTargetsDown` Move All Video Targets Down
@@ -708,12 +728,13 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `timeline.nudgeRight` Nudge Clip Selection Right One Frame
 - `timeline.nudgeRight5` Nudge Clip Selection Right Five Frames
 - `timeline.nudgeUp` Nudge Clip Selection Up
-- `timeline.place` Place Clip: {"item":id,"track":"V1"\|id\|"A1" (sound only)?,"audioTrack":"A1"\|id?,"time":ticks\|"frame":i64\|"seconds":f64,"insert":bool,"sourceIn":ticks?,"duration":ticks?}
+- `timeline.place` Place Clip: {"item":id\|"items":[id] (back to back, one undo step),"track":"V1"\|id\|"A1" (sound only)\|"new" (a video track after the last)?,"audioTrack":"A1"\|id\|"new"?,"time":ticks\|"frame":i64\|"seconds":f64,"insert":bool,"sourceIn":ticks?,"duration":ticks?,"video":bool=true,"audio":bool=true}
 - `timeline.rateStretch` Rate Stretch: {"clip":id,"edge":"in\|out","delta":ticks}
 - `timeline.razor` Razor: {"time":ticks,"track":"V1"\|id?,"clip":id?}
-- `timeline.roll` Rolling Edit: {"left":id,"right":id,"delta":ticks\|"deltaFrames":i64}
-- `timeline.select` Select Clips: {"clips":[id],"add":bool,"toggle":bool}
+- `timeline.roll` Rolling Edit: {"left":id,"right":id,"delta":ticks\|"deltaFrames":i64,"followLinks"?:bool}
+- `timeline.select` Select Clips: {"clips":[id],"transitions":[id]?,"add":bool,"toggle":bool}
 - `timeline.selectClipAtPlayhead` Select Clip at Playhead [D]
+- `timeline.selectGap` Select Gap: {"track":"V1"\|id,"time":ticks\|"frame":n\|"seconds":f}
 - `timeline.selectNextClip` Select Next Clip [Cmd+Down]
 - `timeline.selectPrevClip` Select Previous Clip [Cmd+Up]
 - `timeline.setTargeting` Track Targeting: {"track":"V1"\|id,"targeted":bool?,"sourcePatch":bool?}
@@ -795,4 +816,14 @@ Generated from `command_list` (FilmCraft 0.4.0, 675 commands). Run any of these 
 - `trim.shuttle` Dynamic Trim (Shuttle): {"direction":"forward\|reverse","slow":bool?,"clock":seconds}
 - `trim.shuttleStop` Dynamic Trim Stop: {"clock":seconds?}
 - `trim.tick` Advance Trim Playback: {"clock":seconds}
-- `trim.toggleType` Toggle Trim Type [Ctrl+T]
+- `trim.toggleType` Toggle Trim Type
+
+## tts
+
+- `tts.create` New Narration: {"text":str,"voice":str?,"pitch":"extraLow\|low\|default\|high\|extraHigh"?,"pace":0.5..2?,"time":ticks?,"track":"A1"\|id?,"dir":str?}
+- `tts.downloadVoices` Download Natural Voices: {"wait":bool?}
+- `tts.edit` Edit Narration: {"clip":id?,"text":str?,"voice":str?,"pitch":str?,"pace":f64?,"dir":str?}
+- `tts.inspect` Inspect Narration: {"clip":id?,"item":id?}
+- `tts.preview` Preview Narration: {"text":str?,"voice":str?,"pitch":"default"?,"pace":f64?,"sample":bool?,"clip":id?,"path":str?}
+- `tts.render` Synthesize Narration: {"text":str?,"voice":str?,"pitch":str?,"pace":f64?,"sample":bool?,"clip":id?,"wait":bool?}
+- `tts.voices` List Narration Voices

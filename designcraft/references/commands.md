@@ -1,6 +1,6 @@
 # DesignCraft command catalog
 
-Generated from `designcraft-cli commands` (DesignCraft 0.4.0, 444 commands). Run any of these with
+Generated from `designcraft-cli commands` (DesignCraft 0.7.1, 446 commands). Run any of these with
 `execute {command, params}` or several with `batch {commands: [...]}`; check one live with `list_commands {filter}`
 or `designcraft-cli describe <id>`. `params` use the engine's shorthand: `?` = optional, `a|b` = choices,
 `→ {...}` = what it returns. Coordinates are spread points (y down); `page` params say whether they are 0- or 1-based.
@@ -121,7 +121,7 @@ Grep this file rather than reading it whole.
 - `edit.pasteInto` (Edit › Paste Into, Cmd+Alt+V): {id?} — the copied objects become the content of the selected frame (or `id`), clipped by it
 - `edit.pasteInPlace` (Edit › Paste in Place, Cmd+Alt+Shift+V): {}
 - `edit.duplicate` (Edit › Duplicate, Cmd+Alt+Shift+D): {}
-- `edit.stepAndRepeat` (Edit › Step and Repeat…, Cmd+Alt+U): {count?: 1, dx?, dy?, rows?, columns?, ids?} — copies of the selection (or ids) offset by (dx, dy); with rows/columns, a grid
+- `edit.stepAndRepeat` (Edit › Step and Repeat…, Cmd+Alt+U): {count?: 1..1000, dx?, dy?, rows?, columns?, ids?} — copies of the selection (or ids) offset by (dx, dy); with rows/columns, a grid of at most 1000 cells, and at most 1000 item copies including group contents → {created, ids: the copies}
 - `edit.transparencyBlendSpace` (Edit › Transparency Blend Space › Transparency Blend Space): {space: cmyk\|rgb} — the colour space transparency is composited in for output
 
 ## endnote
@@ -137,7 +137,7 @@ Grep this file rather than reading it whole.
 - `file.new` (File › New › Document…, Cmd+N): {preset?: "Letter"\|"A4"\|…, width?, height?, pages?, facingPages?, columns?, gutter?, margins?: number\|{top,bottom,inside,outside}, bleed?, title?}
 - `file.newSample` (Help › Sample Document): {} — a multi-page magazine sample
 - `file.presets` (Document Presets): {}
-- `file.open` (File › Open…, Cmd+O): {path} — .designcraft or .idml; the fonts in a `Document Fonts` folder beside it load first → {index, documentFonts: faces loaded, warnings: font files skipped}
+- `file.open` (File › Open…, Cmd+O): {path} — .designcraft or .idml; the fonts in a `Document Fonts` folder beside it load first → {index, documentFonts: faces loaded, warnings: font files skipped (and, for .idml, package parts missing)}
 - `file.openBytes` (Open Bytes): {name, base64} — DesignCraft JSON or an IDML package
 - `file.save` (File › Save, Cmd+S): {path?}
 - `file.saveAs` (File › Save As…, Cmd+Shift+S): {path}
@@ -151,7 +151,7 @@ Grep this file rather than reading it whole.
 - `file.activate` (Activate Document): {index}
 - `file.place` (File › Place…, Cmd+D): {path?\|base64?, name?, frame?: id (place into), spread?, x?, y?, width?, pdfPage?: n (1-based, Image Import Options), pdfCrop?: crop\|trim\|bleed\|art\|media, layoutPage?: n (IDML / .designcraft: that page's objects as a group)} — places an image (into the selected empty frame if any); text files (.txt, .docx, .rtf, .md) and Excel workbooks (.xlsx, as a table) go into the insertion point, the selected frame or a new frame on `page`/`rect` — {autoflow?: adds pages with threaded frames until the text fits, removeStyles?, styleMap?: {imported name: document style}, styleConflicts?: useExisting\|redefine\|autoRename}
 - `file.exportIdml` (Export IDML…): {path?, embedImages?: true} — writes an IDML package to `path`, or returns {base64} without a path
-- `file.openIdml` (Open IDML): {path \| base64, name?} — opens an IDML package as a new document (linked images are read next to the file or from its Links/ folder; the fonts in a `Document Fonts` folder beside it load first) → {index, documentFonts, warnings}
+- `file.openIdml` (Open IDML): {path \| base64, name?} — opens an IDML package as a new document (linked images are read next to the file or from its Links/ folder; the fonts in a `Document Fonts` folder beside it load first) → {index, documentFonts, warnings: package parts missing, font files skipped}
 - `file.exportPdf` (File › Export PDF…): {path?, pages?: "1-3,5" \| [1,3] (1-based positions; default all), flatten?: high\|medium\|low\|ppi (Transparency Flattener: spreads with transparency are rasterised), spreads?: bool, fullScreen?: bool, bookmarksPanel?: bool, pageLayout?: single\|continuous\|twoUp\|twoUpCover\|twoUpContinuous, view?: fitPage\|fitWidth\|actual, advanceSeconds?: number (interactive PDF), bleed?: bool (document bleed), marks?: bool \| {crop?, bleed?, pageInfo?, weight?, offset?}, standard?: "none"\|"x4"\|"a2b", compressImages?: bool, tagged?: bool (structure tree: stories as paragraphs, figures with alt text), media?: bool (interactive: embed placed video and sound), title?, author?} → {path, bytes, pages, warnings} (no path: {base64, …})
 - `file.exportEpub` (File › Export EPUB (Reflowable)…): {path?, title?, author?, language?: "en", cover?: bool (the first page as the cover image), fixedLayout?: bool (pre-paginated: each page as an image with its text)} → {path, bytes} (no path: {base64, bytes})
 - `file.exportFixedEpub` (File › Export EPUB (Fixed Layout)…): {path?, title?, author?, language?} — pre-paginated EPUB → {path, bytes} (no path: {base64, bytes})
@@ -162,7 +162,7 @@ Grep this file rather than reading it whole.
 - `file.importXml` (File › Import XML…): {path \| text} — each element's content goes into the next text frame with that tag (child elements of mapped tags become paragraphs in their style) → {placed, unmatched}
 - `file.package` (File › Package…): {dir: folder to create, idml?: true, pdf?: false, instructions?: text} — the document (its placed files relinked to Links/), Links/, the font files that draw its text in Document Fonts/ (fallback fonts included; unless their licence restricts it), an IDML copy, an optional PDF and a report → {dir, files, report}
 - `file.printers` (Printers): {} → {printers: [names], default}
-- `file.print` (File › Print…, Cmd+P): {printer?, copies?: 1, pages?: "1-3,5", spreads?, marks?, bleed?, dryRun?: bool (only return the spool command)} → {printer, copies, pages, command}
+- `file.print` (File › Print…, Cmd+P): {printer?, copies?: 1, pages?: "1-3,5", spreads?, marks?, bleed?, dryRun?: bool (export and preview submission without printing)} → {printer, copies, pages, command, bytes}
 
 ## find
 
@@ -268,7 +268,7 @@ Grep this file rather than reading it whole.
 - `layout.overrideParentItems` (Layout › Pages › Override All Parent Page Items, Cmd+Alt+Shift+L): {page (0-based), ids?: parent items (default: all on the page's parent page)} → {ids} the page's editable copies
 - `layout.removeOverrides` (Layout › Pages › Remove All Local Overrides): {page (0-based)} — deletes the page's overridden copies; the parent items show again
 - `layout.detachAll` (Layout › Pages › Detach All Objects from Parent): {page (0-based)} — the page's overridden copies become ordinary items
-- `layout.createGuides` (Layout › Create Guides…): {rows?: 0, columns?: 0, rowGutter?: 12, columnGutter?: 12, fitTo?: margins\|page, removeExisting?: false, spread?, page? (index in the spread; default all pages)}
+- `layout.createGuides` (Layout › Create Guides…): {rows?: 0..1000, columns?: 0..1000, rowGutter?: 12, columnGutter?: 12, fitTo?: margins\|page, removeExisting?: false, spread?, page? (index in the spread; default all pages)} — at most 10000 guides per command
 
 ## library
 
@@ -338,7 +338,7 @@ Grep this file rather than reading it whole.
 - `object.hide` (Object › Hide, Cmd+3): {ids?}
 - `object.showAll` (Object › Show All on Spread, Cmd+Alt+3): {}
 - `object.setFlags` (Set Visibility / Lock): {ids: [id], hidden?: bool, locked?: bool} — Layers panel eye/lock per object
-- `object.fill` (Fill): {swatch, tint?: 0..1, ids?}
+- `object.fill` (Fill): {swatch (a swatch's name, e.g. [Paper]), tint?: 0..1, ids?}
 - `object.stroke` (Stroke): {swatch?, tint?, weight?, align?: center\|inside\|outside, type?: {kind:…}, cap?: butt\|round\|projecting, join?: miter\|round\|bevel, miterLimit?, start?, end?: none\|simple\|simpleWide\|triangle\|triangleWide\|barbed\|curved\|circle\|circleSolid\|square\|squareSolid\|bar, gapSwatch?, gapTint?, gapOverprint?: bool, ids?}
 - `object.opacity` (Opacity): {opacity: 0..1, blend?: normal\|multiply\|…, ids?}
 - `object.dropShadow` (Object › Effects › Drop Shadow, Cmd+Alt+M): {on?: bool, distance?, angle?, globalLight?: bool, opacity?, size?, spread? (%), color? (swatch), ids?}
@@ -351,7 +351,7 @@ Grep this file rather than reading it whole.
 - `object.directionalFeather` (Object › Effects › Directional Feather): {on?: bool, widths?: [top, left, bottom, right] \| number, ids?}
 - `object.feather` (Object › Effects › Basic Feather): {width (0 = off), ids?}
 - `object.content` (Object › Content › Content): {type: graphic\|text\|unassigned, ids?}
-- `object.textFrameOptions` (Object › Text Frame Options…, Cmd+B): {columns?, gutter?, inset?: number\|[t,l,b,r], verticalJustification?: top\|center\|bottom\|justify, firstBaseline?, autoSize?, ignoreWrap?, balanceColumns?, vertical?: bool (sets the story direction of the frames' stories, as Type ▸ Story Direction), ids?}
+- `object.textFrameOptions` (Object › Text Frame Options…, Cmd+B): {columns?, gutter?, inset?: number\|[t,l,b,r] (null keeps that side), verticalJustification?: top\|center\|bottom\|justify, firstBaseline?, autoSize?, ignoreWrap?, balanceColumns?, columnRule?: bool, columnRuleWeight? (pt), columnRuleColor? (swatch name), columnRuleTint? (0..1), columnRuleOffset? (pt, horizontal), columnRuleTopInset? (pt), columnRuleBottomInset? (pt), vertical?: bool (sets the story direction of the frames' stories, as Type ▸ Story Direction), ids?}
 - `object.cornerOptions` (Object › Corner Options…): {shape: none\|rounded\|inverseRounded\|inset\|bevel\|fancy, size, ids?}
 - `object.textWrap` (Window › Text Wrap, Cmd+Alt+W): {mode: none\|boundingBox\|contour\|jumpObject\|jumpToNextColumn, offset?: number\|[t,l,b,r], invert?: bool, ids?}
 - `object.fit` (Object › Fitting › Fitting): {mode: fillProportionally\|fitProportionally\|fitContentToFrame\|centerContent\|fitFrameToContent, ids?}
@@ -479,10 +479,10 @@ Grep this file rather than reading it whole.
 - `style.paragraph.apply` (Apply Paragraph Style): {name, clearOverrides?: bool}
 - `style.character.apply` (Apply Character Style): {name}
 - `style.paragraph.create` (New Paragraph Style…): {name, basedOn?, nextStyle?, para?: {…}, chars?: {…}, fromSelection?: bool}
-- `style.paragraph.edit` (Paragraph Style Options…): {name, rename?, basedOn?, nextStyle?, para?: {…}, chars?: {…}}
+- `style.paragraph.edit` (Paragraph Style Options…): {name, rename?, basedOn?, nextStyle?, para?: {… ruleAbove?/ruleBelow?: only the named rule fields change}, chars?: {…}}
 - `style.paragraph.delete` (Delete Paragraph Style): {name, replaceWith?}
-- `style.character.create` (New Character Style…): {name, basedOn?, chars?: {…}}
-- `style.character.edit` (Character Style Options…): {name, rename?, basedOn?, chars?}
+- `style.character.create` (New Character Style…): {name, basedOn?: style \| "[None]", chars?: {…}} — the style sets only `chars` → {name} (made unique)
+- `style.character.edit` (Character Style Options…): {name, rename?, basedOn?: style \| "[None]" \| null, chars?: {attr: value \| null (no longer set)}} — renaming updates every use
 - `style.list` (List Styles): {} → paragraph and character style names
 - `style.object.apply` (Apply Object Style): {name, ids?}
 - `style.object.create` (New Object Style…): {name, fromSelection?: true, fill?, paragraphStyle?}
@@ -535,6 +535,7 @@ Grep this file rather than reading it whole.
 - `table.setRowHeight` (Row Height): {height, mode?: atLeast\|exactly}
 - `table.setColumnWidth` (Column Width): {width}
 - `table.distributeColumns` (Table › Distribute Columns Evenly): {}
+- `table.distributeRows` (Table › Distribute Rows Evenly): {story?, table?, rows?: [a,b]} — equal fixed heights preserving the selected rows' composed total height; may overset cell text; unmerge row-spanning cells first
 - `table.options` (Table Options): {direction?: leftToRight\|rightToLeft, border?: {weight?, color?, tint?, type?}, spaceBefore?, spaceAfter?, headerRows?, footerRows?, repeatHeader?, repeatFooter?, altRows?: {first, firstColor, firstTint, next, nextColor, nextTint, skipFirst, skipLast} \| null, altCols?: … \| null}
 - `table.select` (Select Cells): {story?, table?, rows?: [a,b], cols?: [a,b], what?: cell\|row\|column\|table}
 - `table.selectTable` (Table › Select › Select Table): {}
@@ -570,7 +571,7 @@ Grep this file rather than reading it whole.
 
 ## transform
 
-- `transform.move` (Object › Transform › Move): {dx, dy, copy?: bool, ids?, toSpread?}
+- `transform.move` (Object › Transform › Move): {dx, dy, copy?: bool, ids?, toSpread?} → {moved, ids: the objects moved (with copy, the copies)}
 - `transform.resize` (Resize): {from: rect, to: rect, content?: bool (scale content), distribute?: bool (Live Distribute: objects keep their size, their centres spread with the bounds), ids?}
 - `transform.rotate` (Object › Transform › Rotate): {angle (degrees, CCW), ids?}
 - `transform.scale` (Object › Transform › Scale): {sx, sy, ids?} (about the selection centre)
@@ -588,7 +589,7 @@ Grep this file rather than reading it whole.
 - `type.pathOptions` (Type › Type on a Path › Type on a Path Options…): {id?, start?, flip?, align?: baseline\|ascender\|descender\|center, delete?: true (Delete Type from Path)}
 - `type.fillWithPlaceholder` (Type › Fill with Placeholder Text): {frame?}
 - `type.char` (Character Formatting): {attrs: {fontFamily?, fontStyle?, size?, leading?: {kind:auto}\|{kind:points,value}, tracking?, kerning?, hScale?, vScale?, baselineShift?, fill?, capitalization?, underline?, …}}
-- `type.para` (Paragraph Formatting): {attrs: {align?, leftIndent?, firstLineIndent?, spaceBefore?, spaceAfter?, dropCapLines?, hyphenate?, composer?, tabs?, …}}
+- `type.para` (Paragraph Formatting): {attrs: {align?, leftIndent?, firstLineIndent?, spaceBefore?, spaceAfter?, dropCapLines?, hyphenate?, composer?, tabs?, ruleAbove?/ruleBelow?: {on?, weight?, color?, tint?, columnWidth?, offset?, leftIndent?, rightIndent?} (only the named rule fields change), …}}
 - `type.align` (Align): {align: left\|center\|right\|leftJustified\|…}
 - `type.alignLeft` (Align Left, Cmd+Shift+L): {}
 - `type.alignCenter` (Align Center, Cmd+Shift+C): {}
@@ -601,6 +602,7 @@ Grep this file rather than reading it whole.
 - `type.tateChuYoko` (Tate-Chu-Yoko): {on?: bool} — set the selected text horizontally within one em of a vertical line (toggles by default)
 - `type.ruby` (Ruby): {text} — the reading set over the selected text (one group); empty removes it
 - `type.kenten` (Kenten): {on?: bool} — emphasis dots over the selected characters (toggles by default)
+- `type.warichu` (Warichu): {on?: bool, lines?: int, size?: number, lineSpacing?: number, align?: auto\|left\|center\|right\|justify, charsBeforeBreak?: int, charsAfterBreak?: int} — set the selection as an inline note in smaller lines inside one line height (toggles by default)
 - `type.storyDirection` (Story Direction): {vertical: bool} — the stories of the text selection or the selected frames: vertical lines run top to bottom and follow each other right to left, in every frame of the thread
 - `type.sizeUp` (Increase Point Size, Cmd+Shift+.): {}
 - `type.sizeDown` (Decrease Point Size, Cmd+Shift+,): {}

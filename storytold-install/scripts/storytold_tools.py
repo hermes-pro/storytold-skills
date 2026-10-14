@@ -48,6 +48,7 @@ APPS = {
     "deckcraft": "Presentations (PowerPoint-style)",
     "soundcraft": "Audio editing and mixing (Pro Tools-style)",
     "cadcraft": "Computer-aided design and drafting (AutoCAD-style)",
+    "figcraft": "Interface design and prototyping (Figma-style)",
 }
 IS_WINDOWS = os.name == "nt"
 EXE = ".exe" if IS_WINDOWS else ""
@@ -331,6 +332,12 @@ def ensure_path() -> dict:
 
 def mcp_args(app: str) -> list[str]:
     """The `<app>-cli` arguments that start a *usable* MCP server (what Hermes is registered with)."""
+    if app == "vectorcraft":
+        # Bare `mcp` attaches to whatever listens on 127.0.0.1:7979, even another Crafting App.
+        return ["mcp", "--headless"]
+    if app == "pdfcraft":
+        # 17 tools (core + tool_search/tool_call) instead of 161: ~3.5k tokens of schemas instead of ~40k.
+        return ["mcp", "--compact"]
     if app == "photocraft":
         # Without roots it can't open or save any file; MCP paths are then relative to this root.
         root = os.environ.get("STORYTOLD_PHOTOCRAFT_ROOT") or str(Path.home())

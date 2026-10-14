@@ -1,13 +1,13 @@
 ---
 name: storytold-install
 description: "Install the storytold Crafting Apps (VectorCraft, PhotoCraft, FilmCraft, …) on PATH and wire their MCP servers into Hermes."
-version: 0.1.0
+version: 0.2.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
 metadata:
   hermes:
-    tags: [Creative, Design, Illustration, Photo, Video, Audio, Office, CAD, MCP]
+    tags: [Creative, Design, Illustration, Photo, Video, Audio, Office, CAD, UI, MCP]
     related_skills: [storytold]
 ---
 
@@ -31,12 +31,13 @@ tools written in Rust. Every release ships a desktop app `<app>` and an automati
 | `deckcraft` | Presentations (PowerPoint-style) |
 | `soundcraft` | Audio editing and mixing (Pro Tools-style) |
 | `cadcraft` | Computer-aided design and drafting (AutoCAD-style) |
+| `figcraft` | Interface design and prototyping (Figma-style) |
 
 ## When to Use
 
 - The user asks to install, update or set up any storytold / Crafting App (by name or "the craft apps").
 - The user wants to create or edit vector art, photos, video, audio, documents, spreadsheets, slides,
-  PDFs or CAD drawings, and a Crafting App is the tool for it.
+  PDFs, CAD drawings or UI designs, and a Crafting App is the tool for it.
 - A `<app>-cli` command is "not found", or a storytold MCP server fails to start.
 
 ## Quick Reference
@@ -52,7 +53,7 @@ python ${HERMES_SKILL_DIR}/scripts/storytold_tools.py register [APP ...]  # herm
 python ${HERMES_SKILL_DIR}/scripts/storytold_tools.py setup   [APP ...]   # install + verify + register
 ```
 
-Leave `APP` out to act on all twelve apps. Every command prints one JSON object per line.
+Leave `APP` out to act on all thirteen apps. Every command prints one JSON object per line.
 
 | Where | Windows | Linux / FreeBSD | macOS |
 |---|---|---|---|
@@ -69,7 +70,7 @@ if the GitHub API rate limit (60 requests an hour without a token) gets in the w
 1. **Check first.** Run `status`. An app counts as present when its `<app>-cli` is on PATH, whether
    this skill installed it or an MSI, .deb or Flatpak did. Don't reinstall an app that's already there
    unless the user asks, or `latest` is newer than `installed`.
-2. **Install.** Run `install` with the apps the user wants. Leave `APP` out to install all twelve, about 1 GB of
+2. **Install.** Run `install` with the apps the user wants. Leave `APP` out to install all thirteen, about 1.2 GB of
    downloads. For each app it finds the latest GitHub release, downloads the asset for this OS and CPU,
    checks it against the release's `SHA256SUMS.txt`, unpacks it and links `<app>` and `<app>-cli` into the bin
    dir. Then it adds the bin dir to the persistent PATH unless it's already there. Running it again does no
@@ -87,6 +88,8 @@ if the GitHub API rate limit (60 requests an hour without a token) gets in the w
    | App | MCP args | Why |
    |---|---|---|
    | most apps | `mcp` | headless in-process engine |
+   | `pdfcraft` | `mcp --compact` | 17 tools instead of 161 (about 3.5k tokens of schemas instead of 40k). The rest run through `tool_call` |
+   | `vectorcraft` | `mcp --headless` | bare `mcp` attaches to anything on port 7979, even another Crafting App |
    | `photocraft` | `mcp --automation-read-root <HOME> --automation-write-root <HOME>` | without roots it can't open or save files. Paths are relative to HOME. Override HOME with `STORYTOLD_PHOTOCRAFT_ROOT` |
    | `lightcraft` | `mcp --library <install root>/lightcraft-library` | without a library the catalog lives in memory only. Override with `STORYTOLD_LIGHTCRAFT_LIBRARY` |
 5. **Report.** List the installed versions, PATH changes, MCP results and anything that failed, with its
@@ -96,11 +99,12 @@ if the GitHub API rate limit (60 requests an hour without a token) gets in the w
 
 - **App skills.** Each app has its own skill (`vectorcraft`, `photocraft`, …), and the `storytold` skill picks
   the right app for a task. Load the app's skill before you work in it.
-- **MCP modes.** Bare `<app>-cli mcp` starts every app and runs an in-process engine (VectorCraft first
-  tries a desktop app on `127.0.0.1:7979`). To watch a live desktop app instead, start it with
+- **MCP modes.** Bare `<app>-cli mcp` starts every app and runs an in-process engine (bare VectorCraft `mcp`
+  first tries a desktop app on `127.0.0.1:7979`, so it's registered with `--headless`). To watch a live desktop app instead, start it with
   `<app> --control <port>` and pass the app's own flag. The flags differ from app to app: `--connect`
-  (vectorcraft, gridcraft, designcraft, deckcraft) or `--bridge` (photocraft, effectcraft). Check
-  `<app>-cli --help` for the exact form before relying on it.
+  (vectorcraft, designcraft, wordcraft, gridcraft, deckcraft, soundcraft, cadcraft), `--bridge` (photocraft,
+  effectcraft, filmcraft) or `--attach` (figcraft). Check `<app>-cli help` for the exact form before relying
+  on it.
 - **Without MCP.** Most CLIs have `run` (headless batch of commands plus exports), `convert IN OUT`,
   `info FILE`, `commands` (the command catalog as JSON) and `bench`. `<app>-cli --help` lists them for each app.
 - Each repository's `docs/mcp.md` and `docs/control-protocol.md` document the tools, resources and prompts,
