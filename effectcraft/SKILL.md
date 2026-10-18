@@ -1,7 +1,7 @@
 ---
 name: effectcraft
 description: "Motion graphics and compositing with EffectCraft (After Effects-style): animated titles, title cards, lower thirds, logo reveals, kinetic type, intros, overlays with alpha, keyframes, easing, expressions, effects (glow, blur, keying, tracking), and renders to MP4 / GIF / WebM / ProRes / PNG sequence / Lottie."
-version: 0.3.0
+version: 0.4.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,17 +16,16 @@ metadata:
 EffectCraft is a free, open-source clean-room take on Adobe After Effects (storytold Crafting Apps). An
 agent drives it through an MCP server (`effectcraft-cli mcp`), one-shot CLI commands, or After Effects-style
 JavaScript (`run_script` / `effectcraft-cli script`). Projects are `.ecproj` files; everything stays editable.
-This skill is written for EffectCraft 0.10.0.
+This skill is written for EffectCraft 0.11.1.
 
 ## When to Use
 
 Use it for **things that move, built from layers over time**:
 
 - animated titles, title cards, lower thirds, end cards, logo reveals, kinetic typography, intros/outros
-- overlays and graphics with transparency (WebM VP9 alpha, ProRes 4444, PNG sequence) for an editor to drop in
+- overlays with transparency (WebM VP9 alpha, ProRes 4444, PNG sequence) for an editor; GIFs and Lottie for the web
 - compositing and VFX on footage: keying, masks, track mattes, motion/camera tracking, stabilizing, roto,
   cutting an object out with a click (Object Matte)
-- short animated GIFs and Lottie animations for the web
 
 Pick a different Crafting App when:
 
@@ -36,7 +35,6 @@ Pick a different Crafting App when:
 | A static logo, icon or vector illustration | `vectorcraft` (import its SVG/PDF here to animate it) |
 | Retouching a still photo | `photocraft` |
 | Audio editing, mixing, voice-over cleanup | `soundcraft` |
-| Slides | `deckcraft` |
 
 ## Setup
 
@@ -49,8 +47,7 @@ Pick a different Crafting App when:
 on the CPU (`mcp --gpu` for the GPU). For the user to watch live, they run `effectcraft --control 9877` and the
 server is started as `effectcraft-cli mcp --bridge 9877`; that adds `screenshot` and the `ui_*` tools.
 
-The headless project lives in memory: `save_project` after each milestone, since a server restart loses unsaved work
-(`mcp --autosave` would checkpoint every edit, but the default registration doesn't pass it).
+The headless project lives in memory: `save_project` after each milestone (a restart loses unsaved work).
 
 ## Mental Model
 
@@ -64,8 +61,7 @@ The headless project lives in memory: `save_project` after each milestone, since
   `transform/rotation` (deg), `transform/opacity` (0–100), `transform/anchor`, `effects/#1/blurriness`,
   `contents/trim/end`, `masks/mask/feather`, `text/sourceText`. `get_layer {layer, flat: true}` lists them all.
 - **Layers are referenced** by id (returned on creation), `"#n"`, or **name**. Name layers when you create them
-  (`name` param) and keep using the names. A name that matches nothing is an error, never a silent no-op.
-  An all-digit string (`"4"`) that matches no name is taken as an id.
+  (`name` param) and keep using them. An unknown name is an error; an all-digit string (`"4"`) falls back to an id.
 - **Every edit is an engine command** (731 of them) and undoable. The dedicated tools cover the common ones;
   everything else is `execute_command {command, params}`. Unknown param keys are rejected with the accepted list.
 - **Rendering is a render queue**: `renderQueue.add` then `renderQueue.render`. `render_frame` is for looking.
@@ -100,10 +96,10 @@ The headless project lives in memory: `save_project` after each milestone, since
   (lower thirds). Restyle later with `layer.setText {layer, font?, size?, fill?, tracking?, justify?, range?}`.
   Pick fonts from `list_fonts`; the default family is Inter.
 - **Shapes:** `layer.newShape {kind: rect|rounded|ellipse|star|polygon, name, size: [w, h], fill, stroke,
-  strokeWidth, position}`. The shape is centred on the layer origin. No fill is `fill: false` (not `"none"`).
-  Its paint is at `contents/group/contents/fill/color` (and `…/stroke/color`, `…/rect/size`).
-  Add operators with `layer.addShapeItem {layer, kind: trim|repeater|round|wiggle|gfill|…}` → `{path}`
-  (e.g. `contents/trim`, then animate `contents/trim/end` 0→100 for a draw-on).
+  strokeWidth, position}`, centred on the layer origin. No fill is `fill: false`. Its paint is at
+  `contents/group/contents/fill/color` (and `…/stroke/color`, `…/rect/size`).
+  Operators: `layer.addShapeItem {layer, kind: trim|repeater|round|wiggle|gfill|…}` → `{path}` (animate
+  `contents/trim/end` 0→100 for a draw-on).
 - **SVG to shapes:** `edit.pasteSvg {svg: "<svg …>…</svg>", name}` → `{layer, skipped}` makes one editable shape
   layer, centred in the comp (anchor = the SVG's centre). Good for logos from `vectorcraft`.
 - **Solids / nulls / adjustment:** `layer.newSolid {name, color}`, `layer.newNull`, `layer.newAdjustment`.
@@ -119,15 +115,14 @@ The headless project lives in memory: `save_project` after each milestone, since
 - **Precompose:** `layer.precompose {layers, name}` → `{comp, layer}`.
 - **Ready-made animation:** `layer.applyTextPreset {layer, preset}` (`text.presets`: typewriter, fadeUpCharacters,
   bounceInWords, trackingIn, scramble, blurIn, jitter, dropInLines) and `anim.applyBuiltinPreset {preset, layers}`
-  (`anim.builtinPresets`: fadeIn/fadeOut, wipes, clock, blinds, card flip, pixel dissolve…). Both start at the
-  **current time** (`time.set {time}` first). Fades take 0.5 s, wipes 1 s, typewriter 2 s.
-- **Animated backgrounds:** put one of 23 `anim.builtinPresets {category: "Backgrounds"}` on a full-comp solid
-  (auroraVeil, slowFog, emberHaze, magmaFlow, bokehDrift, blueprintGrid, dawnSky…): `anim.applyBuiltinPreset`.
+  (`anim.builtinPresets`: fadeIn/fadeOut, wipes, clock, blinds, card flip, pixel dissolve…). Both key from the
+  current time (see Pitfalls). Fades take 0.5 s, wipes 1 s, typewriter 2 s.
+- **Animated backgrounds:** `anim.applyBuiltinPreset` one of 23 `anim.builtinPresets {category: "Backgrounds"}`
+  (auroraVeil, slowFog, emberHaze, magmaFlow, bokehDrift, blueprintGrid, dawnSky…) on a full-comp solid.
 
 ## Procedure
 
-1. **Plan** the comp size/fps/duration, palette, layer stack (background → shapes → type → overlays), and the beats
-   (what moves when). Keep animations short: 0.4–0.8 s ins, a hold, then outs.
+1. **Plan** size/fps/duration, palette, layer stack (background → shapes → type → overlays) and beats: 0.4–0.8 s ins, a hold, outs.
 2. **Set up:** `comp.new` with every setting. Use `batch` to create the layers in one step.
 3. **Animate** with `add_keyframe` (multiple keys + `interpolation: "easyEase"` in one call). Use expressions for
    loops/wiggles: `set_property {path, expression: "wiggle(2, 10)"}`; the reply's `evaluated` shows the result.
@@ -237,8 +232,7 @@ echo '{"Title":"John Smith","Bar Color":"#00a060"}' > v.json
 effectcraft-cli render --template /abs/lt.ectemplate --values v.json --out /abs/john.mp4     # 1280×720, 60 frames
 ```
 
-An unknown control fails before rendering: `invalid parameters for \`essential.set\`: no control named \`Nope\`
-(controls: Title, Bar Color)`. `render-frame --template … --values …` gives a PNG; `--channels rgba` an overlay.
+`render-frame --template … --values …` gives a PNG; `--channels rgba` an overlay. An unknown control fails first.
 
 ### Recipe: cut an object out of footage with Object Matte (tested)
 
@@ -250,24 +244,22 @@ render_frame {time:1.5, transparent:true}                        → only the ob
 renderQueue.add {comp:"shot", format:"webm", channels:"rgba", output:"/abs/cutout.webm"} · renderQueue.render {wait:true}
 ```
 
-A point on the object (layer pixels) is enough: it segments and tracks it, no roto. Add `box: [x0, y0, x1, y1]`
-when a point is ambiguous. Without `propagate`, frames compute as they render; `objectMatte.freeze {layer,
-wait:true}` computes them all and bakes them. `objectMatte.status` shows progress.
+A point on the object (layer pixels) is enough; add `box: [x0, y0, x1, y1]` when it's ambiguous. Without `propagate`
+frames compute as they render; `objectMatte.freeze {layer, wait:true}` bakes them all; `objectMatte.status` shows progress.
 
 ## Rendering and formats
 
 - `renderQueue.add {comp, output: "/abs/file.ext", format?, timeSpan?: workArea|comp|custom, start?, end?,
   resolution?: full|half|third|quarter, channels?: rgb|rgba, proresProfile?, bitrate?, frameRate?}` then
-  `renderQueue.render {wait: true}`. The format is inferred from the extension when omitted (`.gif`, `.mov` → ProRes,
-  `.mp4` → H.264). Missing output folders are created. A failed item makes the reply `isError` with `failed > 0`.
+  `renderQueue.render {wait: true}`. No `format` → from the extension (`.mov` → ProRes, `.mp4` → H.264). Missing
+  folders are created; a failed item makes the reply `isError` with `failed > 0`. The default span is the work area
+  (= the whole comp); `end` is exclusive (`start:0, end:0.5` at 30 fps = 15 frames).
 - Formats: `h264`, `hevc`, `av1`, `prores`, `uncompressed` (QuickTime raw RGB/ARGB, huge), `webm`, `gif`, image
   sequences `png|jpeg|tiff|exr` (`output: "/abs/seq/name_[####].png"`), audio `wav|aiff`. Alpha: `webm`, `prores`
   or `uncompressed` + `channels: "rgba"`, or PNG.
-- The default span is the work area (= the whole comp). `end` is exclusive: `start:0, end:0.5` at 30 fps = 15 frames.
 - **Lottie:** `file.exportLottie {comp, path: "x.json"|"x.lottie"}` → `{bytes, warnings}`; warnings list what Lottie can't show.
-- **To an editor:** `file.exportTimeline {comp, path: "x.xml"|".fcpxml"|".otio"|".edl"}`; or just render a ProRes/WebM
-  overlay for `filmcraft`. Import: footage (video/image/audio) and PSD/AI/PDF/EPS with `file.import`, Lottie with
-  `file.importLottie`, FCP XML/FCPXML/OTIO/EDL/AAF with `file.importTimeline`.
+- **To an editor:** `file.exportTimeline {comp, path: "x.xml"|".fcpxml"|".otio"|".edl"}`, or a ProRes/WebM overlay.
+  Import footage, PSD/AI/PDF/EPS with `file.import`, Lottie with `file.importLottie`, FCP XML/OTIO/EDL/AAF with `file.importTimeline`.
 
 ## CLI (no MCP needed)
 
@@ -289,13 +281,11 @@ There is no `help` subcommand: `effectcraft-cli` with no arguments prints the us
 
 ## Pitfalls
 
-- **Paths:** use absolute paths everywhere (`save_project`, `file.import`, `output`). A relative `save_project`
-  path lands in the server's cwd, and a relative render `output` resolves somewhere else again (the home folder).
-- **Defaults bite:** `comp.new` without settings gives 1920×1080 at 29.97 fps for 10.01 s; text is centred on its
-  baseline `position` unless `justify: "left"`.
+- **Paths:** use absolute paths everywhere (`save_project`, `file.import`, `output`). Relative ones land in the
+  MCP server's working directory, which is rarely where you expect.
 - **The anchor path is `transform/anchor`**, not `anchorPoint` (`no property \`transform/anchorPoint\``).
-- **A shape's fill is inside its group:** `contents/group/contents/fill/color`. `contents/rect/fill/color` fails with
-  `no property \`contents/rect/fill/color\``. `get_layer {flat: true}` lists the real paths.
+- **A shape's fill is inside its group:** `contents/rect/fill/color` fails with `no property
+  \`contents/rect/fill/color\``. `get_layer {flat: true}` lists the real paths.
 - **Group paths aren't properties:** `get_property {path: "transform"}` fails with `` `transform` is a property group;
   use layer.tree (MCP: get_layer) to inspect its children ``.
 - **No fill is `fill: false`:** `"none"` fails with `` `fill`: a colour [r, g, b] or #hex, or false for none ``.
@@ -315,13 +305,11 @@ There is no `help` subcommand: `effectcraft-cli` with no arguments prints the us
   expected: …`); an unknown command param lists the accepted ones (`unknown parameter(s) \`index\`; accepted: …`).
 - **Object Matte only covers its span:** `frame` ± `before`/`after` (30 frames each by default). Frames past it render
   fully transparent, with no error. Pass `after` (up to 600) to cover the whole shot; the reply's `span` shows it.
-- `layer.setText` and `layer.timing` return `null` on success. That's normal.
-- `easyEaseOut` leaves the incoming side linear; use `easyEase` for both ends.
+- `layer.setText` and `layer.timing` return `null` on success. `easyEaseOut` leaves the incoming side linear.
 
 ## Verification
 
-- `render_frame` at key times and look at the images before saying it's done.
-- `get_comp` shows the expected layers and in/out points; `get_property` shows the keys.
+- `render_frame` at key times and look; `get_comp` shows layers and in/out points; `get_property` the keys.
 - After a render: `ffprobe -v error -show_entries format=duration:stream=codec_name,width,height,pix_fmt out.mp4`,
   and pull a frame (`ffmpeg -ss 1 -i out.mp4 -frames:v 1 f.png`) to look at. Alpha WebM shows `alpha_mode=1`,
   ProRes 4444 shows `yuva444p12le`, uncompressed RGBA shows `rawvideo` `argb`.

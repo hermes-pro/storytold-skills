@@ -1,6 +1,6 @@
 # EffectCraft command catalog
 
-Generated from `list_commands` (EffectCraft 0.10.0, 731 commands). Run any of these with `execute_command {command, params}` (or several in one undo step with `batch`); read one live with `describe_command {command}`. `?` = optional, `a|b` = choices, `→ {...}` = what it returns. Commands with no params doc take `{}`.
+Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of these with `execute_command {command, params}` (or several in one undo step with `batch`); read one live with `describe_command {command}`. `?` = optional, `a|b` = choices, `→ {...}` = what it returns. Commands with no params doc take `{}`.
 
 ## anim
 

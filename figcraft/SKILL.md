@@ -1,7 +1,7 @@
 ---
 name: figcraft
 description: "Interface design and prototyping with FigCraft (Figma-style): UI/UX design, mobile app and web mockups, wireframes, dashboards, landing pages, design systems with components, variants and variables (Light/Dark tokens), clickable prototypes, social graphics and .fig files, from scratch or from starter templates. Frames, auto layout, components and instances, styles, variables, interactions; export PNG / JPG / SVG / WebP / PDF / .fig and component code (CSS, React, Leptos, SwiftUI, Compose)."
-version: 0.2.0
+version: 0.3.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -51,17 +51,22 @@ The MCP server is **headless**: an in-process engine with one untitled document 
 only reports the session status and `screenshot {window:true}` renders the page. For the user to watch live, they
 start `figcraft --control 7979` and the server runs as `figcraft-cli mcp --attach 7979` (not tested here).
 
+**File access.** Bare `mcp` reads and writes any path the user can. With `--automation-read-root DIR` /
+`--automation-write-root DIR` (repeatable, existing folders) reads must lie in a read or write root and writes in a
+write root, else: `automation path rejected: <path> is outside the folders that may be written: <roots>`. The
+`initialize` instructions list the roots. `--attach` refuses them (exit 2): start the app with the flags instead.
+
 ## Mental Model
 
 - **Units are px** (page units), **y points down**. `create_node` and `set_properties` take `x`/`y` **relative to the
   parent frame** (the page when there is none). Groups don't count as parents. `inspect_document` reports `x`/`y`
   that way plus `absoluteBounds` in page coordinates.
 - **Ids are integers.** In a new document the page is `1` and the first layer `2`, then counting up. Creation
-  calls return `{id}`. Keep the ids. A `batch` step can use the id an earlier step of it creates (the next free
-  one).
+  calls return `{id}`. Keep the ids. In a `batch` (and a CLI `run` script), `{"$step": n}` anywhere in a step's
+  params is the `id` step n (zero-based) returned; `{"$step": n, "field": "…"}` takes another field.
 - **Auto layout** (`layout: vertical|horizontal|grid`, `gap`, `padding`, `mainAlign`, `crossAlign`) positions the
   children. Size them with `sizingH`/`sizingV`: `fixed`, `hug` or `fill`. Their x/y are ignored.
-- **Every menu action is a command** (552 of them). Run one with `run_command {command, params}` or several as one
+- **Every menu action is a command** (561 of them). Run one with `run_command {command, params}` or several as one
   undo step with `batch`. Find them with `list_commands {filter}` or grep `${HERMES_SKILL_DIR}/references/commands.md`. Commands act on
   `ids` when given, else on the selection. New layers become the selection.
 - **Components:** `component.create` turns a frame into a COMPONENT (same id). A component set holds variants named
@@ -77,15 +82,15 @@ start `figcraft --control 7979` and the server runs as `figcraft-cli mcp --attac
 |---|---|
 | `create_node {type, x, y, width, height, parent, name, text, path, props}` | Make a `frame`, `rectangle`, `ellipse`, `polygon`, `star`, `line`, `arrow`, `text`, `vector` (SVG `path`), `section`, `component` or `slice`. `props` takes any `set_properties` key. Returns `{id, node}` |
 | `set_properties {ids, props}` | Geometry, fills, strokes, effects, corner radius, auto layout, sizing, constraints, text props. Keys in `${HERMES_SKILL_DIR}/references/node-properties.md` |
-| `run_command {command, params}` | Any of the 552 commands |
-| `batch {commands, label?}` | Several commands as one undo step, all-or-nothing |
+| `run_command {command, params}` | Any of the 561 commands |
+| `batch {commands, label?}` | Several commands as one undo step, all-or-nothing. `{"$step": n}` = the id step n made |
 | `list_commands {filter}` | Look up command ids and params |
 | `inspect_document {depth?, allPages?}` | Layer tree with ids, sizes, fills, layout, bound variables, styles; pages, flows, styles, history |
 | `get_node {id, depth?}` | One layer as JSON (overrides, component properties, interactions) |
 | `select {ids}` | Replace the selection (`[]` deselects) |
 | `screenshot {ids?, scale?, maxSize?}` | Render the page or layers to PNG so you can **look** at it (default max side 1600) |
 | `export {ids?, path?, format?, scale? \| size?}` | png, jpg, svg, webp, pdf, or `fig` (the whole file). `size`: `2x`, `512w`, `512h`. PDF print: `bleed`, `cropMarks`, `bleedMarks`, `cmyk` |
-| `open_file {path}` / `save_file {path}` | Open `.figcraft`, `.json` (FigCraft or REST API), `.fig`, `.svg`, images; save `.figcraft` |
+| `open_file {path}` / `save_file {path}` | Open `.figcraft`, `.json` (FigCraft or REST API), `.fig`, `.svg`, images (reply has `opened {summary, warnings}`); save `.figcraft`. A `.fig` path writes an export copy and keeps the document's own path |
 | `undo` / `redo` | Edit history |
 | `pointer`, `key`, `type_text`, `inspect_ui` | Drive the canvas like a mouse and keyboard would (rarely needed). `type_text {id, text}` replaces a text layer's text |
 
@@ -113,6 +118,7 @@ run_command template.list    → [{id, name, description, kind, size}]: mobile-a
 run_command file.newFromTemplate {template:"social-posts", name:"Autumn"}   → {index, template} (new, unsaved, active)
 inspect_document {depth:2}   (five frames: Square, Portrait, Story, Link preview, Banner; text and paint styles)
 run_command edit.findReplace {find:"SUMMER TRAIL SERIES", replace:"AUTUMN NIGHT WALKS"}   → {matches:[9,27,45,63,81]}
+                               (case-insensitive: "hello" also replaces "Hello" and "HELLO")
 run_command style.update {style:"Brand/Accent", value:["#FF7A45"]}   → every layer using the style follows
 screenshot {ids:[2], maxSize:800}  ·  save_file {path:"/abs/autumn.figcraft"}
 ```
@@ -217,6 +223,9 @@ needs the app. `run_command file.exportFramesPdf {path}` writes every top-level 
 
 ### More building blocks
 
+- **A nested tree in one call** (tested): `batch {commands:[{command:"node.create", params:{type:"frame",
+  props:{layout:"vertical", gap:12}}}, {command:"node.create", params:{type:"text", parent:{"$step":0}, text:"Hi"}},
+  …]}`. A later step's `{"$step": 2}` puts layers in the third step's frame. One undo step, no id guessing.
 - **Images:** `image.place {path, parent, x, y, width, height, mode: fill|fit|crop|tile}` (tested).
 - **Align, distribute, group:** `align.left|hcenter|right|top|vcenter|bottom`, `distribute.horizontal`, `object.group`.
 - **Booleans:** `bool.union|subtract|intersect|exclude {ids}`, then `bool.flatten`.
@@ -230,7 +239,9 @@ needs the app. `run_command file.exportFramesPdf {path}` writes every top-level 
 - **Variables in styles:** `style.bind {style, field, variable}`: `fill` / `fills/<i>/color` of a paint style,
   `effects/<i>/radius|color|…` of an effect style, `fontSize`… of a text style. Layers follow their own mode
   (tested: a paint and a shadow radius switch with `variable.setMode`).
-- **Frame ↔ group:** `object.convertToFrame {ids}` / `object.convertToGroup {ids}` in place (tested).
+- **Frame ↔ group ↔ section:** `object.convertToFrame {ids}` / `object.convertToGroup {ids}` /
+  `object.convertToSection {ids}` in place (tested; a section drops auto layout and clipping, a frame made from it
+  keeps the fill).
 - **Pages:** `page.add {name}`, `page.select {id}`, `page.setBackground {color}`.
 - **Import:** `run_command file.import {path, x?, y?}` adds an SVG/image/`.fig`/JSON to the current document.
 
@@ -240,7 +251,7 @@ needs the app. `run_command file.exportFramesPdf {path}` writes every top-level 
   it for variables), `.fig` (best effort, `warnings` list what was skipped), `.svg` (editable layers), PNG/JPG/WebP/GIF/BMP.
 - **Save:** `.figcraft`. **Export:** PNG, JPG, WebP (`scale` up to 64 or `size`), SVG (text outlined by default;
   `svgOutlineText:false` keeps `<text>`), PDF (frames one page each, real text, `bleed`/`cropMarks`/`cmyk`),
-  `.fig` (the whole file, experimental; tested: it reopens in FigCraft with variables and their modes, styles and
+  `.fig` (the whole file, experimental, by `export {format:"fig"}` or `save_file {path:"/abs/x.fig"}`; tested: it reopens in FigCraft with variables and their modes, styles and
   bindings). Without `path` you get the image back inline.
 - Variables: `variable.export {format: json|css, path?}` and `variable.import {variables}`.
 
@@ -257,10 +268,11 @@ figcraft-cli info app.figcraft [--json]                  # pages, top-level fram
 figcraft-cli commands --filter variable                  # the command catalog
 ```
 
-`run` uses the same ids and params as `run_command`. A failing step prints `"ok": false`, exits 1 and saves
-nothing. Every subcommand takes `--no-system-fonts` for renders that match on every machine (built-in fonts: Inter,
-Roboto, Open Sans, Lato, Montserrat, Poppins, Nunito Sans, Source Sans 3, Source Serif 4, Merriweather, Playfair
-Display, Liberation Sans/Serif/Mono, and a few more).
+`run` uses the same ids and params as `run_command`, and `{"$step": n}` like `batch`. The script is one undo step
+and all-or-nothing: a failing step prints `{"command":"nope.x","error":"unknown command \`nope.x\`","ok":false,
+"rolledBack":true,"step":0}`, exits 1 and saves nothing. The CLI takes no automation roots. Every subcommand
+takes `--no-system-fonts` for renders that match on every machine (built-in fonts: Inter, Roboto, Open Sans, Lato,
+Montserrat, Poppins, Nunito Sans, Source Sans 3/Serif 4, Merriweather, Playfair Display, Liberation, a few more).
 
 ## Pitfalls
 
@@ -272,19 +284,21 @@ Display, Liberation Sans/Serif/Mono, and a few more).
   run `component.combineVariants {ids:[id]}` (one component is enough), then add variants. The set is named after
   the property, wraps the variants with 20 px padding (it starts at x, y − 20) and gets a dashed purple outline.
   Rename it.
-- **Missing fonts fall back silently.** `fontFamily:"Helvetica"` is kept in the layer but renders with a fallback.
-  `run_command text.fonts {family:"Helvetica"}` returns `[]` for a font that isn't there. Check before you use one.
+- **Missing fonts fall back silently:** `fontFamily:"Helvetica"` is kept but renders with a fallback.
+  `text.fonts {family:"Helvetica"}` returns `[]` for a missing font: check first. A missing style draws the nearest
+  face; only `set_properties` warns (`Inter has no \`Light\` style: it draws in Regular, the nearest (…)`).
+- **Auto layout keys need a frame, component or instance:** `invalid parameters for \`node.set\`: \`gap\` is an auto
+  layout property, and layer 6 “Rectangle” is a RECTANGLE (only frames, components and instances have auto layout)`.
+  With a frame among the `ids`, the other layers are skipped and named in `warnings`.
 - **Text defaults:** Inter Regular, 12 px, **black**. Text hugs its content; give it `width` (or `sizingH:"fill"` in
   auto layout) to wrap.
-- **Template ids are exact:** `invalid parameters for \`file.newFromTemplate\`: \`template\` must be an id from
-  \`template.list\``. Without `template` it returns `{templates}`.
+- **Template ids are exact:** `invalid parameters for \`file.newFromTemplate\`: \`template\` must be an id from \`template.list\``.
 - **A failing `batch` rolls back every step** and only names the problem (`no such node 999`), not the step.
 - **Opening a `.fig` renumbers ids.** A round trip came back as page 2, frame 3, variables `1:15`. Re-inspect after
   `open_file`.
-- **Relative paths** resolve against the server's directory: `nope.figcraft: The system cannot find the file
-  specified. (os error 2)`. Use absolute paths everywhere.
-- **Page screenshots crop to the layers.** Shadows at the edge get cut. Screenshot or export a frame instead.
-- **Frames clip their content** (`clip: true` by default). Set `clip: false` for overhanging elements.
+- **Relative paths** resolve against the server's working directory: `nope.figcraft: The system cannot find the file
+  specified. (os error 2)`. Use absolute paths everywhere (inside the roots when the server has them).
+- **Page screenshots crop to the layers** (edge shadows get cut): shoot a frame. **Frames clip** (`clip: false` to overhang).
 - `variable.export {format:"css"}` writes numbers without units (`--radius-card: 16;`).
 - Reopening FigCraft's own SVG drops drop shadows: `filter filter1 isn't a shadow or blur: the layer is drawn without it`.
 - Errors are actionable: `no such node 999`, `invalid parameters for \`variable.bind\`: no such variable`,
@@ -301,7 +315,7 @@ Display, Liberation Sans/Serif/Mono, and a few more).
 
 ## References
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 552 commands with params, grouped by area (component, instance,
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 561 commands with params, grouped by area (component, instance,
   variable, style, layout, proto, text, file, export, inspect, library…). Grep it rather than reading it whole
   (`grep -n 'variable[.]set' ${HERMES_SKILL_DIR}/references/commands.md`).
 - `${HERMES_SKILL_DIR}/references/node-properties.md`: every `set_properties` key, paint/effect value forms, the

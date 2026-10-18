@@ -1,7 +1,7 @@
 ---
 name: soundcraft
 description: "Audio editing, recording and mixing with SoundCraft (Pro Tools-style DAW): podcast and voice-over cleanup, music mixing and mastering, trimming, fades, crossfades, EQ, compression, reverb, sound effects, stems, loudness (LUFS) and WAV / AIFF / FLAC bounces."
-version: 0.3.0
+version: 0.4.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -146,7 +146,7 @@ execute mix.volume {tracks:["Host"], delta_db: 2.0}        # target − measured
 bounce_mix {path:"/abs/episode.wav", start:0, end:"0:08.400", bit_depth:"16"}   → −16.0 LUFS, peak −10.6
 ```
 
-Checked on 0.7.0 with ffmpeg `ebur128` and ffprobe: −16.0 LUFS, −10.6 dBFS, 8.4 s, 48 kHz stereo
+Checked on 0.8.0 with ffmpeg `ebur128` and ffprobe: −16.0 LUFS, −10.6 dBFS, 8.4 s, 48 kHz stereo
 `pcm_s16le`; the waveform shows the fade-in and fade-out. (The test voice was a −20 LUFS synthetic signal;
 real speech has more peak, so the maximizer works harder.) A limiter makes gain changes non-linear, so
 iterate rather than computing once.
@@ -176,7 +176,7 @@ execute file.bounce_stems {dir:"/abs/stems"}               → "Song - kick.wav"
 execute file.bounce_mix {path:"/abs/verb.wav", source:"Verb", start:0, end:{seconds:10}}   # the bus alone
 ```
 
-On 0.7.0: 10.0 s 48 kHz stereo WAV (24-bit) and FLAC, three stems, and the reverb tail visible after 8 s
+On 0.8.0: 10.0 s 48 kHz stereo WAV (24-bit) and FLAC, three stems, and the reverb tail visible after 8 s
 in the waveform. The maximizer added 2 dB (−21.4 → −19.4 LUFS with quiet test tones). An unknown
 `source` fails with ``unknown bus `Nope` ``.
 
@@ -291,6 +291,10 @@ values (``--bit-depth: expected 16, 24 or 32f, got `12` ``, ``--rate: expected a
 - `execute session.audio_health` before saving or delivering: `healthy: true`, `issue_count: 0`.
 - After `save_session`, `soundcraft-cli info Session.scraft` lists tracks, clips and files. `open_session`
   returns `missing: []` when every audio file was found.
+- A session's stored paths resolve against its own folder (`../media/v.wav` works). Paths on another
+  computer are refused, not read: `open_session` lists `\\192.0.2.1\share\x.wav: not opened: the path is on
+  another computer` under `missing`, and those clips bounce silent (`session.audio_health` → `unavailable_audio`).
+  Copy the audio locally and re-import it.
 
 ## References
 

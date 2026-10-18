@@ -1,15 +1,16 @@
 # DeckCraft catalogs
 
-Generated from the live server (DeckCraft 0.7.0): `shape.presets`, `transition.list`, `animation.list`, `design.themes`.
+Generated from the live server (DeckCraft 0.8.0): `shape.presets`, `transition.list`, `animation.list`, `design.themes`, `file.templates`, `insert.icons`, `picture.styles`, `picture.recolors`.
 Grep for a name rather than reading the file whole.
 
 ## Themes (new_presentation {theme} / design.theme {name})
 
-DeckCraft (Inter), Harbor (Merriweather / Open Sans), Ember (Montserrat / Lato), Meadow (Merriweather / Open Sans),
-Nocturne (Inter, dark background), Paper (Playfair Display / Lato), Coral Reef (Poppins / Nunito Sans), Slate (Roboto).
+DeckCraft (Inter), Harbor (Merriweather / Open Sans), Ember (Montserrat / Lato), Meadow (Merriweather / Open Sans), Nocturne (Inter, dark background), Paper (Playfair Display / Lato), Coral Reef (Poppins / Nunito Sans), Slate (Roboto).
 
 Colour schemes for `design.colors {name}`: DeckCraft, Harbor, Ember, Meadow, Nocturne, Paper, Coral Reef, Slate, Grayscale, Ocean, Sunset, Forest, Berry.
 Font schemes for `design.fonts {name}`: Inter, Classic, Geometric, Editorial, Humanist, Friendly, Neutral, Office Compatible, Times / Arial (or `{major, minor}`).
+Effect schemes for `design.effects {name}`: DeckCraft, Soft, Crisp, Lift, Glow, Plain.
+Starter decks for `file.new {template}` (6): Briefing (Harbor, 5 slides), Lesson (Meadow, 5 slides), Pitch (Ember, 5 slides), Field Notes (Coral Reef, 5 slides), Quarterly (Paper, 5 slides), Evening Talk (Nocturne, 5 slides).
 Theme colours are addressable as `accent1`..`accent6`, `tx1`, `bg1` wherever a colour is accepted.
 
 ## Shape presets (183) for add_shape {preset} / shape.insert / shape.change
@@ -30,12 +31,30 @@ Theme colours are addressable as `accent1`..`accent6`, `tx1`, `bg1` wherever a c
 - **Exciting:** `fallOver` [l/r] 2000ms, `drape` [l/r] 2000ms, `curtains` 2000ms, `wind` [l/r] 2000ms, `prestige` 2000ms, `fracture` 2000ms, `crush` 2000ms, `peelOff` [l/r] 1500ms, `pageCurlDouble` [l/r/singleL/singleR] 1500ms, `airplane` [l/r] 2000ms, `origami` [l/r] 2000ms, `dissolve` 1200ms, `checker` [horz/vert] 1500ms, `blinds` [vert/horz] 1600ms, `clock` [clockwise/counterClockwise/wedge] 2000ms, `ripple` [center/lu/ru/ld/rd] 1400ms, `honeycomb` 3000ms, `glitter` [l/r/u/d/hexL/hexR/hexU/hexD] 2500ms, `vortex` [l/r/u/d] 3000ms, `shred` [stripsIn/stripsOut/particlesIn/particlesOut] 2000ms, `switch` [l/r] 1250ms, `flip` [l/r] 1250ms, `gallery` [l/r] 1500ms, `cube` [l/r/u/d] 1250ms, `doors` [vert/horz] 1400ms, `box` [l/r/u/d] 1250ms, `comb` [horz/vert] 1000ms, `zoom` [in/out/rotate] 1000ms, `random` 2000ms
 - **Dynamic Content:** `pan` [u/d/l/r] 1000ms, `ferris` [l/r] 2000ms, `conveyor` [l/r] 2000ms, `rotate` [l/r/u/d] 2000ms, `window` [vert/horz] 1250ms, `orbit` [l/r/u/d] 2000ms, `flythrough` [in/out/inBounce/outBounce] 1000ms
 
-## Animations (64) for animation.add / animation.set {effect, class?, option?}
+## Animations (107) for animation.add / animation.set {effect, class?, option?}
 
 - **entrance:** `appear`, `fade`, `fly` [b/lb/l/lt/t/rt/r/rb], `float` [u/d], `split` [horzIn/horzOut/vertIn/vertOut], `wipe` [b/l/t/r], `shape` [circleIn/circleOut/boxIn/boxOut/diamondIn/diamondOut/plusIn/plusOut], `wheel` [1/2/3/4/8], `randomBars` [horz/vert], `grow`, `zoom` [in/out], `swivel` [horz/vert], `bounce`, `blinds` [horz/vert], `box` [in/out], `checkerboard` [across/down], `circle` [in/out], `diamond` [in/out], `dissolve`, `peek` [b/l/t/r], `strips` [lu/ru/ld/rd], `expand`, `rise`, `spinner`
 - **emphasis:** `pulse`, `colorPulse`, `teeter`, `spin` [clockwise/counterClockwise], `growShrink` [both/horz/vert], `desaturate`, `darken`, `lighten`, `transparency`, `objectColor`, `complementaryColor`, `lineColor`, `fillColor`, `fontColor`, `underline`, `boldFlash`, `wave`
-- **exit:** `disappear`, `fadeOut`, `flyOut` [b/lb/l/lt/t/rt/r/rb], `floatOut` [u/d], `splitOut` [horzIn/horzOut/vertIn/vertOut], `wipeOut` [b/l/t/r], `shapeOut` [circleIn/circleOut], `wheelOut` [1/2/3/4/8], `randomBarsOut` [horz/vert], `shrinkTurn`, `zoomOut` [in/out], `swivelOut` [horz/vert], `bounceOut`, `dissolveOut`
-- **path:** `lines` [down/up/right/left], `arcs` [down/up/right/left], `turns` [down/up/right/left], `shapes` [circle/diamond/hexagon/triangle/square/trapezoid/octagon/parallelogram/pentagon], `loops`, `customPath`
+- **exit:** `disappear`, `fadeOut`, `flyOut` [b/lb/l/lt/t/rt/r/rb], `floatOut` [u/d], `splitOut` [horzIn/horzOut/vertIn/vertOut], `wipeOut` [b/l/t/r], `shapeOut` [circleIn/circleOut], `wheelOut` [1/2/3/4/8], `randomBarsOut` [horz/vert], `shrinkTurn`, `zoomOut` [in/out], `swivelOut` [horz/vert], `bounceOut`, `dissolveOut`, `blindsOut` [horz/vert], `boxOut` [in/out], `checkerboardOut` [across/down], `diamondOut` [in/out], `peekOut` [b/l/t/r], `stripsOut` [lu/ru/ld/rd], `sinkDown`, `spinnerOut`, `contract`
+- **path:** `lines` [down/up/right/left], `arcs` [down/up/right/left], `turns` [down/up/right/left], `shapes` [circle/diamond/hexagon/triangle/square/trapezoid/octagon/parallelogram/pentagon], `loops`, `diagonalDownRight`, `diagonalUpRight`, `zigzag`, `sineWave`, `pathWave`, `decayingWave`, `heartbeat`, `sCurve1`, `sCurve2`, `stairsDown`, `bounceRight`, `bounceLeft`, `spiralRight`, `spiralLeft`, `spring`, `funnel`, `swoosh`, `star4`, `star5`, `star6`, `star8`, `heart`, `crescentMoon`, `teardrop`, `football`, `plusPath`, `rightTriangle`, `curvedSquare`, `figure8Horizontal`, `figure8Vertical`, `loopDeLoop`, `bean`, `peanut`, `neutron`, `customPath`
 - **mediacall:** `play`, `pause`, `stop`
 
 Pass `class` (entrance|emphasis|exit|path) with `animation.add` when an effect name could be ambiguous.
+
+## Icons (70) for insert.icon {name, rect?} (Lucide, inserted as stroked shapes)
+
+- **Arrows:** `arrow-up`, `arrow-down`, `arrow-left`, `arrow-right`, `chevron-right`, `undo-2`, `refresh-cw`, `move`
+- **Marks:** `check`, `x`, `plus`, `minus`, `star`, `heart`, `flag`, `bookmark`, `award`, `thumbs-up`, `circle-check`, `triangle-alert`
+- **People:** `user`, `users`, `circle-user`, `hand`
+- **Time:** `calendar`, `clock`, `hourglass`, `timer`
+- **Communication:** `mail`, `phone`, `message-circle`, `bell`, `megaphone`, `at-sign`
+- **Charts:** `chart-column`, `chart-bar`, `chart-pie`, `trending-up`, `target`, `lightbulb`, `presentation`
+- **Files:** `file`, `folder`, `file-text`, `paperclip`, `clipboard`, `link`, `download`, `share-2`
+- **Places:** `house`, `map-pin`, `globe`, `building`, `compass`, `briefcase`
+- **Media:** `image`, `camera`, `play`, `clapperboard`, `music`
+- **Objects:** `settings`, `search`, `info`, `circle-alert`, `lock`, `key`, `zap`, `sun`, `moon`, `cloud`
+
+## Pictures
+
+- **picture.style {style}:** `simpleFrameWhite`, `beveledMatteWhite`, `metalFrame`, `dropShadowRectangle`, `roundedDiagonalCornerWhite`, `snipDiagonalCornerWhite`, `moderateFrameWhite`, `rotatedWhite`, `perspectiveShadowWhite`, `softEdgeRectangle`, `doubleFrameBlack`, `thickMatteBlack`, `simpleFrameBlack`, `beveledOvalBlack`, `compoundFrameBlack`, `centerShadowRectangle`, `softEdgeOval`, `reflectedRoundedRectangle`, `reflectedBevelWhite`, `metalRoundedRectangle`, `moderateFrameBlack`, `bevelRectangle`, `bevelPerspective`, `metalOval`, `none`
+- **picture.recolor {preset}:** `none`, `grayscale`, `sepia`, `washout`, `bw25`, `bw50`, `bw75`, `tx2Dark`, `accent1Dark`, `accent2Dark`, `accent3Dark`, `accent4Dark`, `accent5Dark`, `accent6Dark`, `tx2Light`, `accent1Light`, `accent2Light`, `accent3Light`, `accent4Light`, `accent5Light`, `accent6Light`

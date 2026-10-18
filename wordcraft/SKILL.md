@@ -1,7 +1,7 @@
 ---
 name: wordcraft
 description: "Word processing with WordCraft (Word-style): write, format and edit documents — reports, letters, memos, résumés, proposals, manuals. Headings and styles, lists, tables, pictures, native charts and SmartArt, equations, headers/footers, page numbers, TOC, footnotes, comments, track changes, mail merge. Open and save .docx, export PDF; also ODT, RTF, HTML, Markdown, LaTeX, TXT, .doc (read)."
-version: 0.3.0
+version: 0.4.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -15,7 +15,7 @@ metadata:
 
 WordCraft is a free, open-source clean-room take on Microsoft Word (storytold Crafting Apps). An agent
 drives it through an MCP server (`wordcraft-cli mcp`) or one-shot CLI commands. It reads and writes real
-`.docx` that opens in Word, and exports PDF with selectable text. This skill is written for WordCraft 0.7.0.
+`.docx` that opens in Word, and exports PDF with selectable text. This skill is written for WordCraft 0.8.0.
 
 ## When to Use
 
@@ -55,7 +55,7 @@ changes and comments are by (default `WordCraft User`).
 ## Mental Model
 
 - **One active document**, edited like a person would: a **caret/selection**, and every edit is a **command**
-  (617 of them) that acts at the caret or on the selection. `execute {command, params}` runs one,
+  (629 of them) that acts at the caret or on the selection. `execute {command, params}` runs one,
   `batch {commands: [...]}` runs many in one call (stops at the first error unless `keepGoing`).
 - **Write top to bottom:** type a paragraph, style it, `text.newParagraph`, repeat. The paragraph after a
   heading comes back as `Normal`.
@@ -65,7 +65,9 @@ changes and comments are by (default `WordCraft User`).
 - **Styles first, direct formatting second.** Use `para.style {style: "Heading 1"}` (names or ids like
   `Heading1`), and change the look document-wide with `design.theme`, `design.styleSet`, then `styles.modify`.
 - **Typing behaves like Word's keyboard:** AutoCorrect runs when `text.newParagraph` ends a paragraph (see Pitfalls).
-- **Units are points** (72 per inch). Letter page 612 × 792, 1-inch margins by default.
+- **Units are points** (72 per inch). `new_document` gives a Letter page 612 × 792 with 1-inch margins. Markdown, HTML
+  and text files take the system region's paper (A4 outside Letter regions); the CLI honours `WORDCRAFT_REGION=en-US`.
+  Check with `document.layout`, change with `layout.size {name}` or `{width, height}`.
 
 ## Tools (Hermes names them `mcp_wordcraft_<tool>`)
 
@@ -76,7 +78,7 @@ changes and comments are by (default `WordCraft User`).
 | `type_text {text, paragraphs?}` | Type at the caret, replacing the selection. `paragraphs: true` turns `\n` into new paragraphs |
 | `select_text {text, occurrence?}` | Select the n-th match (1-based). Then format it, or type to replace it |
 | `execute` / `batch` | Run commands (see **Commands**) |
-| `get_text` | Plain text of the story the caret is in (normally the body) |
+| `get_text` | Plain text of the story the caret is in (normally the body), tracked deletions left out |
 | `inspect_document` | Blocks with style, runs, lists, tables (cell text), objects (pictures, charts, fields), sections, parts, pages |
 | `render_page {page?, scale?}` | A page as PNG so you can **look** at it (1-based page) |
 | `list_commands {query}` | Find command ids and params |
@@ -97,7 +99,8 @@ Resources: `wordcraft://document` (same as inspect) and `wordcraft://commands`.
 - **Character:** `format.bold|italic|underline {value?}`, `format.font {name}`, `format.size {size}`,
   `format.color {color: "RRGGBB"}`, `format.highlight {color: "yellow"}`, `format.charStyle {style}`, `format.clear`.
 - **Styles:** `styles.list`, `styles.modify {style, chr?, para?}`, `styles.create {name, basedOn?}`, `styles.delete {style}`.
-- **Insert:** `insert.table {rows, cols, style?}`, `insert.picture {path, width?, alt?}`, `insert.link {url, text?}`,
+- **Insert:** `insert.table {rows, cols, style?}`, `insert.picture {path, width?, alt?}`, `insert.link {url | heading | bookmark, text?}`
+  (`link.targets` lists heading blocks and bookmarks for in-document links),
   `insert.chart {type, data, title?, legend?, dataLabels?, width?, height?}`, `insert.smartArt {layout, items, colors?}`,
   `insert.equation {latex | linear, display?, edit: false}`, `insert.header {text?}`, `insert.footer {text? | preset: "pageNumber"}`,
   `insert.pageNumber {position, align, format?: "x of y"}`, `insert.closeHeader`, `insert.coverPage {title, subtitle?, author?}`,
@@ -112,7 +115,8 @@ Resources: `wordcraft://document` (same as inspect) and `wordcraft://commands`.
   `review.trackChanges {value?}`, `review.changes`, `review.acceptAll`, `review.wordCount`, `file.setAuthor {name}`,
   `file.privacyOptions {removePersonalInfo?, removeDateTime?}` (saved authors become "Author", no dates).
 - **Tables (caret inside):** `table.style {style}`, `table.look {headerRow, bandedRows…}`, `table.insertRowBelow`,
-  `table.merge`, `table.columnWidth {width}`, `table.autofit {mode}`, `table.sort`, `table.properties {…}`.
+  `table.merge`, `table.columnWidth {width}`, `table.autofit {mode}`, `table.sort`, `table.properties {…}`,
+  `table.formula {formula: "=SUM(ABOVE)"}` (a live field in the caret cell).
 - **Check:** `document.layout` (pages and the first block on each), `document.paragraph {path:[i]}`, `format.state`.
 
 Table style ids: `TableGrid`, `PlainTable1`, `GridTable1Light`, `GridTable4Accent{Blue|Orange|Green|Purple}`,
@@ -144,8 +148,7 @@ batch {commands: [
   {command:"insert.table", params:{rows:3, cols:3, style:"GridTable4AccentBlue"}},   ← caret lands in cell (0,0)
   {command:"text.insert", params:{text:"Region"}}, {command:"text.tab"}, … fill row by row with text.tab …
   {command:"caret.docEnd"},                                      ← leaves the table (an empty paragraph follows it)
-  {command:"insert.picture", params:{path:"/abs/chart.png", width:300, alt:"Revenue trend"}},
-  {command:"caret.end"},                                         ← the new picture is SELECTED; collapse first
+  {command:"insert.picture", params:{path:"/abs/chart.png", width:300, alt:"Revenue trend"}},   ← caret lands after it
   {command:"para.alignCenter"}, {command:"text.newParagraph"}, {command:"para.alignLeft"},
   {command:"text.insert", params:{text:"Next steps"}}, {command:"para.heading1"}, {command:"text.newParagraph"},
   {command:"para.numbering"}, {command:"text.insert", params:{text:"Hire two account managers"}},
@@ -218,11 +221,14 @@ in a PDF: `file.exportPdf {path, markup:true}` or `wordcraft-cli convert in.docx
 ```text
 new_document {template:"blank"} → execute tools.autocorrect {enabled:false}
 execute mailings.start {kind:"letters"}
-execute mailings.recipients {path:"/abs/people.csv"}      → {fields:[…], records:n}   (.xlsx/.ods: add sheet)
+execute mailings.recipients {path:"/abs/people.csv"}      → {fields:[…], records:n}   (.xlsx/.xls/.ods: add sheet)
 batch: text.insert "Dear " · mailings.insertField {field:"Name"} · text.insert "," · text.newParagraph · …
 execute mailings.preview → get_text                         ← shows record 1 filled in
 execute mailings.finish {path:"/abs/merged.docx"}           → one letter per record, each on its own page
 ```
+
+Only some records, or in another order: `mailings.filterRecipients {rules:[{field:"City", op:"equal", value:"Porto"}],
+sort:[{field:"Name", descending:true}]}` before preview/finish (→ `{records, of}`; `{}` clears it).
 
 ## Formats
 
@@ -245,6 +251,7 @@ wordcraft-cli render file.docx page.png --page 2 --scale 0.8
 wordcraft-cli run --template letter --cmd 'edit.replaceAll={"text":"Dear","with":"Hello"}' \
                   --cmd 'select.text={"text":"Hello"}' --cmd format.bold --save /abs/out.docx --print
 wordcraft-cli commands [--json]                  # the full command catalog
+wordcraft-cli <command> --help                   # usage for one command
 ```
 
 `run` takes `--file F` or `--template T`, then any number of `--cmd 'id={json}'`, then `--save`, and `--author NAME`.
@@ -252,14 +259,13 @@ wordcraft-cli commands [--json]                  # the full command catalog
 
 ## Pitfalls
 
-- **A new picture, chart or SmartArt stays selected.** The next `text.insert`/`type_text`/`text.newParagraph` *replaces* it.
-  Run `caret.end` (or `select.collapse`) right after inserting one.
+- **A new chart or SmartArt stays selected.** The next `text.insert`/`type_text`/`text.newParagraph` *replaces* it.
+  Run `caret.end` (or `select.collapse`) right after inserting one. (`insert.picture` leaves the caret after the picture.)
 - **AutoCorrect on Enter.** `text.newParagraph` (and `type_text {paragraphs:true}`) applies AutoCorrect to the word before
   it: `x` → `X`, `teh` → `the`, sentence capitals. For names, codes or lowercase lines, run
   `execute tools.autocorrect {enabled:false}` first. It lasts for the server session only.
-- **Watermarks are not saved to .docx (or .odt).** `design.watermark` shows in `render_page` and in a PDF exported from
-  the same session, but the saved .docx has no watermark (no header part is written; reopening it shows none). Export
-  the PDF before closing.
+- **Watermarks are not saved to .odt.** `design.watermark` is kept in .docx (and PDF), but a saved .odt has none.
+  Keep the .docx as the master and export the PDF from it.
 - **`design.theme` resets style colours and fonts.** A `styles.modify` colour set before it is replaced by the theme colour.
   Apply the theme first, then `styles.modify`.
 - **Cover page spills onto a second page.** `insert.coverPage` builds the page from empty `Normal` paragraphs, and the
@@ -283,7 +289,6 @@ wordcraft-cli commands [--json]                  # the full command catalog
   `^p`, `^t` and other `^` codes are special by default; pass `special:false` to match a literal `^`.
 - `references.caption {label:"Table", text:"Sales"}` writes "Table 1: Sales". Don't start `text` with a colon.
 - `render_page` shows red spelling squiggles. PDF and `wordcraft-cli render` don't.
-- `get_text` includes the deleted text of tracked deletions.
 - **Paths:** use absolute paths. Relative ones resolve against the server's working directory. With automation roots
   set, a path outside them fails with `automation path rejected: outside the write root <DIR>: <path>`.
 - UI-only tools fail headless with `` `ui.screenshot` needs the desktop app: start `wordcraft --control 7981` … ``. That's expected.
@@ -298,7 +303,7 @@ wordcraft-cli commands [--json]                  # the full command catalog
 
 ## References
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 617 commands with params, ribbon location and shortcut, grouped by
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 629 commands with params, ribbon location and shortcut, grouped by
   area (text, para, table, chart, smartArt, equation, mailings, review, references, fields, developer…). Grep it
   (`grep -n 'chart[.]' ${HERMES_SKILL_DIR}/references/commands.md`) rather than reading it whole.
 - Upstream docs: https://github.com/storytold/wordcraft/tree/main/docs (`mcp.md`, `control-protocol.md`, `typing-parity.md`).

@@ -1,6 +1,6 @@
 # FilmCraft command catalog
 
-Generated from `command_list` (FilmCraft 0.8.0, 701 commands). Run any of these with `command_run {id, params}` (or several with `command_batch`); `filmcraft-cli describe <id>` shows one in full. Times: 254016000000 ticks per second; most time params also accept `seconds`, `frame` or `timecode`. `params` are the engine's own docs (`str`, `int`, `?` = optional).
+Generated from `command_list` (FilmCraft 0.9.0, 701 commands). Run any of these with `command_run {id, params}` (or several with `command_batch`); `filmcraft-cli describe <id>` shows one in full. Times: 254016000000 ticks per second; most time params also accept `seconds`, `frame` or `timecode`. `params` are the engine's own docs (`str`, `int`, `?` = optional).
 
 ## audio
 
@@ -733,7 +733,7 @@ Generated from `command_list` (FilmCraft 0.8.0, 701 commands). Run any of these 
 - `timeline.rateStretch` Rate Stretch: {"clip":id,"edge":"in\|out","delta":ticks}
 - `timeline.razor` Razor: {"time":ticks,"track":"V1"\|id?,"clip":id?}
 - `timeline.roll` Rolling Edit: {"left":id,"right":id,"delta":ticks\|"deltaFrames":i64,"followLinks"?:bool}
-- `timeline.select` Select Clips: {"clips":[id],"transitions":[id]?,"add":bool,"toggle":bool}
+- `timeline.select` Select Clips: {"clips":[id],"transitions":[id]?,"add":bool,"toggle":bool,"linked":bool?}
 - `timeline.selectClipAtPlayhead` Select Clip at Playhead [D]
 - `timeline.selectGap` Select Gap: {"track":"V1"\|id,"time":ticks\|"frame":n\|"seconds":f}
 - `timeline.selectNextClip` Select Next Clip [Cmd+Down]

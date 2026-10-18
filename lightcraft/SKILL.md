@@ -1,7 +1,7 @@
 ---
 name: lightcraft
-description: "Photo development and cataloguing with LightCraft (Lightroom-style): import and cull a shoot, rate / flag / keyword, develop RAW (DNG, CR2, CR3, NEF, ARW, RAF…) and JPEG photos (exposure, white balance, tone curve, HSL, B&W, crop, masks), HDR editing, apply presets, sync edits across a batch, HDR / panorama merge, contact sheet PDFs, batch export JPEG / PNG / TIFF / WebP / AVIF / JPEG XL / PSD / DNG."
-version: 0.3.0
+description: "Photo development and cataloguing with LightCraft (Lightroom-style): import and cull a shoot, rate / flag / keyword, develop RAW (DNG, CR2, CR3, NEF, ARW, RAF…) and JPEG photos (exposure, white balance, tone curve, HSL, B&W, crop, masks), HDR editing, apply presets, sync edits across a batch, HDR / panorama merge, slideshows (AV1 video / PDF), print layouts and contact sheet PDFs, batch export JPEG / PNG / TIFF / WebP / AVIF / JPEG XL / PSD / DNG."
+version: 0.4.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,7 +16,7 @@ metadata:
 LightCraft is a free, open-source clean-room take on Adobe Lightroom (storytold Crafting Apps): a photo
 library plus a non-destructive raw developer. An agent drives it through an MCP server
 (`lightcraft-cli mcp`) or one-shot CLI commands. Edits are settings stored per photo, never baked into the
-original file. Pixels only change in an export. This skill is written against LightCraft 0.8.0.
+original file. Pixels only change in an export. This skill is written against LightCraft 0.9.1.
 
 ## When to Use
 
@@ -27,7 +27,7 @@ Use it for **photographs as photographs**:
 - culling and organising a shoot: ratings, pick/reject flags, colour labels, keywords, albums, finding duplicates
 - local fixes: graduated / radial / sky / subject / luminance masks, dust spots, red eye
 - HDR merges of brackets, panorama stitching (to DNG), and HDR output (gain map JPEG, PQ AVIF)
-- a contact sheet PDF of a shoot
+- a slideshow of a shoot as AV1 video, PDF or JPEG slides; print layouts (contact sheet, picture package) to PDF
 
 Pick a different Crafting App when:
 
@@ -36,7 +36,7 @@ Pick a different Crafting App when:
 | Pixel-level retouching, layers, compositing several images, text on a photo | `photocraft` |
 | Logos, icons, vector art, posters | `vectorcraft` |
 | Photo books, brochures, multi-page layouts | `designcraft` |
-| Video or slideshows with motion | `filmcraft` |
+| Video editing, slideshows with music or motion | `filmcraft` |
 
 A typical hand-off: develop in LightCraft, then `cmd_photo_editExternal {format: "psd"}` (or export a 16-bit TIFF)
 and composite in PhotoCraft.
@@ -73,7 +73,7 @@ Your exported files stay, but the ratings and edits don't. Other modes:
   `vignette.amount`, `detail.sharpen_amount`).
 - **Positions are normalized image coordinates**, 0..1 with the origin at the top-left: crop rects, mask points,
   white-balance picks, spots.
-- **Every action is a command** (313). Each one is also its own tool: `photo.rate` → `mcp_lightcraft_cmd_photo_rate`,
+- **Every action is a command** (371). Each one is also its own tool: `photo.rate` → `mcp_lightcraft_cmd_photo_rate`,
   or use `command_run {id, params}`, or `command_batch {steps}` for several. Grep `references/commands.md`, or
   `command_list {filter}`.
 - Every edit is undoable (`cmd_edit_undo` / `cmd_edit_redo`). `cmd_history_list` → `{history, cursor}` for the active
@@ -142,13 +142,16 @@ saturation, sharpness, noise, moire, defringe, color_hue, color_sat, amount`.
 | `object {points, exclude?}`, `prompt {text}` | Need the 3.4 GB SAM 3 model (`cmd_segment_model_status`). Ask the user before `cmd_segment_model_download {acknowledged: true}` |
 
 Combine with `cmd_mask_addComponent {op: add|subtract|intersect, kind, …}`. Remove with `cmd_mask_invert`,
-`cmd_mask_delete` or `cmd_mask_deleteAll`. Retouching: `cmd_spot_findDust`, `cmd_spot_add {mode: heal|clone|remove|fill, points, size}`
+`cmd_mask_delete` or `cmd_mask_deleteAll`. Mask effect presets: `cmd_mask_saveEffect {name, group?}` stores the active mask's sliders,
+`cmd_mask_applyEffect {name}` sets them on the active mask, `cmd_mask_importEffects {paths}` reads Lightroom / Camera Raw
+local adjustment presets. Retouching: `cmd_spot_findDust`, `cmd_spot_add {mode: heal|clone|remove|fill, points, size}`
 (`fill` is content-aware), `cmd_redeye_add`. `cmd_spot_findBlemishes` and `cmd_faces_detect` need the YuNet face
 detector (232 KB, `cmd_faces_models_download {id: "yunet-2023mar"}`); ask before downloading.
 
 ## Library, culling, batch
 
 - **Rate, flag, label:** `cmd_photo_rate {rating, ids}`, `cmd_photo_flag {flag: pick|reject|none, ids}`, `cmd_photo_label {label: red|…, ids}`.
+  `cmd_photo_cycleFlag` / `cmd_photo_increaseFlag` / `cmd_photo_decreaseFlag {ids}` step each photo's own flag.
 - **Metadata:** `cmd_photo_setMeta {ids, title, caption, keywords: [..], creator, copyright}`, `cmd_keyword_create {name, addToSelected?}`.
 - **Filter** (`query_photos` / `cmd_catalog_query` / `cmd_library_filter`): `{rating: 3, ratingOp: "atLeast"|"exactly"|"atMost"}`,
   `{flag: "pick"}`, `{label: "red"}`, `{keyword: "sky"}`, `{kind: "raw"}`, `{edited: true}`, `{album: id}`,
@@ -167,14 +170,12 @@ detector (232 KB, `cmd_faces_models_download {id: "yunet-2023mar"}`); ask before
 
 ## Procedure
 
-1. **Import** the files or folder. Keep the returned ids; `query_photos` re-lists them. If `imported` is empty,
-   use the `duplicates[].existing` id.
-2. **Cull** if needed: rate, flag, filter, and settle on the ids to work on.
-3. **Develop one hero photo:** `select_photos`, `cmd_develop_auto`, then `set_develop` corrections, WB, crop and masks.
-4. **Look:** `render_preview {max_side: 800}` after each major step. Check the exposure, colour cast, horizon and crop.
-5. **Spread the look:** a preset, copy/paste or sync to the rest. Render a couple of them to check.
-6. **Export** and read each reply's `files[].path / width / height / bytes`.
-7. If the work must outlive the session, use `--library DIR`, or export `format: "original"` (the original plus an XMP sidecar).
+1. **Import** the files or folder and keep the ids (if `imported` is empty, use `duplicates[].existing`). **Cull** if needed.
+2. **Develop one hero photo:** `select_photos`, `cmd_develop_auto`, then `set_develop`, WB, crop and masks.
+   `render_preview {max_side: 800}` after each major step: check exposure, colour cast, horizon and crop.
+3. **Spread the look** with a preset, copy/paste or sync. Render a couple of them to check.
+4. **Export** and read each reply's `files[].path / width / height / bytes`. To keep the edits themselves, use a
+   persistent library or export `format: "original"` (the original plus an XMP sidecar).
 
 ### Recipe: develop one photo (tested)
 
@@ -231,13 +232,40 @@ cmd_merge_hdr {ids: [1,2,3], preview: true, previewPath: "/abs/prev.png"}   → 
 cmd_merge_hdr {ids: [1,2,3], deghost: "low"}    → writes bracket-0-HDR.dng next to the sources, imports it as id 4 (active)
 ```
 
-Panoramas (tested): `cmd_merge_panorama {ids, projection: auto|cylindrical|spherical|perspective, autoCrop: true}` → `<first>-Pano.dng`.
+Panoramas (tested): `cmd_merge_panorama {ids, projection: auto|cylindrical|spherical|perspective, autoCrop: true}` → `<first>-Pano.dng`
+(full resolution when memory allows). A whole shoot of brackets (tested): `cmd_merge_hdrBatch {ids}` merges each bracket set
+(a stack, or photos less than a second apart at different exposures) → `{merged: [{id, path, …}], failed}`.
+
+### Recipe: slideshow to video and PDF (tested)
+
+```text
+cmd_slideshow_templates_apply {id: "builtin:gallery-wall"}     (built-ins: plain-black, gallery-wall, edge-to-edge,
+                                                  cinema-wide, shooting-data; or set the parts yourself:)
+cmd_slideshow_playback {slideDuration: 2, fadeDuration: 0.5}
+cmd_slideshow_layout {margins: 0.05, backdropColor: "#202020", strokeBorder: true, strokeColor: "#ffffff"}
+cmd_slideshow_overlays {addText: {text: "{name} · {date}", anchor: "bottom", size: 0.04}}
+cmd_slideshow_titles {intro: {enabled: true, content: "text", text: "Summer 2026"}}
+cmd_slideshow_preview {id: 1, width: 960, path: "/abs/slide1.png"}      → look at one slide first
+cmd_slideshow_export {format: "video", path: "/abs/show.mp4", ids: [1,2,4], size: "720p", wait: true}
+                                              → AV1 MP4, 1280×720, 30 fps, no audio: the intro + 3 slides
+cmd_slideshow_export {format: "pdf", path: "/abs/show.pdf", ids: [1,2,4], size: 1280, wait: true}  → a page per slide
+```
+
+`format: "jpeg"` writes `<name>-001.jpg…` into the folder `path`; `container: "webm"` gives WebM. Need music or real
+motion? Export the JPEG slides or the video and finish in FilmCraft.
+
+**Print layouts to PDF (tested):** `cmd_print_set {layout: {style: "contactSheet", page: {paper: "a4", orientation:
+"portrait"}, grid: {columns: 2, rows: 2}}, image: {strokeEnabled: true}, job: {ppi: 240}}`, then
+`cmd_print_exportPdf {path, ids}` → `{pages, photos}`. Styles: `singleImage|contactSheet|picturePackage|customPackage`;
+papers a3 a4 a5 letter legal tabloid 4x6 5x7 8x10 13x19. A picture package: `style: "picturePackage"`, then
+`cmd_print_cell_add {width: 5, height: 3.5}` per cell (inches), and the photo fills every cell. `cmd_print_get` shows it.
 
 ## Export
 
 - `path` (one photo, format from the extension) or `dir` + `naming` (batch; the folder is created). Tokens:
   `{name} {num} {seq} {seq:N} {date:%Y%m%d} {folder} {camera} {lens} {iso} {rating} {title} {creator}`.
-  `conflict: unique|overwrite|skip` (default unique: a new name).
+  `conflict: unique|overwrite|skip` (default unique: a new name). `destinationMode: "sameAsOriginal"` writes each
+  file next to its original instead of into `dir`.
 - Formats: `.jpg .png .tif .webp .avif .jxl .psd` (a flat PSD), plus `format: "dng"` (raws only: the raw at full size
   with the edits embedded; also what a `.dng` path gives), `format: "rendereddng"` (Render to DNG: a linear 16-bit
   float DNG of the rendered photo with the edit baked in; works for any photo and honours the size) and
@@ -259,11 +287,12 @@ Panoramas (tested): `cmd_merge_panorama {ids, projection: auto|cylindrical|spher
 lightcraft-cli render in.dng -o out.jpg --set light.exposure=0.3 --set light.shadows=40 --preset lc.golden-hour --size 1200
 lightcraft-cli render in.dng -o out.tif --opt bitDepth=16 --opt colorSpace=adobeRgb   # any app.export option
 lightcraft-cli render in.jpg -o out.dng --opt format=rendereddng --size 2000      # a baked, linear DNG
+lightcraft-cli render in.dng -o out.jpg --settings look.lcpreset --size 1600     # a preset.export file or XMP preset
 lightcraft-cli run --import /abs/a.jpg develop.auto develop.set control=light.exposure value=0.7 \
                    app.export path=/abs/a-out.jpg longEdge=800          # one JSON line per command
 lightcraft-cli run --library /abs/lib --import /abs/shoot photo.rate rating=5 'ids=[1,2]'   # persists
 lightcraft-cli run --library /abs/lib catalog.query 'filter={"rating":5}'
-lightcraft-cli merge hdr|panorama|hdr-panorama [--preview OUT.png] FILES…   # writes <first>-HDR.dng / -Pano.dng
+lightcraft-cli merge hdr|panorama|hdr-panorama|hdr-batch [--preview OUT.png] FILES…  # hdr-batch: a folder works
 lightcraft-cli snapshot --library /abs/lib -o ui.png --size 1600x1000   # the full app UI, headless, as a PNG
 lightcraft-cli commands --json  ·  lightcraft-cli controls --json   # the catalogs
 ```
@@ -292,7 +321,7 @@ lightcraft-cli commands --json  ·  lightcraft-cli controls --json   # the catal
   read `results[]` to see which steps ran.
 - **Helper tools refuse unknown keys** with a protocol error (`unknown argument "bogusOpt" for export; expected: …`).
 - **One program per library.** While the MCP server has its library open, `lightcraft-cli run --library` on the same folder
-  fails: `This library is already open in lightcraft-cli 0.8.0 (process N on this computer). Close it there first.`
+  fails: `This library is already open in lightcraft-cli 0.9.1 (process N on this computer). Close it there first.`
   The same happens when the desktop app has it open; use `--connect` then. Use a separate `--library` for CLI work.
 - `kind: "prompt"`/`"object"` masks without the model fail with `The SAM 3 model is not installed. Download it (about
   3.4 GB, SAM License (Meta)) … with `segment.model.download {"acknowledged": true}`…`.
@@ -303,7 +332,12 @@ lightcraft-cli commands --json  ·  lightcraft-cli controls --json   # the catal
 - A merge writes its DNG **next to the source files**, so copy them first if that folder must stay untouched.
 - Raws get default sharpening (40) and colour noise reduction (25); JPEGs get none.
 - Paths: use absolute paths. Relative ones resolve against the server's working directory, not yours.
-- Bad ids name the problem: `unknown command `photo.nope``, `unknown preset `nope``, `no such photo 9999`.
+- Bad ids name the problem: `unknown command `photo.nope``, `unknown preset `nope``, `no such photo 9999`,
+  `` `ids` must be photo ids (whole numbers) `` (for `"x"` or `-1`).
+- **`cmd_slideshow_export` without `wait: true` runs in the background.** Poll `cmd_slideshow_exportStatus` until
+  `running: false`. If the server exits first, only a `.part` file is left behind.
+- `slideshow.*` and `print.*` settings are saved with the library and carry over to the next job. Set every key you
+  care about, or start with `cmd_print_reset` / a slideshow template.
 
 ## Verification
 
@@ -314,8 +348,8 @@ lightcraft-cli commands --json  ·  lightcraft-cli controls --json   # the catal
 
 ## References
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 313 commands with params, grouped by area. Grep it rather than
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 371 commands with params, grouped by area. Grep it rather than
   reading it whole, e.g. `grep -n "mask\." ${HERMES_SKILL_DIR}/references/commands.md`.
 - `${HERMES_SKILL_DIR}/references/controls.md`: all 122 develop slider ids with ranges and defaults, by section. Grep it too.
 - Upstream docs: https://github.com/storytold/lightcraft/tree/main/docs (`mcp.md`, `control-protocol.md`, `ai-masks.md`,
-  `merge.md`, `xmp-interop.md`, `process-versions.md`, `faces.md`, `denoise.md`).
+  `merge.md`, `slideshow.md`, `xmp-interop.md`, `process-versions.md`, `faces.md`, `denoise.md`).

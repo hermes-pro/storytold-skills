@@ -1,6 +1,6 @@
 # PdfCraft Action Wizard and app commands
 
-Generated from `action_list` and `command_list` (PdfCraft 0.8.0).
+Generated from `action_list` and `command_list` (PdfCraft 0.9.0).
 
 ## Built-in actions (`action_run {action: <name>, paths, folder}`)
 
@@ -25,7 +25,7 @@ Generated from `action_list` and `command_list` (PdfCraft 0.8.0).
 - `detect_form_fields`: Detect form fields
 - `run_javascript`: Run a JavaScript (takes `arg`)
 
-## App commands (194)
+## App commands (200)
 
 Ids for the live desktop app (`pdfcraft-cli ui --control FILE command id=<id>`). The `tool` column names the
 MCP tool that does the same thing headlessly; prefer the tool. `command_run {id, params}` runs only the ids that have a
@@ -61,6 +61,7 @@ tool (it calls that tool; `params` are the tool's arguments).
 | `file.revert` | Revert | File |  |  |
 | `print.dialog` | Print… | File | Ctrl+P |  |
 | `file.properties` | Document properties… | File | Ctrl+D | `doc_info` |
+| `file.word_count` | Word count… | File |  | `text_word_count` |
 | `edit.undo` | Undo | Edit | Ctrl+Z | `edit_undo` |
 | `edit.redo` | Redo | Edit | Ctrl+Shift+Z | `edit_redo` |
 | `edit.find` | Find… | Edit | Ctrl+F | `text_find` |
@@ -74,12 +75,15 @@ tool (it calls that tool; `params` are the tool's arguments).
 | `view.fit_one_page` | Fit one full page |  |  |  |
 | `view.fit_visible` | Fit visible |  | Ctrl+3 |  |
 | `view.marquee_zoom` | Marquee zoom | View |  |  |
+| `edit.copy` | Copy | Edit |  |  |
 | `edit.column_select` | Column select | Edit |  | `text_extract` |
 | `edit.snapshot` | Take a snapshot | Edit |  |  |
 | `view.full_screen` | Full screen mode | View | Ctrl+L |  |
 | `view.read_mode` | Read mode | View | Ctrl+H |  |
 | `view.next_tab` | Next tab | View | Ctrl+Tab |  |
 | `view.previous_tab` | Previous tab | View | Ctrl+Shift+Tab |  |
+| `view.previous_view` | Previous view |  | Ctrl+[ |  |
+| `view.next_view` | Next view |  | Ctrl+] |  |
 | `view.focus_page_input` | Go to page… | View | Ctrl+Shift+N |  |
 | `ui.dock.reset` | Reset panel layout | View |  |  |
 | `view.theme` | Switch light / dark theme |  |  |  |
@@ -185,10 +189,12 @@ tool (it calls that tool; `params` are the tool's arguments).
 | `ocr.enhance_camera` | Enhance camera image |  |  | `page_enhance_camera` |
 | `ocr.recognize_batch` | Recognize text in multiple files… |  |  | `ocr_recognize_files` |
 | `a11y.check` | Check for accessibility… |  |  | `accessibility_check` |
+| `a11y.find_untagged` | Find untagged content |  |  | `accessibility_find_untagged` |
 | `a11y.autotag` | Automatically tag PDF |  |  |  |
 | `a11y.report` | Open accessibility report |  |  | `accessibility_report` |
 | `a11y.reading_options` | Change reading options… |  |  | `view_reading_colors` |
 | `a11y.alt_text` | Add alternate text… |  |  | `accessibility_figures` |
+| `a11y.autotag_fields` | Tag form fields |  |  | `accessibility_autotag_form_fields` |
 | `a11y.tags` | Tags panel |  |  | `accessibility_tags` |
 | `export.all_images` | Export all images… | File |  | `doc_export_all_images` |
 | `edit.header_footer` | Add header & footer… |  |  | `doc_header_footer` |

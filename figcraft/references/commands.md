@@ -1,13 +1,13 @@
 # FigCraft command catalog
 
-Generated from `figcraft-cli commands --json` (FigCraft 0.6.0, 552 commands). Run one with
+Generated from `figcraft-cli commands --json` (FigCraft 0.7.0, 561 commands). Run one with
 `run_command {command, params}` or several as one undo step with `batch {commands: [...]}`; check one live with
 `list_commands {filter}` or read `figcraft://command/<id>`. `?` = optional, `a|b` = choices, `→ {...}` = what it
 returns. `*` = undoable (changes the document). Most commands take `ids?` and act on the selection without it.
 Coordinates are page units (px), y down, x/y relative to the parent frame. `node.set` keys are in
 `node-properties.md`. Grep this file rather than reading it whole.
 
-Groups: align (6), annotation (8), app (2), arrange (8), bool (5), branch (7), codeConnect (4), collab (20), command (1), comment (14), component (21), dev (4), devResource (4), distribute (2), doc (5), edit (15), effect (4), export (3), file (20), fill (5), frame (3), grid (3), guide (5), help (4), image (5), inspect (5), instance (8), layers (1), layout (4), libraries (2), library (18), measure (2), node (5), object (27), page (8), paint (1), plugin (11), plugins (2), pref (10), proto (20), section (1), select (21), shape (6), shapeBuilder (4), stroke (6), style (10), template (1), text (52), tool (21), transform (9), variable (18), vector (40), version (8), view (48), widget (3), window (2)
+Groups: align (6), annotation (8), app (2), arrange (9), bool (5), branch (7), codeConnect (4), collab (21), command (1), comment (14), component (21), dev (4), devResource (4), distribute (2), doc (5), edit (16), effect (4), export (3), file (20), fill (5), frame (3), grid (3), guide (5), help (4), image (5), inspect (5), instance (8), layers (1), layout (4), libraries (2), library (18), measure (2), node (5), object (28), page (8), paint (1), plugin (11), plugins (2), pref (11), proto (20), section (1), select (21), selection (4), shape (6), shapeBuilder (4), stroke (6), style (10), template (1), text (52), tool (21), transform (9), variable (18), vector (40), version (8), view (48), widget (3), window (2)
 
 ## align
 
@@ -36,6 +36,7 @@ Groups: align (6), annotation (8), app (2), arrange (8), bool (5), branch (7), c
 
 ## arrange
 
+- `arrange.spacing`* (Spacing): {ids?, horizontal?, vertical?, fromGesture?} (page units; fromGesture uses the interaction snapshot)
 - `arrange.tidy`* (Arrange › Tidy up, Ctrl+Alt+Shift+T): {ids?, spacing?}
 - `arrange.packH`* (Arrange › Pack horizontal): {ids?}
 - `arrange.packV`* (Arrange › Pack vertical): {ids?}
@@ -84,6 +85,7 @@ Groups: align (6), annotation (8), app (2), arrange (8), bool (5), branch (7), c
 - `collab.report` (Report file to server operator): {reason (a few words, at most 500 characters)} → {sent}: the file you joined on a server is reported to its operator; the session's message says when the server kept it (servers older than this app don't take reports)
 - `collab.peers` (People in this file): {} → the open file's session (each open file has its own or none): {available, canHost (false in the browser: it can only join), session (its id; null: this file isn't in a session), status: off|connecting|live|reconnecting|failed, reason?, role, me, name, color, fileName, pages, link, url, address, network, access: edit|view (view: a server's view link; edits are refused), readOnly (the open file can't be edited now: view only, or being published), published (a file you published: {server, file, name, edit, view}), code (the join code to give others, when the file was shared with `collab.share`; null otherwise or while it is on its way), share ({via: online|local, access, shared (false: a file of yours on a server that nobody else gets into now), editCode, viewCode, editLink, viewLink (what others join with; null when not shared)} or null), follow, syncing, document (index of the synced open document), editing (the text layer you type in: {node, layer, caret, selection}), peers: [{id, name, color, editing (theirs, same shape, or null), presence: {cursor: [page, x, y], selection, viewport: [page, x, y, w, h], editing_text}}], sessions: [{session, document (index of its open document; null for a join on its way), status, reason, role, fileName, link, peers (how many others)}] (every session of the app)}
 - `collab.follow` (Follow): {client? (a peer's id; omit to stop following)} → {follow}
+- `collab.removePerson` (Remove from session): {client (a peer's id)} → {removed, name}: they are disconnected (they keep their copy) and can't join again from their address while the session runs; only the person hosting, or the owner of a file on a server, can do it
 - `collab.cursor` (Show cursor at): {x?, y? (page coordinates on the current page; omit both to hide)} → {cursor} (agents; in the app the pointer drives it): your pointer in the open file's session (null when the file isn't in one)
 - `collab.cursorChat` (Cursor chat, /): {text? (shown next to your cursor for everyone, at most 100 characters; empty closes it; omit to open the chat box in the app)} → {chat} (or {open}); others see it fade after 5 s without changes
 - `collab.spotlight` (Spotlight me): {on? (default: toggle)} → {spotlighting}: everyone in the session follows your view and page until they move theirs
@@ -170,10 +172,11 @@ Groups: align (6), annotation (8), app (2), arrange (8), bool (5), branch (7), c
 - `edit.undo` (Edit › Undo, Cmd+Z): {}
 - `edit.redo` (Edit › Redo, Shift+Cmd+Z): {}
 - `edit.delete`* (Edit › Delete, Delete): {ids?}
-- `edit.duplicate`* (Edit › Duplicate, Cmd+D): {ids?, dx?, dy? (offset; default 0 for frames-in-place... Figma offsets top-level frames to the right)}
+- `edit.duplicate`* (Edit › Duplicate, Cmd+D): {ids?, dx?, dy? (page offset; default: the offset of the last duplicate when ids are its copies, still selected; else top-level frames to the right with a 100 gap, everything else in place)}
 - `edit.copy` (Edit › Copy, Cmd+C): {ids?}
 - `edit.cut`* (Edit › Cut, Cmd+X): {ids?}
 - `edit.paste`* (Edit › Paste, Cmd+V): {parent?, x?, y? (page coordinates of the pasted top-left)}
+- `edit.pasteDesignLayers`* (Paste design layers): {html (the clipboard's HTML) | data (base64 of the clipboard's design data, at most 256 MB), parent?, x?, y?} layers copied from another design app (a .fig canvas in the clipboard's HTML), read like a .fig file (best effort, with `warnings`), pasted as edit.paste pastes
 - `edit.pasteOver`* (Edit › Paste over selection, Shift+Cmd+V): {}
 - `edit.pasteReplace`* (Edit › Paste to replace, Shift+Cmd+R): {ids?}
 - `edit.copyProperties` (Edit › Copy properties, Alt+Cmd+C): {id?}
@@ -199,15 +202,15 @@ Groups: align (6), annotation (8), app (2), arrange (8), bool (5), branch (7), c
 ## file
 
 - `file.new` (File › New design file, Cmd+N): {name?}
-- `file.open` (File › Open, Cmd+O): {path, variables? (REST: the local variables JSON as an object, JSON text or a path; default `<name>.variables.json` or `variables.json` next to the file)} (.figcraft, .json: FigCraft or REST API file JSON, .fig (best effort), .svg, .png, .jpg …); REST and .fig imports return `warnings`
+- `file.open` (File › Open, Cmd+O): {path | data (base64) + name (tells the format; opens as a new unsaved document), variables? (REST: the local variables JSON as an object, JSON text or a path; default `<name>.variables.json` or `variables.json` next to the file)} (.figcraft, .json: FigCraft or REST API file JSON, .fig (best effort), .svg, .png, .jpg …); REST and .fig imports return `warnings`; a file opened anew returns `summary` {name, pages, layers, images} (one that was already open just returns its `index`)
 - `file.openRecent` (File › Open recent): {path? | index? (into the list), clear? (forget them all), remove? (a path: forget that one)} opens a recent file; a file that no longer exists is dropped from the list. Returns the list, newest first: {files: [{path, name, exists}]} (opening returns what `file.open` does)
-- `file.save` (File › Save, Cmd+S): {path?} (programmatic saves need a path the first time)
-- `file.saveAs` (File › Save as, Shift+Cmd+S): {path}
+- `file.save` (File › Save, Cmd+S): {path?} (programmatic saves need a path the first time); a .fig path writes an experimental export copy of the shown document with `warnings`, keeping the native path, unsaved changes and version preview
+- `file.saveAs` (File › Save as, Shift+Cmd+S): {path} (no extension adds .figcraft); a .fig path writes an experimental export copy of the shown document with `warnings`, keeping the native path, unsaved changes and version preview
 - `file.export` (File › Export, Shift+Cmd+E): {ids? (default selection, else the page), format? (png|jpg|svg|pdf|webp, or fig: the whole file as .fig, experimental, with `warnings` for what was left out; other apps may not open every file), scale? (default 1) | size? (2x|512w|512h or {by: scale|width|height, value}: a scale, or a width or height in pixels), path? (else returns base64 `data`), bleed? (PDF: points, or with a unit: "3mm", "0.125in", "9pt"), cropMarks?, bleedMarks?, cmyk? (PDF print options)}
 - `file.exportLayers` (Export layers): {ids? (default the selection, else every layer on the page with export settings), assets? (true: the Inspect tab's assets in and under them instead: layers with export settings, icons as SVG, images as PNG), dir? (folder to write into; else each file comes back as base64 `data`), bleed? (PDF: points, or with a unit: "3mm", "0.125in", "9pt"), cropMarks?, bleedMarks?, cmyk? (PDF print options): for every PDF instead of each setting's own} every layer once per export setting, named `<layer><suffix>.<format>` ("@2x" when a scaled export has no suffix; repeats get " 2"; slashes in a layer name make folders). Returns {files: [{name, id, bytes, path | data}], skipped (layers without settings)}
 - `file.exportSvg` (File › Export selection as SVG): {ids?, path?}
 - `file.exportFramesPdf` (File › Export frames to PDF): {path?, page? (page id, default the current page), bleed? (PDF: points, or with a unit: "3mm", "0.125in", "9pt"), cropMarks?, bleedMarks?, cmyk? (PDF print options)} every top-level frame in reading order, one PDF page each; returns base64 `data` without a path
-- `file.import`* (File › Import, Shift+Cmd+I): {path | data (base64) + name, x?, y?, center? (SVG: centre it on x, y), variables? (REST: the local variables JSON as an object, JSON text or a path)} SVG becomes an editable frame (shapes, text, gradients, masks, effects; with `warnings` for what it left out), images become image layers, .figcraft, REST API file JSON and .fig pages are appended with their variables and flows (REST and .fig: with `warnings`)
+- `file.import`* (File › Import, Shift+Cmd+I): {path | data (base64) + name, x?, y?, center? (SVG: centre it on x, y), variables? (REST: the local variables JSON as an object, JSON text or a path)} SVG becomes an editable frame (shapes, text, gradients, masks, effects; with `warnings` for what it left out), images become image layers, .figcraft, REST API file JSON and .fig pages are appended with their variables and flows (REST and .fig: with `warnings`; those return `summary` {name, pages, layers, images} of the file read)
 - `file.placeImage`* (File › Place image, Shift+Cmd+K): {path | data, x?, y?}
 - `file.close` (File › Close tab, Cmd+W): {index?, force? (discard unsaved changes)}
 - `file.recover` (Recover file): {path} open a recovery copy (written while the app runs, read back after a crash) as a document with unsaved changes and no path: saving asks where → {index}
@@ -352,7 +355,8 @@ Groups: align (6), annotation (8), app (2), arrange (8), bool (5), branch (7), c
 - `object.frameSelection`* (Object › Frame selection, Alt+Cmd+G): {ids?, name?}
 - `object.removeFrame`* (Object › Remove frame): {ids?}
 - `object.convertToGroup`* (Convert to group): {ids?} (frames become groups in place, their layers staying where they are; what only a frame has goes: auto layout, fills, strokes, corner radius, clipping, layout grids, guides and scrolling. Groups are left alone; instances, main components, layers inside instances and empty frames are refused)
-- `object.convertToFrame`* (Convert to frame): {ids?} (groups become frames of the same box in place, their layers staying where they are: no fill, not clipping. Frames are left alone; instances, main components and layers inside instances are refused)
+- `object.convertToFrame`* (Convert to frame): {ids?} (groups become frames of the same box in place, their layers staying where they are: no fill, not clipping; sections become frames that keep their fill and don't clip. Frames are left alone; instances, main components, layers inside instances and sections holding sections are refused)
+- `object.convertToSection`* (Convert to section): {ids?} (frames on the page or in a section become sections in place, keeping their fill and layers; what only a frame has goes: auto layout, clipping, layout grids, guides and scrolling. Sections are left alone; nested frames, instances and main components are refused)
 - `object.wrapInSection`* (Wrap in new section): {ids?, name?} (layers on the page or in a section; the section wraps them with some room)
 - `object.resizeToFit`* (Object › Resize to fit, Alt+Shift+Cmd+R): {ids?} (frames, sections and components shrink or grow to their contents; the contents stay put)
 - `object.mask`* (Object › Use as mask, Ctrl+Alt+M): {ids?}
@@ -403,10 +407,11 @@ Groups: align (6), annotation (8), app (2), arrange (8), bool (5), branch (7), c
 - `pref.showDimensions` (Preferences › Show dimensions on objects): {on?}
 - `pref.numberKeysOpacity` (Preferences › Use number keys for opacity): {on?}
 - `pref.reduceMotion` (Reduce motion): {on?}
+- `pref.autoSave` (Save files automatically): {on?}
 - `pref.nudge` (Preferences › Nudge amount): {small?, big?}
 - `pref.userName` (Your name in comments): {name (blank: the default, "You")}
 - `pref.publishServer` (Server for online sharing): {url?: ws://host:port/ or wss://host/path/ (no key; empty: online sharing off; omit: back to the built-in server)} → {url, default (the built-in server)}: where Share ▸ Online keeps files and where join codes are asked
-- `pref.language` (Interface language): {language: system|en|es|es-419|fr|de|pt-BR|ja|ko|zh-Hans|…; else English}
+- `pref.language` (Interface language): {language: system|en|cs|ru|es|es-419|fr|de|pt-BR|ja|ko|zh-Hans|…; else English}
 
 ## proto
 
@@ -458,6 +463,13 @@ Groups: align (6), annotation (8), app (2), arrange (8), bool (5), branch (7), c
 - `select.sameInstance` (Edit › Select all with same › Select same instance): {}
 - `select.sameProperties` (Edit › Select all with same › Select same properties): {}
 - `select.byName` (Select layers by name): {query, page? (default current; "all" for every page)}
+
+## selection
+
+- `selection.colors` (Selection colors): {ids?} → {colors: [{paint, targets}]}; includes descendants and text ranges
+- `selection.setPaint`* (Change selection color): {targets: [{id, fills, index, range: [start,end] | null}], paint}
+- `selection.applyColorStyle`* (Apply selection color style): {targets, style}; applies the color style to matching fill/stroke lists (text ranges keep typography)
+- `selection.selectColor` (Select layers with color): {targets} → {ids}; selects the layers owning these paint slots
 
 ## shape
 
@@ -539,7 +551,7 @@ Groups: align (6), annotation (8), app (2), arrange (8), bool (5), branch (7), c
 - `text.maxLines`* (Max lines): {lines (0 = no limit; truncates), ids?}
 - `text.setFeatures`* (OpenType features): {features: {tag: bool | null (font default)}, replace? (clear others first), id?/ids?}
 - `text.setVariations`* (Variable font axes): {variations: {axis: number | null (style default)}, replace? (clear others first), id?/ids?}; while editing: the selected range
-- `text.preview` (Preview text change): {command: style.apply|library.applyStyle|text.setVariations|text.style, params} shows what the command would do on the canvas without an undo step (a hovered text style or named instance, a dragged axis slider), in place of an earlier preview; text.endPreview or any other command ends it, so running the command for real commits it as one undo step
+- `text.preview` (Preview text change): {command: style.apply|library.applyStyle|text.setVariations|text.style, params} shows what the command would do on the canvas without an undo step (a hovered font family or style, text style or named instance, a dragged axis slider), in place of an earlier preview; text.endPreview or any other command ends it, so running the command for real commits it as one undo step
 - `text.endPreview` (End text preview): {} puts the document back as it was before text.preview → {ended}
 - `text.set`* (Set text): {id?, characters}
 - `text.style`* (Style text range): {id?, start?, end?, fontFamily?, fontStyle?, fontWeight?, fontSize?, lineHeight?, letterSpacing?, textDecoration?, textCase?, hyperlink?, textFills?}
@@ -663,7 +675,7 @@ Groups: align (6), annotation (8), app (2), arrange (8), bool (5), branch (7), c
 - `version.rename` (Rename version): {id | index, name, description?} a titled autosave becomes a named version
 - `version.delete` (Delete version): {id | index}
 - `version.preview` (View version): {id | index} show the version on the canvas in place of the document (read-only; `version.restore` keeps it, `version.exitPreview` goes back)
-- `version.autosave` (Autosave version): {} save an automatic checkpoint when the document has unsaved changes since the last version (the app does this every 30 minutes); keeps the newest 20 autosaves → {saved, version?}
+- `version.autosave` (Autosave version): {} save an automatic checkpoint when the document has unsaved changes since the last version (with `pref.autoSave` on: changes made since it was opened); the app does this every 30 minutes; keeps the newest 20 autosaves → {saved, version?}
 - `version.exitPreview` (Back to current version): {} end a version preview
 - `version.duplicate` (Duplicate version): {id | index} open the version as a new document; returns its tab `index`
 

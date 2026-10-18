@@ -1,6 +1,6 @@
 # GridCraft worksheet functions
 
-Generated from `gridcraft-cli functions --json` (GridCraft 0.7.0, 514 functions). Grep for a name or a word
+Generated from `gridcraft-cli functions --json` (GridCraft 0.8.0, 514 functions). Grep for a name or a word
 from the description. The `category` filter of `list_functions` takes these exact names:
 `AddIn`, `Compatibility`, `Cube`, `Database`, `DateTime`, `Engineering`, `Financial`, `Information`, `Logical`, `Lookup`, `MathTrig`, `Statistical`, `Text`, `Web`.
 

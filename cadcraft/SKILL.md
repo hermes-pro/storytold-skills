@@ -1,7 +1,7 @@
 ---
 name: cadcraft
 description: "Technical drawing and drafting with CADCraft (AutoCAD-style): floor plans, site plans, mechanical part drawings, brackets, layouts with title blocks, dimensioned 2D drawings to scale. Draw lines, polylines, circles and arcs at exact coordinates, offset / trim / fillet, layers, dimensions, hatches, blocks, tables, then save DXF / DWG or export PDF, SVG, PNG."
-version: 0.3.0
+version: 0.4.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,7 +16,7 @@ metadata:
 CADCraft is a free, open-source clean-room take on AutoCAD (storytold Crafting Apps). An agent drives it
 through an MCP server (`cadcraft-cli mcp`) or one-shot CLI commands. It reads DXF (R12–2018), DWG (R13–2018)
 and SVG, writes DXF / DWG (versions 2000–2018, DXF also binary), and plots PDF; SVG and PNG are exports.
-This skill is tested against CADCraft 0.7.0.
+This skill is tested against CADCraft 0.8.0.
 
 ## When to Use
 
@@ -46,11 +46,12 @@ Pick a different Crafting App when:
 Without a running desktop app the server is **headless** (in-process session with a CPU renderer). For the
 user to watch live, they run `cadcraft --control 7979` and the server is
 `cadcraft-cli mcp --connect 127.0.0.1:7979`. Plain `--connect` exits at startup if the app isn't answering
-(`cannot connect to 127.0.0.1:7979`); add `--lazy` to start anyway: each call then fails with
+(`cannot connect to 127.0.0.1:7979: connection timed out`); add `--lazy` to start anyway: each call then fails with
 `CADCraft is not answering at 127.0.0.1:7979 … Open CADCraft with its control port …` until the app is up.
 `--launch` (implies lazy) also opens the app, on macOS only; elsewhere calls fail with
 `CADCraft is not running; start it with \`cadcraft --control 7979\``. Only the bridged mode adds `screenshot`,
-`ui_inspect` and `ui_click` (15 tools).
+`ui_inspect` and `ui_click` (15 tools). `screenshot` saves the app window to a PNG and returns its `path`
+(not an image); read that file to look.
 
 ## Mental Model
 
@@ -269,4 +270,4 @@ uses the current view if the commands zoomed or panned. `run` exits 1 on the fir
 - `references/commands.md`: all 426 commands with aliases and JSON params, grouped by menu. Grep it rather than
   reading it whole (e.g. `grep -n "^- \`dim" ${HERMES_SKILL_DIR}/references/commands.md`).
 - Upstream docs: https://github.com/storytold/cadcraft/tree/main/docs (`mcp.md`, `control-protocol.md`). They
-  track `main` and may list features newer than 0.7.0.
+  track `main` and may list features newer than 0.8.0.

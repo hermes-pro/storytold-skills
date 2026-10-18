@@ -1,6 +1,6 @@
 # FigCraft layer properties (`node.set`)
 
-Generated from the live `node.set` docs and `frame.presets` (FigCraft 0.6.0, 95 keys). These keys go in
+Generated from the live `node.set` docs and `frame.presets` (FigCraft 0.7.0, 95 keys). These keys go in
 `set_properties {ids, props}`, in `create_node {props}` and in `node.create`/`frame.create` `props`. Unknown keys are an
 error that lists every known key. Grep this file rather than reading it whole.
 
@@ -19,7 +19,7 @@ error that lists every known key. Grep this file rather than reading it whole.
 - `fontStyle` is a style name the family has: `text.fonts {family}` lists them (`[]` = the family is not installed and
   the text silently falls back). Inter has Regular, Italic, SemiBold ("Semi Bold" works too), Bold.
 - `sizingH`/`sizingV`: `fixed`, `hug` (auto layout frames and text) or `fill` (children of an auto layout frame).
-- `constraints`: `{"horizontal": "left|right|leftRight|center|scale", "vertical": "top|bottom|topBottom|center|scale"}`.
+- `constraints`: `{"horizontal": "left|right|center|leftRight|scale", "vertical": "top|bottom|center|topBottom|scale"}`.
 
 ## What inspect returns
 
@@ -60,7 +60,7 @@ fontSize, lineHeight, letterSpacing, textAlign, textAutoResize, styledRuns`), `b
 
 ## Fill, stroke, effects
 
-- `fills` (paints or colours)
+- `fills` (paints or colours; gradients as {type: linearGradient|radialGradient|angularGradient|diamondGradient, stops: ["#hex", ...], from?, to?} too)
 - `fill` (colour)
 - `strokes`
 - `stroke` (colour)

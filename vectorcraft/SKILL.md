@@ -1,7 +1,7 @@
 ---
 name: vectorcraft
 description: "Vector illustration with VectorCraft (Illustrator-style): logos, icons, posters, flyers, badges, infographics, charts, and SVG / PDF / EPS / AI / DXF artwork. Draw shapes and Bézier paths, paint, set type, apply live effects, export."
-version: 0.3.0
+version: 0.4.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -15,7 +15,7 @@ metadata:
 
 VectorCraft is a free, open-source clean-room take on Adobe Illustrator (storytold Crafting Apps). An
 agent drives it through an MCP server (`vectorcraft-cli mcp`) or one-shot CLI commands. Everything it
-makes stays editable: live shapes, live effects and live type. This skill is written for VectorCraft 0.11.0.
+makes stays editable: live shapes, live effects and live type. This skill is written for VectorCraft 0.13.1.
 
 ## When to Use
 
@@ -60,11 +60,12 @@ always does, and `--automation-read-root DIR` / `--automation-write-root DIR` co
 
 - **Coordinates** are points (1/72 in). **y points down.** The origin is the first artboard's top-left.
   A new document is US Letter, 612 × 792. For another size, run `command_run file.new {width, height}`.
-- **Every edit is a command** (749 of them). The drawing tools cover the common ones. Anything else goes
+- **Every edit is a command** (785 of them). The drawing tools cover the common ones. Anything else goes
   through `command_run {id, params}`, or `command_batch {steps}` for several in one call. Find commands
-  with `command_list {filter: "align"}`, or grep `references/commands.md`.
-- **New objects become the selection**, and most commands act on the selection or on explicit `ids`.
-  Every tool that creates something returns its `id`, so keep those ids.
+  with `command_list {filter: "align", brief: true}`, or grep `references/commands.md`.
+- **New objects become the selection**, and most commands act on the selection or on explicit `ids`
+  (a command that works on the selection selects the `ids` first). Every tool that creates something
+  returns its `id`, so keep those ids.
 - Everything is undoable (`undo` / `redo`). `doc_inspect` shows the history.
 
 ## Tools (Hermes names them `mcp_vectorcraft_<tool>`)
@@ -73,10 +74,10 @@ Common command tools (the same names across the Crafting Apps):
 
 | Tool | Use it for |
 |---|---|
-| `command_list {filter?, enabled_only?}` | Find command ids and their params |
+| `command_list {filter?, menu?, brief?, enabled_only?}` | Find command ids and their params. `menu: "Object > Path"` lists one menu; `brief: true` leaves out the params (the bulk of the catalog). `query` is the same as `filter` |
 | `command_run {id, params?}` | Run any command. Errors come back as `isError` with the reason |
-| `command_batch {steps:[{id, params?}], atomic?, label?, stop_on_error?}` | Several commands in one call (at most 256 steps). A param string `"$N.path"` / `"$last.path"` takes a value from an earlier step's result (`"$0.id"`, `"$2.matches.0.id"`). `atomic: true` makes the batch one undo step |
-| `doc_inspect {depth?, childLimit?}` | Artboards, layer tree with ids, bounds and paint, selection, history. `depth: 0` on big files |
+| `command_batch {steps:[{id, params?}], atomic?, label?, stop_on_error?}` | Several commands in one call (at most 256 steps). A step's `id` can also be `draw_shape` or `draw_path`, with the tool's arguments as `params`; the reply's `created` lists their ids. A param string `"$N.path"` / `"$last.path"` takes a value from an earlier step's result (`"$0.id"`, `"$2.matches.0.id"`). `atomic: true` makes the batch one undo step |
+| `doc_inspect {depth?, childLimit?, ids?, kind?, limit?, offset?}` | Artboards, layer tree with ids, bounds and paint, selection, history. On big files: `depth: 0`, `ids: [..]` for just those nodes, `kind: "Group"` for every node of that Layers-panel kind (`Rectangle`, `Ellipse`, `Path`, `Type`…; an unknown kind returns no nodes), `limit`/`offset` to page |
 | `render_preview {artboard?, max_side?}` | PNG of an artboard (default 0, 1024 px) so you can **look** at it |
 | `ui_inspect`, `ui_screenshot` | The live desktop app only |
 
@@ -84,10 +85,10 @@ Drawing and file tools:
 
 | Tool | Use it for |
 |---|---|
-| `draw_shape` | `rectangle`/`ellipse` (`x,y,width,height`, rectangle `radius`), `polygon` (`cx,cy,radius,sides`), `star` (`cx,cy,radius1,radius2,points`), `line` (`x1,y1,x2,y2`), plus `fill`, `stroke`, `strokeWidth`, `rotation` |
+| `draw_shape` | `rectangle`/`ellipse` (`x,y,width,height`, rectangle `radius`), `polygon` (`cx,cy,radius,sides`), `star` (`cx,cy,radius1,radius2,points`), `line` (`x1,y1,x2,y2`), plus `fill`, `stroke`, `strokeWidth`, `rotation`, and (both draw tools) `dash: [12, 6]`, `cap`, `join`, `opacity` (%), `name`, `effects: [{effect, params}]` |
 | `draw_path` | Any curve: SVG `d` (`"M0 0 C …Z"`) or `points` (`[x,y]` or `{x,y,in,out}` Bézier handles), `closed` |
 | `set_paint` | Fill, stroke and weight on the selection or `ids` (also becomes the default for new art) |
-| `add_text` | Point type at `(x, y)`: `y` is the **baseline**, `x` the left edge (with `justify: "center"` the line's centre, `"right"` its end). Area type with `width`/`height`, plus `fit: "autoHeight"` (frame grows) or `"shrinkText"`. `path` + `mode` puts type in or on a path. Also `font`, `size`, `color`. Returns `overflow: true` when the text doesn't fit |
+| `add_text` | Point type at `(x, y)`: `y` is the **baseline**, `x` the left edge (with `justify: "center"` the line's centre, `"right"` its end). Area type with `width`/`height`, plus `fit: "autoHeight"` (frame grows) or `"shrinkText"`. `path` + `mode` puts type in or on a path. Also `font`, `size`, `color`, `vertical: true`. Returns `overflow: true` when the text doesn't fit |
 | `apply_effect` | Live effects. Call it with no `effect` to get the catalog. See `references/effects.md` |
 | `pathfinder {operation}` | `unite`, `minusFront`, `intersect`, `exclude`, `divide`, `trim`, `merge`, `crop`, `outline`, `minusBack` (destructive) |
 | `transform` | `dx/dy`, `rotate` (degrees, counter-clockwise), `scale`/`scaleX`/`scaleY` (%), `reflect`, `shear`, `origin`, `copy` |
@@ -116,6 +117,8 @@ Resources read one thing at a time: `vectorcraft://object/{id}`, `vectorcraft://
   - `angle: -90` runs stop 0 at the **top** to stop 1 at the bottom.
   - `angle: 90` runs bottom to top.
   - `angle: 0` runs left to right.
+- One gradient across several objects: `paint.setFill {ids, gradient, span: "selection"}`. Without `span`
+  each object gets the whole gradient.
 - **Opacity and blend modes:** `command_run transparency.set {opacity: 0..100, blend: "Multiply"}`.
 - Stroke details (caps, joins, dashes): `command_run stroke.set` / `stroke.setAdvanced`.
 
@@ -202,6 +205,24 @@ The legend sits to the right of the plot, outside `width`. Leave room for it, or
 `graph.setType {legend: false}`. `name` in `document.find` is a substring, so pick series names that
 don't contain each other.
 
+### Recipe: many shapes in one call (tested)
+
+```text
+draw_shape {shape: rectangle, x:20, y:20, width:160, height:100, fill:"none", stroke:"#1b1046",
+            strokeWidth:4, dash:[12,6], cap:"round", join:"round", name:"Frame"}
+command_batch {atomic:true, label:"Dots", steps:[
+  {id:"draw_shape", params:{shape:"ellipse", x:40,  y:200, width:80, height:80, stroke:"none"}},
+  {id:"draw_shape", params:{shape:"ellipse", x:160, y:200, width:80, height:80, stroke:"none"}},
+  {id:"draw_shape", params:{shape:"ellipse", x:280, y:200, width:80, height:80, stroke:"none"}},
+  {id:"paint.setFill", params:{ids:["$0.id","$1.id","$2.id"], span:"selection",
+     gradient:{kind:"linear", angle:0, stops:[{offset:0,color:"#5b3df5"},{offset:1,color:"#ffb800"}]}}},
+  {id:"object.group", params:{ids:["$0.id","$1.id","$2.id"]}}]}
+render_preview {}                 → one gradient runs across the three dots
+```
+
+`draw_path {d, …, effects:[{effect:"stylize.dropShadow", params:{x:4, y:4, blur:3}}]}` adds live effects
+in the same call.
+
 ### More building blocks
 
 - **Repeat or array:** `transform {dx: 80, copy: true}`, then `command_run object.transformAgain`.
@@ -223,8 +244,8 @@ don't contain each other.
 
 ## Formats
 
-- **Read:** .vectorcraft .drawcraft .svg .svgz .pdf .ai .ait .eps .dxf .emf .wmf .png .jpg .gif .webp .tif .bmp
-  .psd .psb (as the merged image) .af .afdesign .afpub (Affinity) .vctemplate
+- **Read:** .vectorcraft .drawcraft .svg .svgz .pdf .ai .ait .eps .epsf .ps .dxf .emf .wmf .png .jpg .gif .webp
+  .tif .bmp .psd .psb (as the merged image) .af .afdesign .afpub (Affinity) .vctemplate
 - **Save** (`save_file`, the document takes the file): .vectorcraft (native JSON), .vctemplate, .svg/.svgz, .pdf,
   .ai. A `.ai` or PDF saved this way carries the native document and reopens fully editable (`restored: true`).
 - **Export** (`export`, the document keeps its path): svg/svgz (artboard = viewBox), pdf (one page per artboard),
@@ -234,12 +255,16 @@ don't contain each other.
   `selection: true` (cropped to the selection), `outlineText` (SVG/DXF), and `options` (raster `ppi`,
   `background`, jpg `quality`; PDF text as outlines is `options:{advanced:{outlineText:true}}`).
   `command_run document.formats` lists each format's options.
+- For apps that need an old-style `.ai`: `export {path:"/abs/x.ai", options:{aiVersion:"7"}}` writes a legacy
+  version 7 file (layers, groups and type kept, one file per artboard; the `warnings` list what it drops).
+- A raster export of any page area: `command_run document.export {path, rect:[x, y, width, height], ppi}`.
 - Live effects survive export: geometry is baked, and shadows, glows and blurs become SVG filters.
 
 ## CLI (no MCP needed)
 
 ```bash
 vectorcraft-cli convert in.svg out.pdf [--scale N] [--artboard I | --range "1-3"] [--outline-text] [--decimals N]
+vectorcraft-cli convert in.vectorcraft out.ai --ai-version 7    # legacy .ai (also --hidden-objects, --transparent-images)
 vectorcraft-cli info file.ai                         # JSON: artboards, object counts, fonts, import warnings
 vectorcraft-cli run [--in FILE] --cmd shape.rectangle --params '{"x":50,"y":50,"width":200,"height":100}' \
                     --cmd paint.setFill --params '{"color":"#ff0000"}' --export out.svg --scale 2   # one JSON line per step
@@ -262,7 +287,7 @@ without an MCP session. A failing step stops `run` with exit code 1. `convert` r
   `automation path rejected: outside the write root …`.
 - **Misspelt params:** most commands now refuse them: ``invalid parameters for `file.new`: unknown parameter
   `widht`; did you mean `width`?``, and for effects ``unknown parameter `blurr`; the command takes: radius``.
-  A few still **ignore them silently** in 0.11.0: `text.setStyle`, `paint.setFill`, `transparency.set` and
+  A few still **ignore them silently** in 0.13.1: `text.setStyle`, `paint.setFill`, `transparency.set` and
   `stroke.set` (`transparency.set {opacty: 50}` succeeds and changes nothing). Copy keys from `command_list` /
   `references/commands.md`. Unknown *tool* arguments are refused: ``unknown argument `rotat` for `transform` ``.
 - **`paint.setStroke {color: "none"}` fails** with ``invalid parameters for `paint`: bad color "none" ``.
@@ -290,7 +315,7 @@ without an MCP session. A failing step stops `run` with exit code 1. `convert` r
 
 Grep these rather than reading them whole, e.g. `grep -n 'object.align' ${HERMES_SKILL_DIR}/references/commands.md`.
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 749 commands with params, grouped by area.
-- `${HERMES_SKILL_DIR}/references/effects.md`: all 83 live effects with params and defaults.
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 785 commands with params, grouped by area.
+- `${HERMES_SKILL_DIR}/references/effects.md`: all 89 live effects with params and defaults.
 - Upstream docs: https://github.com/storytold/vectorcraft/tree/main/docs (`mcp.md`, `control-protocol.md`).
-  `mcp.md` on `main` can describe features newer than 0.11.0.
+  `mcp.md` on `main` can describe features newer than 0.13.1.

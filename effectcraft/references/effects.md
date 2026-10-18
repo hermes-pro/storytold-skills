@@ -1,6 +1,6 @@
 # EffectCraft effects
 
-Generated from `list_effects` (EffectCraft 0.10.0, 307 effects). Apply with `add_effect {layer, effect: <id or name>, values: {paramId: value}}`; the instance lands at `effects/#n`, so a parameter is `effects/#n/<paramId>` for `set_property` / `add_keyframe`. Enum params take an index. Format: `id` **Name** — `paramId` (default), …
+Generated from `list_effects` (EffectCraft 0.11.1, 307 effects). Apply with `add_effect {layer, effect: <id or name>, values: {paramId: value}}`; the instance lands at `effects/#n`, so a parameter is `effects/#n/<paramId>` for `set_property` / `add_keyframe`. Enum params take an index. Format: `id` **Name** — `paramId` (default), …
 
 ## 3D Channel
 

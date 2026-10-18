@@ -1,6 +1,6 @@
 # GridCraft command catalog
 
-Generated from `gridcraft-cli commands --json` (GridCraft 0.7.0, 341 commands). Run any of them with
+Generated from `gridcraft-cli commands --json` (GridCraft 0.8.0, 341 commands). Run any of them with
 `execute_command {command, params}` (MCP) or `gridcraft-cli run --cmd 'id={json}'`. Check one live with
 `list_commands {search}`. `?` = optional, `a|b` = choices, `→ {...}` = what it returns. Most commands act on the
 selection when `range` is omitted.

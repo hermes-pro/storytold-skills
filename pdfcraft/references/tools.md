@@ -1,6 +1,6 @@
 # PdfCraft MCP tools
 
-Generated from the live `pdfcraft-cli mcp` server (PdfCraft 0.8.0, 163 tools). Hermes names them
+Generated from the live `pdfcraft-cli mcp` server (PdfCraft 0.9.0, 170 tools). Hermes names them
 `mcp_pdfcraft_<tool>`. The same names work in `pdfcraft-cli run <tool> key=value` and `run --script`.
 With `pdfcraft-cli mcp --compact` only a core set is listed; run any other tool here with
 `tool_call {name, arguments}` (and `tool_search {name}` returns its full schema).
@@ -32,7 +32,7 @@ List the open documents with their ids, page counts and unsaved state.
 - (no parameters)
 
 ### `doc_info` (read-only)
-Metadata, page sizes and labels, bookmarks, annotations, form fields, links, layers, attachments, fonts, security and repair notes.
+Metadata, page sizes and labels, bookmarks, annotations, form fields, links, layers, page transitions and display times, attachments, fonts, security and repair notes.
 - (no parameters besides `doc`)
 
 ### `doc_close`
@@ -123,6 +123,7 @@ Run steps in order (at most 1000). Returns completed/failed counts and per-step 
 ### `page_render` (read-only)
 Render one page to a PNG image (default 96 dpi, at most 600).
 - `dpi`?: number [min 1, max 600]
+- `hide_added_text`?: integer [min 1] — Render a retyping background without this added text item (added index from object_list). Mutually exclusive with hide_text_block. Does not modify the document.
 - `hide_text_block`?: integer [min 1] — Render an inline editor background without this paragraph (index from text_paragraphs). Does not modify the document.
 - `page`: integer [min 1]
 
@@ -150,6 +151,13 @@ The lines of existing text on a page (Edit a PDF ▸ Edit text): number, text, b
 ### `text_paragraphs` (read-only)
 The paragraphs on a page (adjacent source runs grouped into aligned visual rows, including mixed fonts, sizes and colours): number, text, editor_text (visual rows separated by newlines), rows and source line numbers, box (top-left-origin points), font and size. Use the number with text_edit's paragraph.
 - `page`: integer [min 1]
+
+### `text_word_count` (read-only)
+Count Unicode words and characters on selected pages (default all), with totals and per-page counts. Table/code exclusions use PDF structure tags, not visual guesses; unclassified text is retained. Image exclusion removes Figure-tagged and invisible/OCR text. Does not run OCR. Copy permission is required. Fails rather than returning a partial total when a page cannot be read.
+- `exclude_code`?: boolean
+- `exclude_images`?: boolean
+- `exclude_tables`?: boolean
+- `pages`?: [integer] — 1-based page numbers to count (default: all).
 
 ### `page_images` (read-only)
 The raster images and grouped Form artwork a page draws (Edit a PDF): number, full placement rect and visible_rect after page/path clipping (top-left-origin points; null if fully hidden), kind (image/form), pixel size ([0,0] for forms) and resource name. Forms include nested graphics and are edited as a whole. Numbers count forms and images together in drawing order, so a page with forms numbers its images differently than before forms were listed: always take numbers from a fresh page_images call.
@@ -200,7 +208,7 @@ Insert a blank page so it becomes page `at`. Size defaults to the neighbouring p
 - `width`?: number — Points.
 
 ### `page_insert_file`
-Insert pages of another PDF so the first becomes page `at`. Undoable.
+Insert pages of another PDF so the first becomes page `at`. Its bookmarks come along, collapsed under one bookmark named after the file, placed among the document's bookmarks where the pages went. Undoable.
 - `at`: integer [min 1]
 - `pages`?: [integer] — 1-based page numbers of the source file (default: all).
 - `path`: string
@@ -239,6 +247,18 @@ Label a range of pages (e.g. i, ii, iii for front matter, or A-1, A-2 for an app
 - `style`?: decimal \| upper-roman \| lower-roman \| upper-alpha \| lower-alpha \| none — Numbering style (default decimal; none = prefix only).
 - `to`: integer [min 1]
 
+### `page_transition_set`
+Set or remove the transition and display time pages play in a full-screen presentation (ISO 32000-2 §12.4.4; Acrobat's Organize ▸ Page Transitions). style: Split, Blinds, Box, Wipe, Dissolve, Glitter, R (replace, no effect), Fly, Push, Cover, Uncover or Fade, or none to remove the transition; duration in seconds (default 1); dimension horizontal/vertical (Split, Blinds); motion inward/outward (Split, Box, Fly); direction 0, 90, 180, 270, 315 or none (Wipe, Glitter, Fly, Cover, Uncover, Push); scale and opaque for Fly. display: seconds the page stays before advancing; left out, the page waits for the presenter. doc_info lists the result under transitions.
+- `dimension`?: horizontal \| vertical
+- `direction`?: any — 0, 90, 180, 270, 315 or "none"
+- `display`?: number [min 0]
+- `duration`?: number [min 0]
+- `motion`?: inward \| outward
+- `opaque`?: boolean
+- `pages`?: [integer] — 1-based page numbers to change (default: all).
+- `scale`?: number
+- `style`?: none \| Split \| Blinds \| Box \| Wipe \| Dissolve \| Glitter \| R \| Fly \| Push \| Cover \| Uncover \| Fade
+
 ### `doc_combine`
 Combine files, in order, into one PDF (bookmarks are kept under one entry per file). Images (PNG, JPEG, TIFF, GIF, BMP, JPEG 2000) and .txt files are made into PDFs first. pages optionally chooses each file's pages, in step with paths: a range such as "1-3, 6" or null for all pages. passwords, also in step with paths, opens encrypted files (the open password, or the permissions password where a file's security doesn't allow copying pages; null for none). The result is not encrypted. Passwords are never echoed back. groups, also in step with paths, splits a file around others: entries with the same number (they must name the same path) are one file, copied once, so it keeps one bookmark at its first page, its links and its form fields; null for a file of its own. A group uses its first entry's password. When two files' forms name the same field, field_conflicts says what happens: "rename" (the default) keeps the fields separate by renaming the later one (Text1 becomes Text1-1) and the result lists renamed_fields as [[old, new], …] — scripts that refer to the old name are not rewritten; "merge" makes them one field, as before.
 - `field_conflicts`?: rename \| merge
@@ -260,7 +280,7 @@ Split into several files written to out_dir: every N pages, before given pages, 
 ## Editing page content
 
 ### `page_add_text`
-Add text as page content (not a comment). Place it with at [x, y] (top-left, points from the top-left of the displayed page) and width (wrap width, default 200), or rect. Newlines start new lines; long lines wrap. Style: font helvetica/times/courier, size, bold, italic, color (#RRGGBB or a name), align left/center/right. Text must be Western European (WinAnsi) characters; others are refused. It stays editable with content_update. Undoable.
+Add text as page content (not a comment). Place it with at [x, y] (top-left, points from the top-left of the displayed page) and width (wrap width, default 200), or rect. Newlines start new lines; long lines wrap. Style: font helvetica/times/courier, size, bold, italic, color (#RRGGBB or a name), align left/center/right. Text must be Western European (WinAnsi) characters, or Arabic, Hebrew or Thai when the build has their craft-fonts faces (drawn right to left where the text is); others are refused. It stays editable with content_update. Undoable.
 - `align`?: left \| center \| right \| justify
 - `at`?: [2 numbers]
 - `bold`?: boolean
@@ -359,8 +379,8 @@ Load an explicitly selected, openly licensed full TrueType/OpenType face into a 
 - `path`: string
 
 ### `image_edit`
-Change one of a page's images (number from page_images): action move (rect: new full placement box in top-left-origin points, based on page_images.rect), rotate (quarters clockwise, default 1), flip_horizontal, flip_vertical, replace (path: an image file, drawn in the same place) or delete. Undoable. The selected image crop transforms with its pixels, isolating shared path scopes while retaining neighboring painting. Text-outline clips return a clear error. Rotation/flip use the visible centre. Form artwork supports move/resize/rotate/flip/delete as a group; replace and image_save only support raster images.
-- `action`: move \| rotate \| flip_horizontal \| flip_vertical \| replace \| delete
+Change one of a page's images (number from page_images): action move (rect: new full placement box in top-left-origin points, based on page_images.rect), crop (rect: the part to keep, top-left-origin points; the pixels stay in place and page_images.visible_rect shows the result; a later move carries the crop along), rotate (quarters clockwise, default 1), flip_horizontal, flip_vertical, replace (path: an image file, drawn in the same place) or delete. Undoable. The selected image crop transforms with its pixels, isolating shared path scopes while retaining neighboring painting. Text-outline clips return a clear error. Rotation/flip use the visible centre. Form artwork supports move/resize/rotate/flip/delete as a group; replace and image_save only support raster images.
+- `action`: move \| crop \| rotate \| flip_horizontal \| flip_vertical \| replace \| delete
 - `image`: integer [min 1]
 - `page`: integer [min 1]
 - `path`?: string
@@ -566,10 +586,11 @@ Lock or unlock a comment (Properties ▸ Locked). Locked comments can't be moved
 - `page`?: integer [min 1] — With `index`, instead of `id`.
 
 ### `comment_edit`
-Change a comment's text, colour, opacity, line width, fill (rectangle/oval/polygon; "none" removes it), rectangle (rectangle/oval/text box/stamp) or position (`move` [dx, dy] in points). Stamps keep their original appearance when resized. One undo step.
+Change a comment's text, colour, opacity, line width, font size (text box/typewriter/callout), fill (rectangle/oval/polygon; "none" removes it), rectangle (rectangle/oval/text box/stamp) or position (`move` [dx, dy] in points). Stamps keep their original appearance when resized. One undo step.
 - `color`?: string — #RRGGBB or a name: yellow, red, orange, green, blue, purple, pink, black, gray, white.
 - `contents`?: string
 - `fill`?: string — Interior colour of a rectangle, oval or polygon: #RRGGBB, a colour name, or "none" for no fill.
+- `font_size`?: number [min 1, max 400] — Font size in points of a text box, typewriter text or callout; the box grows to hold the text.
 - `id`?: string — The comment's id (from comment_list).
 - `index`?: integer [min 1] — 1-based position on the page, as comment_list reports.
 - `move`?: [2 numbers] — [x, y] in points from the top-left of the displayed page.
@@ -631,7 +652,7 @@ Preferences ▸ Date format: the pattern Fill & Sign dates use (default m/d/yyyy
 - `language`?: string
 
 ### `doc_flatten`
-Merge comment and/or form field appearances into the page content, so they print and display everywhere but can no longer be edited. Undoable until saved.
+Merge comment and/or form field appearances into the page content, so they print and display everywhere but can no longer be edited. Flattening the fields of an XFA form also takes the XFA out (its template, data and scripts), so Adobe's viewers show the baked pages rather than laying the form out again. Undoable until saved.
 - `comments`?: boolean — Default true.
 - `fields`?: boolean — Default true.
 
@@ -704,7 +725,7 @@ Set the tab order of pages (default all): row (top to bottom, left to right), co
 - `pages`?: [integer] — 1-based page numbers to set (default: all).
 
 ### `form_detect_fields`
-Prepare a form ▸ automatic field detection: find the blanks a printed form asks to be filled (underscore runs, lines, empty boxes, small squares for check boxes) and name each field from its label. With add (default true) the fields are created as one undoable step; otherwise they are only proposed. Returns page (1-based), kind, name and rect (points, origin bottom-left).
+Prepare a form ▸ automatic field detection: find the blanks a printed form asks to be filled (underscore runs, lines, empty boxes, small squares for check boxes; on scanned pages read from the pixels) and name each field from its label. With add (default true) the fields are created as one undoable step; otherwise they are only proposed. Returns page (1-based), kind, name and rect (points, origin bottom-left).
 - `add`?: boolean
 - `pages`?: [integer] — 1-based page numbers to look at (default: all).
 
@@ -727,6 +748,10 @@ Field Properties ▸ Run custom script: set field's JavaScript for event keystro
 Collect the field values of form data files (FDF, XFDF) or filled-in PDF forms into one CSV file at path: a column per field name, a row per file. Returns the row and column counts.
 - `path`: string
 - `paths`: [string]
+
+### `xfa_to_static`
+Make an XFA form an ordinary PDF form: the XFA packets (template, data, scripts) and PdfCraft's private keys go; the pages as laid out and the fields with their values stay, so every viewer shows the same form and none lays it out again. Its scripts no longer run. Undoable until saved.
+- (no parameters besides `doc`)
 
 ### `doc_export_data`
 Write comments and/or form data to path; the extension picks the format: .xfdf or .fdf (comments and/or fields), .xml, .csv or .txt (form data). For an XFA form, .xml is its data alone (rooted at the form's root data node, as Acrobat exports it) and .xdp an XML Data Package holding the whole datasets. what: all (default), comments, fields.
@@ -785,7 +810,7 @@ Remove every redaction mark without applying it. Undoable.
 - (no parameters besides `doc`)
 
 ### `doc_audit_redactions` (read-only)
-Find faux redactions: opaque filled rectangles painted over text that is still extractable, and /Redact annotations that were marked but never applied. Paint-order and colour-aware: a rectangle counts only when painted after the text and dark enough to hide it (page backgrounds and light shading are not flagged). Each finding reports the 1-based page, the kind (covered-text or unapplied-mark), the rectangle, and the hidden text. Fails closed: unreadable content is an error, never a clean bill. A properly applied redaction removes the text and never flags.
+Find faux redactions: opaque filled rectangles painted over text that is still extractable, and /Redact annotations that were marked but never applied. Paint-order and colour-aware: a rectangle counts only when painted after the text and dark enough to hide it (page backgrounds and light shading are not flagged). Each finding reports the 1-based page, the kind (covered-text or unapplied-mark), the rectangle (points from the top-left of the displayed page, like comment_list), and the hidden text. Fails closed: unreadable content is an error, never a clean bill. A properly applied redaction removes the text and never flags.
 - (no parameters besides `doc`)
 
 ### `doc_hidden_info` (read-only)
@@ -838,12 +863,14 @@ Windows: signing identities in the Current User Personal certificate store (cert
 - (no parameters)
 
 ### `sign_document`
-Sign with a digital ID (a .p12/.pfx path, or on macOS a Keychain identity: "keychain:<common name or fingerprint>" from sign_keychain_ids, or on Windows a store identity: "windows:<common name or fingerprint>" from sign_windows_ids) and save the signed file to `out` (signing always saves, as in Acrobat; the document then shows the signed file). Sign an existing empty signature field (`field`), or a new one on `page` at `rect` (omit rect for an invisible signature). certify: no_changes, form_fill or comments makes a certification signature. graphic shows a picture where the signer's name would be large (Acrobat: Configure Signature Appearance): {"image": path} (PNG or JPEG), {"text": name} (typed in the Fill & Sign script font) or {"strokes": [[[x, y], …], …]} (y up, the drawing pad 1 wide); it needs a visible signature. PAdES B-B, SHA-256 (SHA-384 for P-384 keys).
+Sign with a digital ID (a .p12/.pfx path, or on macOS a Keychain identity: "keychain:<common name or fingerprint>" from sign_keychain_ids, or on Windows a store identity: "windows:<common name or fingerprint>" from sign_windows_ids) and save the signed file to `out` (signing always saves, as in Acrobat; the document then shows the signed file). Sign an existing empty signature field (`field`), or a new one on `page` at `rect` (omit rect for an invisible signature). certify: no_changes, form_fill or comments makes a certification signature. graphic shows a picture where the signer's name would be large (Acrobat: Configure Signature Appearance): {"image": path} (PNG or JPEG), {"text": name} (typed in the Fill & Sign script font) or {"strokes": [[[x, y], …], …]} (y up, the drawing pad 1 wide); it needs a visible signature. appearance chooses what a visible signature shows (default: name, date and labels; reason, location and distinguished_name are off unless turned on). labels gives the words of its labels, e.g. in another language (default English: "Digitally signed by", "DN: ", "Reason: ", "Location: ", "Date: "; include the separator); each must be in Western European characters (Windows-1252), the only ones the signature's font draws, or the call is refused naming the label and character. PAdES B-B, SHA-256 (SHA-384 for P-384 keys).
+- `appearance`?: {date, distinguished_name, labels, location, name, reason} — What a visible signature shows; items not given keep their default.
 - `certify`?: no_changes \| form_fill \| comments
 - `contact`?: string
 - `field`?: string
 - `graphic`?: {image, strokes, text} — Exactly one of image, text or strokes.
 - `id`: string — Digital ID file (.p12 / .pfx), keychain: reference on macOS, or windows: reference on Windows.
+- `labels`?: {date, distinguished_name, location, reason, signed_by} — The words of a visible signature's labels (at most 200 characters each, Western European characters only); labels not given stay English.
 - `location`?: string
 - `out`: string — Where to save the signed document.
 - `page`?: integer [min 1]
@@ -868,7 +895,7 @@ Write pages as PNG, JPEG or TIFF files (`<name>_page_<n>.png|jpg|tif`) into a fo
 - `quality`?: integer [min 1, max 100] — JPEG quality (default 85).
 
 ### `doc_export_all_images`
-Write the images that pages use into a folder (`<name>_Page_<n>_Image_<k>.jpg|png`), each once: JPEG images unchanged, others as PNG with their soft mask as alpha. min_size skips images with fewer pixels on their shorter side. Images that can't be decoded yet (JPEG 2000, JBIG2, CCITT, separations) are listed under skipped. Includes unsaved edits.
+Write the images that pages use into a folder (`<name>_Page_<n>_Image_<k>.jpg|png`, n zero-padded to the page count's digits), each once: JPEG images unchanged, others as PNG with their soft mask as alpha. min_size skips images with fewer pixels on their shorter side. Images that can't be decoded yet (JPEG 2000, JBIG2, CCITT, separations) are listed under skipped. Includes unsaved edits.
 - `folder`: string
 - `min_size`?: integer [min 0] — Skip images smaller than this many pixels on their shorter side (default 0).
 - `pages`?: [integer] — 1-based page numbers whose images to export (default: all).
@@ -882,7 +909,7 @@ Write a smaller copy of the document to `path` with Acrobat's Reduce File Size c
 - `path`: string
 
 ### `doc_optimize`
-Write an optimized copy to `path` (Acrobat's PDF Optimizer). color / gray: { downsample, ppi, above_ppi, compression: jpeg|zip|retain, quality 1–100 } (defaults: downsample to 150 ppi above 225, JPEG 60). Images are measured where pages draw them and replaced only when smaller. discard_*: thumbnails (default true), alternate_images (true), tags, print_settings; flate_unencoded (true); remove_invalid_links and remove_unreferenced_dests (true); images and forms the pages list but never draw are always dropped (unused_xobjects). discard: Remove Hidden Information categories (metadata, attachments, comments, form-fields, hidden-text, hidden-layers, bookmarks, links-actions-scripts, private-data). Signed documents are refused. The open document is unchanged.
+Write an optimized copy to `path` (Acrobat's PDF Optimizer). preset: standard (default; Reduce File Size's choices) or mobile (images to 96 ppi above 144, JPEG high quality); the options below change it. merge_fragments (default true) first puts a page picture drawn as many stacked image strips (as some PDF printers write it) back together into one image, so it can be resampled (merged_images, fragments_merged). color / gray: { downsample, ppi, above_ppi, compression: jpeg|zip|retain, quality 1–100 } (defaults: downsample to 150 ppi above 225, JPEG 60). Images are measured where pages draw them and replaced only when smaller. discard_*: thumbnails (default true), alternate_images (true), tags, print_settings; flate_unencoded (true); remove_invalid_links and remove_unreferenced_dests (true); images and forms the pages list but never draw are always dropped (unused_xobjects). discard: Remove Hidden Information categories (metadata, attachments, comments, form-fields, hidden-text, hidden-layers, bookmarks, links-actions-scripts, private-data). Signed documents are refused. The open document is unchanged.
 - `color`?: object
 - `discard`?: [string]
 - `discard_alternate_images`?: boolean
@@ -891,7 +918,9 @@ Write an optimized copy to `path` (Acrobat's PDF Optimizer). color / gray: { dow
 - `discard_thumbnails`?: boolean
 - `flate_unencoded`?: boolean
 - `gray`?: object
+- `merge_fragments`?: boolean
 - `path`: string
+- `preset`?: standard \| mobile
 - `remove_invalid_links`?: boolean
 - `remove_unreferenced_dests`?: boolean
 
@@ -900,7 +929,8 @@ How many bytes each kind of content takes and its share of the file (PDF Optimiz
 - (no parameters besides `doc`)
 
 ### `doc_print`
-Print with Acrobat's Print dialog options, or save the print-ready PDF. pages: a range such as "1-3, 6, 9-" (page labels allowed; default all); subset odd/even; reverse. layout: fit (default), actual, shrink, custom (scale %), multiple (per_sheet 2/4/6/9/16, order, border, auto_rotate; cut-stack order arranges single-sided sheets for cutting into piles and stacking left to right, top to bottom, keeping sheet order within each pile; duplex must be off), booklet (booklet_subset both/front/back, binding left/right), poster (scale %, overlap pt, cut_marks). orientation auto/portrait/landscape; comments_forms document / document-and-markups (default) / document-and-stamps / form-fields-only; paper Letter/Legal/Tabloid, ARCH A/B/C/D/E1/E, ANSI C/D/E, or A0/A1/A2/A3/A4/A5 (short names or full preset labels); use layout actual for 100% in the print-ready PDF; printer drivers may still substitute paper or scale. Then path (save) or printer (a name or "default") with copies, collate, duplex off/long-edge/short-edge, grayscale, and options (driver options from printer_options, CUPS).
+Print with Acrobat's Print dialog options, or save the print-ready PDF. pages: a range such as "1-3, 6, 9-" (page labels allowed; default all); subset odd/even; reverse. layout: fit (default), actual, shrink, custom (scale %), multiple (per_sheet 2/4/6/9/16, order, border, auto_rotate; cut-stack order arranges single-sided sheets for cutting into piles and stacking left to right, top to bottom, keeping sheet order within each pile; duplex must be off), booklet (booklet_subset both/front/back, binding left/right), poster (scale %, overlap pt, cut_marks). orientation auto/portrait/landscape; comments_forms document / document-and-markups (default) / document-and-stamps / form-fields-only; paper Letter/Legal/Tabloid, ARCH A/B/C/D/E1/E, ANSI C/D/E, or A0/A1/A2/A3/A4/A5/A6 (short names or full preset labels); use layout actual for 100% in the print-ready PDF; printer drivers may still substitute paper or scale. Then path (save) or printer (a name or "default") with copies, collate, duplex off/long-edge/short-edge, grayscale, and options (driver options from printer_options, CUPS).
+- `as_image`?: boolean — Print as image (Acrobat's Advanced Print Setup): every page rendered to a picture at dpi before it is placed on the paper, for printers that skip text, shading or transparency; the print is no longer searchable text, and with grayscale the pictures are grey.
 - `auto_rotate`?: boolean
 - `binding`?: left \| right
 - `booklet_subset`?: both \| front \| back
@@ -909,6 +939,7 @@ Print with Acrobat's Print dialog options, or save the print-ready PDF. pages: a
 - `comments_forms`?: document \| document-and-markups \| document-and-stamps \| form-fields-only
 - `copies`?: integer [min 1, max 999]
 - `cut_marks`?: boolean
+- `dpi`?: number [min 72, max 600] — Resolution for as_image (default 300).
 - `duplex`?: off \| long-edge \| short-edge
 - `grayscale`?: boolean
 - `layout`?: fit \| actual \| shrink \| custom \| multiple \| booklet \| poster
@@ -1023,7 +1054,29 @@ Write marked content, a Document structure element, paragraph tags and a parent 
 - (no parameters besides `doc`)
 
 ### `accessibility_tags` (read-only)
-List reachable indirect structure tags in document order with PDF object number, generation, nearest indirect parent, depth, page, type, title, actual text, alternate text and language. Inline tag dictionaries have no stable object reference and are not listed.
+List reachable indirect structure tags in document order with PDF object number, generation, nearest indirect parent, depth, page, type, title, actual text, alternate text and language, one page at a time: count is how many tags match, next the offset of the following page (null at the end). types, pages and max_depth keep only some tags. Inline tag dictionaries have no stable object reference and are not listed.
+- `limit`?: integer [min 1, max 1000] — Tags in the page (default 200)
+- `max_depth`?: integer [min 0] — Only tags at most this deep (0 = top level)
+- `offset`?: integer [min 0] — Where the page starts, counted from 0 (the previous page's next)
+- `pages`?: [integer] — Only tags on these pages
+- `types`?: [string] — Only tags of these types, as listed in type (such as H1, H2, Table)
+
+### `accessibility_tag_content` (read-only)
+List the marked-content references directly owned by one reachable indirect structure tag, including page, MCID and extracted text.
+- `generation`: integer [min 0, max 65535]
+- `object`: integer [min 1]
+
+### `accessibility_mark_tag_artifact`
+Mark a reachable leaf structure tag's direct marked content as an artifact and remove the tag from the reading structure. Use object and generation from accessibility_tags. Tags with child structure elements, no direct marked content, or content not found on its page are rejected. Undoable.
+- `generation`: integer [min 0, max 65535]
+- `object`: integer [min 1]
+
+### `accessibility_find_untagged` (read-only)
+Find untagged painted page content, annotations, and form widgets. This focused check does not modify the PDF or claim that its other accessibility rules pass.
+- `pages`?: [integer] — 1-based page numbers to search (default: all).
+
+### `accessibility_autotag_form_fields`
+Write `/Form` tags, widget structure-parent keys, and a parent tree for all page widgets in an untagged AcroForm. Existing tag trees are refused for review. Text, figures, links, and other content are not tagged.
 - (no parameters besides `doc`)
 
 ### `accessibility_set_tag_property`

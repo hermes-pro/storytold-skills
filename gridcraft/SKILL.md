@@ -1,7 +1,7 @@
 ---
 name: gridcraft
 description: "Spreadsheets with GridCraft (Excel-style): budgets, sales reports, financial models, data analysis, pivot tables, charts and dashboards. Enter data and formulas (SUM, XLOOKUP, SUMIFS, dynamic arrays), format numbers, sort, filter, Solver and forecasts, and open / save XLSX, XLS, ODS, CSV, TSV, JSON, HTML or export PDF."
-version: 0.3.0
+version: 0.4.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,7 +16,7 @@ metadata:
 GridCraft is a free, open-source clean-room take on Microsoft Excel (storytold Crafting Apps). An agent
 drives it through an MCP server (`gridcraft-cli mcp`) or one-shot CLI commands. XLSX is the native format,
 so formulas, styles, conditional formats, tables, charts, validation and PivotTables round-trip to Excel.
-This skill is tested against GridCraft 0.7.0.
+This skill is tested against GridCraft 0.8.0.
 
 ## When to Use
 
@@ -239,7 +239,7 @@ difference. Use it on an Excel file before trusting GridCraft's numbers for it.
 
 A `--script` file has one command per line, `id {json}`, `id={json}` or `{"command":…, "params":…}`; `#` lines
 are comments. The first failing step stops the run with exit 1 (`step 2 (steps.jsonl:2, bogus.cmd): unknown
-command \`bogus.cmd\``). Tested on 0.7.0: a 13-step budget script (values, number format code, validation, two
+command \`bogus.cmd\``). Tested on 0.8.0: a 13-step budget script (values, number format code, validation, two
 sparklines, named range, merge, bar chart, `chart.set`, PDF), then `info`, `cat --formulas`, `eval --in`,
 `convert` to CSV and `check`.
 
@@ -257,14 +257,18 @@ sparklines, named range, merge, bar chart, `chart.set`, PDF), then `info`, `cat 
 - **CSV dates become date serials** (`read_range` gives `46027`, `formatted:true` gives `2026-01-05`). Compare
   them with `DATE(…)` in formulas, not with text.
 - **CSV / TSV export writes displayed text**, not raw numbers: a `Currency` cell becomes `"$12,000.00"`
-  (`convert` and `cat --csv` too). For machine-readable numbers, set `numberFormat:"General"` on the range,
-  export, then `undo`. The .json save is GridCraft's internal model, not a table.
+  (`convert`, `file.exportCsv` and `cat --csv` too). For machine-readable numbers, set
+  `numberFormat:"General"` on the range, export, then `undo`. The .json save is GridCraft's internal model,
+  not a table.
 - **The pivot sheet becomes active** (inserted before the current sheet, report at A3), and so does the sheet
   from `data.forecastSheet`, `data.analysisToolPak` without `output`, or `home.insertSheet`. Later
   unqualified ranges then hit that sheet; use `Sheet!A1` or `sheet.activate`.
 - **CSV / TSV save only the active sheet.** Activate the right one or use `file.exportCsv {sheet}`.
 - **A typo'd function doesn't error**: `set_cell` stores `=SUMM(1,2)` and the value is `#NAME?`. Read values back.
   A wrong argument count is refused on entry: `ROUND has too few arguments. Use ROUND(number, num_digits)`.
+- **Formulas over 8,192 characters are refused** like Excel (`There's a problem with this formula: formula is
+  longer than 8192 characters`), and so is very deep nesting (`… formula is nested too deeply`). Split long
+  formulas into helper cells or use `LET`.
 - **Bar charts are horizontal**: `chart.set {yTitle}` labels the vertical (category) axis there.
 - **`file.exportPdf` without `fitToPage: true` splits a wide sheet across pages** (the chart beside the table
   lands on page 2). `save_workbook {path:"x.pdf"}` has no fit option, so use `file.exportPdf` for reports.

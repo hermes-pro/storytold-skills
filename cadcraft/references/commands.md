@@ -1,6 +1,6 @@
 # CADCraft command catalog
 
-Generated from `cadcraft-cli commands` (CADCraft 0.7.0, 426 commands), grouped by menu. Run any of them with
+Generated from `cadcraft-cli commands` (CADCraft 0.8.0, 426 commands), grouped by menu. Run any of them with
 `execute {command, params}` (MCP) or `cadcraft-cli run --cmd 'id {json}'`; type the id or an alias at `command_line`
 for the interactive version. `?` = optional, `a|b` = choices, `→ {...}` = what it returns, `hex` = an entity handle.
 Points are `[x, y]`. Angles are degrees unless noted. *(prompts)* marks commands that also run interactively.

@@ -1,6 +1,6 @@
 # SoundCraft command catalog
 
-Generated from `list_commands` (SoundCraft 0.7.0, 478 commands). Run with `execute {command, params}`
+Generated from `list_commands` (SoundCraft 0.8.0, 478 commands). Run with `execute {command, params}`
 or `batch {calls:[{command, params}]}`; `soundcraft-cli describe ID` shows one. `?` = optional, `a|b` = choices.
 Positions: samples (int), `{"seconds": x}`, or `"0:12.500"` / `"bars_beats:5|1|000"`. Tracks by id or name; clips by id.
 Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an error such as `make an edit selection first` means: pass them).
@@ -531,7 +531,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 
 - `video.online` (Options › Video Track Online): {value?: bool} (toggles when omitted) — when offline the Video window and the Video track stop decoding pictures
 - `video.offset` (Set Video Start): {track?: video track (default: the first), at: position} — moves the track's video clips so the picture starts at `at` (e.g. '01:00:00:00')
-- `video.list` (Movies): {} — movies used by Video tracks (path, size, rate, codec, online file)
+- `video.list` (Movies): {} — movies used by Video tracks (path, size, rate, codec, online file, why it is offline)
 
 ## app — App
 

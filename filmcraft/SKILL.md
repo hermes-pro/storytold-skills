@@ -1,7 +1,7 @@
 ---
 name: filmcraft
 description: "Video editing with FilmCraft (Premiere Pro-style): cut clips into a sequence, trim, razor, ripple, transitions (cross dissolve, dip to black), titles and lower thirds, music and audio levels/fades, color (Lumetri), speed changes, captions/subtitles (SRT/VTT, burn-in), transcript-based editing, text-to-speech narration, and export to MP4 / ProRes / GIF / WAV / FLAC or FCP XML / EDL / OTIO / AAF."
-version: 0.3.0
+version: 0.4.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -59,6 +59,8 @@ with content). For the user to watch live, they run `filmcraft --control 9876` a
 - **Every edit is a command** (701). Discover with `command_list {filter}`, run with `command_run {id, params}`, or
   several with `command_batch`. Unknown ids/tracks are errors, never a different target.
 - **Linked selection is on:** an edit to a video clip also hits its linked audio (razor cuts both, gain sets both).
+  To act on one side only, select it with `timeline.select {clips: [v], linked: false}`, then run the edit with no
+  `clips` (e.g. `edit.clear {}` removes the picture and keeps the sound).
 - **Sync lock is on for every track:** ripple edits refuse to run if they would push a clip on another track out of
   sync (see Pitfalls).
 
@@ -155,7 +157,7 @@ command_run file.exportMedia {path:"/abs/edit.mp4", format:"h264", wait:true}   
 
 ### Recipe: transcript cleanup and burned-in captions (tested)
 
-The 0.8.0 release still has **no speech-to-text** (`transcript.generate`: "command `transcript.generate` is not
+The 0.9.0 release still has **no speech-to-text** (`transcript.generate`: "command `transcript.generate` is not
 available right now: speech-to-text is not available in this build (built without the `whisper` feature); import a
 transcript with transcript.set instead"). Bring word timings from elsewhere:
 
@@ -199,7 +201,7 @@ Place the picture with `timeline.place {item, track:"V1", audio:false}` so its o
   **Pass `format`** (`h264`, `prores`, `dnxhr`, `gif`, `png`, `exr`, `wav`, `flac`, `aac`, …): through MCP the extension
   is not used, and `x.wav` without `format` becomes an H.264 `x.wav.mp4`. A `preset` sets the format too. Without
   `wait` it returns `{job}` at once; poll `jobs.list`. Image sequences write `name000.png`, `name001.png`, ….
-- Tested on 0.8.0: `h264` (+ `crf`), `prores` (.mov, HQ + PCM), `gif`, `png` sequence, `wav`, `flac`, `aac` (.m4a),
+- Tested on 0.9.0: `h264` (+ `crf`), `prores` (.mov, HQ + PCM), `gif`, `png` sequence, `wav`, `flac`, `aac` (.m4a),
   `loudnessLufs: -14` (measured -14.0 LUFS), preset "YouTube 1080p Full HD". `file.exportFrame {path, format: "jpeg",
   time}` writes one still.
 - **32-bit audio:** `settings: {audio: {bits: 32, float: true}}` writes 32-bit float PCM (tested: WAV → `pcm_f32le`);
@@ -261,7 +263,7 @@ A `--preset` sets the format: `out.mov` with an H.264 preset becomes `out.mov.mp
   the `.fcproj`.
 - `sequence_inspect` dumps every clip's effects; extract `start/end/sourceIn/sourceOut` per track instead of reading it all.
 - Many edit commands return `null` on success; that's normal. `render_frame` returns the image plus "rendered frame".
-- Release builds (0.8.0 too) have no speech models: `transcript.generate` (no `whisper` feature),
+- Release builds (0.9.0 too) have no speech models: `transcript.generate` (no `whisper` feature),
   `transcript.downloadModel` ("model downloads are not available in this build (built without the `speech-download`
   feature)"), `tts.downloadVoices` (no `neural-voices` feature) and the `kokoro-*` voices (no `kokoro` feature). `transcript.models` reports `available: false`. Use `transcript.set` or
   `captions.import`, and the `basic-*` voices.
