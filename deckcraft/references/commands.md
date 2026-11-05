@@ -1,11 +1,11 @@
 # DeckCraft command catalog
 
-Generated from `deckcraft-cli commands` (DeckCraft 0.8.0): 321 commands. Run one with `run_command {command, params}`, or several with `batch`.
+Generated from `deckcraft-cli commands` (DeckCraft 0.15.1): 331 commands. Run one with `run_command {command, params}`, or several with `batch`.
 Grep this file for a verb (`grep -n 'table[.]' commands.md`) rather than reading it whole.
 `?` = optional, `a|b` = choices, `→` = what it returns. Unknown keys in command params are ignored silently (the MCP tools themselves refuse unknown arguments), so copy names exactly.
 `(Tab › Group)` is where the command sits in the desktop UI; `[keys]` is its shortcut.
 
-Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `shape` (33), `insert` (18), `chart` (3), `smartArt` (13), `draw` (1), `picture` (12), `media` (9), `guide` (4), `arrange` (15), `selection` (3), `font` (4), `text` (16), `format` (46), `design` (14), `view` (4), `handout` (1), `notes` (1), `master` (6), `transition` (6), `animation` (11), `table` (21), `comment` (7), `review` (11), `show` (4), `document` (1), `commands` (1)
+Groups: `file` (19), `slide` (22), `window` (1), `edit` (12), `section` (5), `shape` (37), `insert` (18), `chart` (3), `smartArt` (13), `draw` (1), `picture` (12), `media` (9), `guide` (4), `arrange` (15), `selection` (3), `font` (4), `text` (17), `format` (47), `design` (14), `view` (4), `handout` (1), `notes` (1), `master` (6), `transition` (6), `animation` (11), `table` (21), `comment` (7), `review` (12), `show` (4), `document` (1), `commands` (1)
 
 ## file
 
@@ -18,9 +18,9 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 - `file.saveAs` (File): Save As… {path, format?} [Cmd+Shift+S]
 - `file.saveTemplate` (File): Save as Template… {path}
 - `file.saveBytes`: Save to Data {format?: deckcraft|pptx} → {data: base64}
-- `file.export` (File): Export… {path, format?: png|jpeg|pptx|deckcraft|outline|pdf|gif (else by path), slide?: index, all?: bool, scale?: px per pt, layout?: slides|notes|handouts (pdf), perPage?: 1|2|3|4|6|9, paper?: letter|a4|legal|a3 (pdf), orientation?: portrait|landscape (pdf), dpi?, slides?: [index]|range ("1-3,5"), includeHidden?, textLayer?, frame?, width?: px 16-3840|small|medium|large|extraLarge (gif), secondsPerSlide?: 0.1-600 (gif; 5), loop?: bool (gif; true: forever)} → {path, bytes} or {files} (png, jpeg); gif adds frames, width, height, secondsPerSlide
+- `file.export` (File): Export… {path, format?: png|jpeg|pptx|deckcraft|outline|rtf|pdf|gif (else by path), slide?: index, all?: bool, scale?: px per pt, layout?: slides|notes|handouts (pdf), perPage?: 1|2|3|4|6|9, paper?: letter|a4|legal|a3 (pdf), orientation?: portrait|landscape (pdf), dpi?, slides?: [index]|range ("1-3,5"), includeHidden?, textLayer?, frame?, transparentBackground?: bool (png: leave the slide background out), width?: px 16-3840|small|medium|large|extraLarge (gif), secondsPerSlide?: 0.1-600 (gif; 5), loop?: bool (gif; true: forever)} → {path, bytes} or {files} (png, jpeg); gif adds frames, width, height, secondsPerSlide
 - `file.info` (File): Info {} → {title, path, format, dirty, slides, hiddenSlides, sections, bytes?, properties}
-- `file.render`: Render Slide {slide?: index, scale?, edit?: bool} → {png: base64, width, height}
+- `file.render`: Render Slide {slide?: index, scale?, edit?: bool, transparentBackground?: bool} → {png: base64, width, height}
 - `file.close` (File): Close {} [Cmd+W]
 - `file.properties` (File): Properties {title?, subject?, author?, keywords?, comments?, category?, company?} → properties
 - `file.recovery.save`: Save AutoRecover Information {} → {written}
@@ -35,12 +35,13 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 - `slide.new` (Home › Slides): New Slide {layout?: layout name or kind (title, titleAndContent, sectionHeader, twoContent, comparison, titleOnly, blank, contentWithCaption, pictureWithCaption), at?: index, title?: text, body?: text} [Cmd+Shift+N]
 - `slide.duplicate` (Insert): Duplicate Slide {index?}
 - `slide.delete` (Edit): Delete Slide {index?, ids?: [slide id]}
-- `slide.move`: Move Slide {from?: index, to: index}
+- `slide.move`: Move Slide {from?: index, ids?: [slide id], to: index (counted without the moved slides)}
 - `slide.go`: Go to Slide {index} | {id}
 - `slide.next`: Next Slide {} [PageDown]
 - `slide.previous`: Previous Slide {} [PageUp]
 - `slide.first`: First Slide {} [Home]
 - `slide.last`: Last Slide {} [End]
+- `slide.selectRange`: Select Slide Range {to: index, from?: index (default the current slide), add?: bool (keep the slides already selected)}
 - `slide.selectSlides`: Select Slides {ids?: [slide id], indices?: [index], add?: bool}
 - `slide.hide` (Slide Show › Set Up): Hide Slide {index?, hidden?: bool}
 - `slide.layout` (Home › Slides): Layout {layout: name or kind, index?}
@@ -48,8 +49,10 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 - `slide.notes` (View): Notes {text | body: formatted notes (as in slide.inspect's notesBody), index?} (text as typed: untouched notes keep their formatting)
 - `slide.rename`: Rename Slide {name, index?}
 - `slide.fromOutline` (Insert › Slides From): Slides from Outline… {text, markdown?: bool (headings are slides, list items bullets)}
+- `slide.reuseList`: List Slides to Reuse {path | data: base64, name?} → {name, slides: [{index, title, hidden}]}: the slides of another presentation, for choosing which ones `slide.reuse` brings in
 - `slide.reuse` (Home › Slides › New Slide): Reuse Slides… {path? | data: base64, name?, slides?: [index] (0-based, default all), keepFormatting?: bool (default false: use the destination theme), at?: index (default after the current slide)}
 - `slide.inspect`: Inspect Slide {index?} → the slide's shapes with ids, kinds, boxes, text, fills, animations, transition, notes (text, and notesBody with its formatting)
+- `slide.actions`: Inspect Slide Actions {index?} → {index, slideId, actions: [{owner, event, type, target, hyperlink}]}; lists shape click/hover actions and text-run links/hover actions (including table cells) without executing them
 
 ## window
 
@@ -95,9 +98,9 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 - `shape.adjust`: Adjust Shape {index, value (file units), ids?}
 - `shape.change` (Shape Format › Insert Shapes › Edit Shape): Change Shape {preset, ids?}
 - `shape.smoothCorners` (Shape Format › Insert Shapes › Edit Shape): Smooth Corners {smoothing: 0..100 (%), radius?: pt (default: the rounded rectangle's own), ids?} → rectangle outline with smoothed (squircle) corners
-- `shape.fill` (Shape Format › Shape Styles): Shape Fill {color? | none?: true | gradient?: {stops: [[pos, color]], angle?, kind?: linear|radial} | picture?: base64 | pattern?: {preset, fg, bg} | transparency?: 0..1 | reset?: true, ids?}; pictureProps?: {tile?: bool, offsetX?, offsetY?: pt, scaleX?, scaleY?: 0..10, align?: tl|t|tr|l|ctr|r|bl|b|br, mirror?: none|x|y|xy, stretch?: [l, t, r, b] fractions, rotateWithShape?: bool} adjusts a picture fill
-- `shape.line` (Shape Format › Shape Styles): Shape Outline {color?, none?, width?: pt, dash?: solid|dot|dash|lgDash|dashDot|sysDot|sysDash, cap?: flat|round|square, join?: round|bevel|miter, compound?: single|double|thickThin|thinThick|triple, head?: none|triangle|stealth|diamond|oval|arrow, tail?, headSize?: sm|med|lg, tailSize?, reset?, ids?}
-- `shape.effects` (Shape Format › Shape Styles): Shape Effects {shadow?: none|outer|inner|perspective|{color, blur, dist, dir}, glow?: none|{color, radius}, softEdges?: pt, reflection?: none|tight|half|full, bevel?: none|circle|…, threeD?: {camera?: preset, rotX?, rotY?, rotZ?: deg, z?: pt, bevelTop?, bevelBottom?: none|circle|…, bevelTopW?, bevelTopH?, bevelBottomW?, bevelBottomH?, depth?, contour?: pt, material?, lighting?, reset?: true}, shadowProps?: {color?, transparency?: 0..1, blur?: pt, dist?: pt, dir?: deg}, glowProps?: {color?, transparency?, radius?: pt}, reflectionProps?: {transparency?, size?: 0..1, dist?: pt, blur?: pt}, reset?, ids?} (the *Props keys adjust the current effect, adding a default one when there is none)
+- `shape.fill` (Shape Format › Shape Styles): Shape Fill {color? | none?: true | background?: true (the slide background shows through; shapes and text boxes only) | gradient?: {stops: [[pos 0..1, color]], kind?: linear|radial|rectangular|path, angle?: deg (linear), focus?: [l, t, r, b] fractions (radial, rectangular and path: where the first stop sits), rotateWithShape?: bool (false keeps linear and radial gradients upright on the slide; rectangular and path gradients turn with the shape when drawn)} | picture?: base64 | pattern?: {preset, fg, bg} | transparency?: 0..1 | reset?: true, ids?}; pictureProps?: {tile?: bool, offsetX?, offsetY?: pt, scaleX?, scaleY?: 0..10, align?: tl|t|tr|l|ctr|r|bl|b|br, mirror?: none|x|y|xy, stretch?: [l, t, r, b] fractions, rotateWithShape?: bool} adjusts a picture fill; a group also formats its members
+- `shape.line` (Shape Format › Shape Styles): Shape Outline {color?, none?, width?: pt, dash?: solid|dot|dash|lgDash|dashDot|sysDot|sysDash, cap?: flat|round|square, join?: round|bevel|miter, compound?: single|double|thickThin|thinThick|triple, head?: none|triangle|stealth|diamond|oval|arrow, tail?, headSize?: sm|med|lg, tailSize?, reset?, ids?}; a group also formats its members
+- `shape.effects` (Shape Format › Shape Styles): Shape Effects {shadow?: none|outer|inner|perspective|{color, blur, dist, dir}, glow?: none|{color, radius}, softEdges?: pt, reflection?: none|tight|half|full, bevel?: none|circle|…, threeD?: {camera?: preset, rotX?, rotY?, rotZ?: deg, z?: pt, bevelTop?, bevelBottom?: none|circle|…, bevelTopW?, bevelTopH?, bevelBottomW?, bevelBottomH?, depth?, contour?: pt, material?, lighting?, reset?: true}, shadowProps?: {color?, transparency?: 0..1, size?: 0.01..2 (1 = 100%), blur?: pt, dist?: pt, dir?: deg}, glowProps?: {color?, transparency?, radius?: pt}, reflectionProps?: {transparency?, size?: 0..1, dist?: pt, blur?: pt}, reset?, ids?} (the *Props keys adjust the current effect, adding a default one when there is none)
 - `shape.quickStyle` (Home › Drawing): Quick Styles {index: 0..41 (theme style row×accent), ids?}
 - `shape.rename` (Selection Pane): Rename {name, id?}
 - `shape.altText` (Shape Format › Accessibility): Alt Text {text, decorative?: bool, ids?}
@@ -106,12 +109,16 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 - `shape.setDefault`: Set as Default Shape {}
 - `shape.merge` (Shape Format › Insert Shapes › Merge Shapes): Merge Shapes {op: union|combine|fragment|intersect|subtract, ids?: shapes in selection order (the first one's formatting is kept)} → {ids}
 - `shape.editPoints` (Shape Format › Insert Shapes › Edit Shape): Edit Points {on?: bool (default: toggle), id?} — enter or leave Edit Points for one selected shape; entering turns a preset into a freeform
-- `shape.points`: Points {id?} → {id, paths: [[[x, y] slide pt]], types: [[smooth|straight|corner]]} vertices of a freeform
+- `shape.points`: Points {id?} → {id, paths: [[[x, y] slide pt]], types: [[smooth|straight|corner]], segments: [[straight|curved|null]]} vertices of a freeform and the segment ending at each
 - `shape.movePoint`: Move Point {path?: 0, index, x, y: slide pt, id?}
 - `shape.addPoint`: Add Point {path?: 0, segment: index of the vertex ending it, t?: 0..1 (0.5), id?}
 - `shape.pointType`: Point Type {path?: 0, index, type: smooth|straight|corner, id?} — smooth: handles in line and equal; straight: in line; corner: independent
 - `shape.moveHandle`: Move Handle {path?: 0, index, side: in|out, x, y: slide pt, type?: smooth|straight|corner (default: read from the handles), id?}
 - `shape.deletePoint`: Delete Point {path?: 0, index, id?}
+- `shape.deleteSegment`: Delete Segment {path?: 0, segment: index of the vertex ending it, id?}: removes a segment of a closed outline, which opens there; it starts at the segment's end and ends at its start
+- `shape.segmentType`: Segment Type {path?: 0, segment: index of the vertex ending it, type: straight|curved, id?} — straight drops the segment's handles; curved gives it handles at its thirds
+- `shape.openPath`: Open Path {path?: 0, index, id?} — break a closed outline at a point, which becomes its two ends
+- `shape.closePath`: Close Path {path?: 0, index: any point of the open outline, id?} — join its ends with a straight segment (one point when they meet)
 - `shape.inspect`: Inspect Shape {id} → full shape JSON plus its effective box
 
 ## insert
@@ -128,7 +135,7 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 - `insert.video` (Insert › Media › Video): Video from File… {path? | data: base64, name?, rect?}
 - `insert.wordArt` (Insert › Text): WordArt {text?, style?: 0..}
 - `insert.slideNumber` (Insert › Text): Slide Number {}
-- `insert.dateTime` (Insert › Text): Date & Time {format?: datetime1..datetime13, update?: bool, language?: en-US|en-GB|fr-FR|ja-JP|sv-SE} — no keys opens the dialog
+- `insert.dateTime` (Insert › Text): Date & Time {format?: datetime1..datetime13, update?: bool, language?: en-US|en-GB|fr-FR|ja-JP|sv-SE} — no keys opens the dialog; in the Handout or Notes Master view it fills the selected date placeholder (else the master's own) and answers where: "master"
 - `insert.symbol` (Insert › Symbols): Symbol {text: character(s)}
 - `insert.hyperlink` (Insert › Links): Link {url? | slide?: index, tooltip?, text?: shown when nothing is selected, highlightClick?, ids?} [Cmd+K]
 - `insert.smartArt` (Insert › Illustrations): SmartArt {kind: list|process|cycle|hierarchy|pyramid|matrix, items?: [text] (leading tabs = sub-points), nodes?: [{text, level}]} → {id}
@@ -139,7 +146,7 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 
 - `chart.type` (Chart Design › Type): Change Chart Type {type, id?}
 - `chart.data` (Chart Design › Data): Edit Data {categories?: [..], levels?: [[..]] (outer category levels, innermost first), series?: [{name, values}], id?}
-- `chart.options` (Chart Design › Chart Layouts): Chart Elements {title?: string|null, legend?: b|t|l|r|null, dataLabels?: bool, gridlines?: bool, palette?, binCount?: n|null, binSize?: n|null, subtotals?: [point index], quartiles?: exclusive|inclusive, upDownBars?: bool, id?}
+- `chart.options` (Chart Design › Chart Layouts): Chart Elements {title?: string|null, legend?: b|t|l|r|null, dataLabels?: bool, gridlines?: bool, palette?, binCount?: n|null, binSize?: n|null, subtotals?: [point index], quartiles?: exclusive|inclusive, upDownBars?: bool, textColor?: #RRGGBB|accent1..6|tx1…|null (title, axes, legend and labels; null for PowerPoint's default: the theme's text colour at 65 % plus 35 %, 595959 on a light theme), id?}
 
 ## smartArt
 
@@ -165,14 +172,14 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 
 - `picture.crop` (Picture Format › Size): Crop {left?: fraction 0..1, top?: fraction 0..1, right?: fraction 0..1, bottom?: fraction 0..1, ids?}
 - `picture.adjust` (Picture Format › Adjust): Corrections {brightness?: -1..1, contrast?: -1..1, saturation?: 0..4, grayscale?: bool, transparency?: 0..1, reset?: bool, ids?}
-- `picture.reset` (Picture Format › Adjust): Reset Picture {ids?}
+- `picture.reset` (Picture Format › Adjust): Reset Picture {ids?} (discards the picture's formatting: adjustments, artistic effect, crop, transparency, picture-style effects and outline; the frame shape from Change Shape or Crop to Shape, the size and the position stay)
 - `picture.change` (Picture Format › Adjust): Change Picture {path? | data: base64, name?, ids?}
 - `picture.removeBackground` (Picture Format › Adjust): Remove Background {tolerance?: 0..100 (how different a colour may be from the edge's, default 20), ids?}
 - `picture.style` (Picture Format › Picture Styles): Picture Styles {style: simpleFrameWhite|dropShadowRectangle|softEdgeOval|… | none (see picture.styles), ids?}
 - `picture.styles`: Picture Style Gallery {} → [{id, label}]
 - `picture.recolor` (Picture Format › Adjust › Color): Recolor {preset: none|grayscale|sepia|washout|bw25|bw50|bw75|accent1Dark…accent6Dark|accent1Light…accent6Light|tx2Dark|tx2Light (see picture.recolors), ids?}
 - `picture.recolors`: Recolor Gallery {} → [{id, label}]
-- `picture.transparentColor` (Picture Format › Adjust › Color): Set Transparent Color {color: #RRGGBB | none: true, ids?} (pixels of that colour become transparent)
+- `picture.transparentColor` (Picture Format › Adjust › Color): Set Transparent Color {color: #RRGGBB | at: [x, y] | none: true, ids?} (pixels of that colour become transparent; `at` takes the colour of the picture's own pixel under that slide point, as a click does in PowerPoint)
 - `picture.artisticEffect` (Picture Format › Adjust): Artistic Effects {effect: none|artisticBlur|artisticPencilGrayscale|artisticLineDrawing|artisticFilmGrain|artisticCutout|artisticGlowEdges|artisticPhotocopy, ids?}
 - `picture.compress` (Picture Format › Adjust): Compress Pictures {ppi?: 330|220|150|96 (default 220), deleteCropped?: bool (default true), all?: bool (every picture in the presentation; default the selected pictures), ids?} → {pictures, before, after}
 
@@ -230,11 +237,12 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 
 - `text.edit`: Edit Text {id?, at?: [paragraph, char], end?: bool, cell?: [row, col], notes?: bool} [Enter]
 - `text.exit`: Stop Editing Text {}
-- `text.autocorrect` (Tools): AutoCorrect Options {on?, twoInitials?, sentenceCaps?, days?, capsLock?, fractions?: bool, add?: [from, to], remove?: from} → the options and the replacement list
+- `text.autocorrect` (Tools): AutoCorrect Options {on?, twoInitials?, sentenceCaps?, days?, capsLock?, fractions?, ordinals?, lists?: bool, add?: [from, to], remove?: from} → the options and the replacement list
 - `text.insert`: Type Text {text} (\n = new paragraph, \u000b = line break)
 - `text.compose`: Compose Text {text, active?: [start, end]} — an input method's composition (preedit) at the insertion point; empty text cancels it
 - `text.commit`: Commit Composition {text} — the input method's result replaces its composition, as one undo step
 - `text.delete`: Delete Text {dir?: backward|forward|wordBackward|wordForward} — the word directions are Ctrl+Backspace/Delete: they work from the start of a selection without deleting it [Backspace]
+- `text.deleteSurrounding`: Delete Surrounding Text {before, after, bytes?: bool}
 - `text.move`: Move Insertion Point {to: left|right|up|down|wordLeft|wordRight|lineStart|lineEnd|paraStart|paraEnd|paraUp|paraDown|start|end, extend?: bool} — left/right are on screen: in a right-to-left paragraph left goes forward
 - `text.select`: Select Text {anchor: [p, c], caret: [p, c]}
 - `text.selectAll`: Select All Text {}
@@ -260,6 +268,7 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 - `format.color` (Home › Font): Font Color {color: #RRGGBB|accent1..6|tx1…|{scheme, lumMod…}}
 - `format.textTransparency` (Shape Format › WordArt Styles): Text Transparency {value: 0..1} — 0 opaque, 1 invisible; keeps the text's colour (inherited colours included)
 - `format.language` (Review › Language): Language {lang?, noProof?: bool} (proofing language of the selected text, and Do Not Check Spelling)
+- `format.languageAll` (Review › Language): Language for All Text {lang?, noProof?: bool} (proofing language of every text in the presentation: slides, tables, notes, masters and layouts, and the default for new text; one undo step)
 - `format.highlight` (Home › Font): Text Highlight Color {color? (absent = none)}
 - `format.case` (Home › Font): Change Case {mode?: cycle|sentence|lower|upper|title|toggle} — cycle (Shift+F3, the default) goes lowercase → Capitalize Each Word → UPPERCASE; a caret in a word changes that word [Shift+F3]
 - `format.caps`: Caps {caps: none|small|all}
@@ -276,7 +285,7 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 - `format.alignRight` (Home › Paragraph): Align Right {} [Cmd+R]
 - `format.justify` (Home › Paragraph): Justify {} [Cmd+J]
 - `format.bullets` (Home › Paragraph): Bullets {on?: bool, char?: •|○|■|□|◆|➢|✓|–, color?, size?: % of text}
-- `format.numbering` (Home › Paragraph): Numbering {on?: bool, scheme?: arabicPeriod|arabicParenR|romanUcPeriod|romanLcPeriod|alphaUcPeriod|alphaLcParenR|alphaLcPeriod, start?: n, color?, size?: % of text}
+- `format.numbering` (Home › Paragraph): Numbering {on?: bool, scheme?: arabicPeriod|arabicParenR|romanUcPeriod|romanLcPeriod|alphaUcPeriod|alphaLcParenR|alphaLcPeriod, start?: n (a numbered paragraph whose start differs from that of the last numbered paragraph at its level begins a new run of numbers at n, as PowerPoint's Start at does), color?, size?: % of text}
 - `format.indent` (Home › Paragraph): Increase List Level {} [Tab]
 - `format.outdent` (Home › Paragraph): Decrease List Level {} [Shift+Tab]
 - `format.lineSpacing` (Home › Paragraph): Line Spacing {lines?: 1.0|1.5|2.0…, pt?: exactly}
@@ -286,7 +295,7 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 - `format.tabs` (Home › Paragraph): Tabs… {set?: [{pos, align?}] (replaces all), add?: {pos, align?: l|ctr|r|dec}, move?: {from, to}, remove?: pos, clear?: bool, defaultTab?: pt} on the selected paragraphs; with none of them, opens the Tabs dialog (pos in pt from the text area's left)
 - `format.anchor` (Home › Paragraph): Align Text {anchor: top|middle|bottom}
 - `format.direction` (Home › Paragraph): Text Direction {dir: horizontal|rotate90|rotate270|stacked}
-- `format.columns` (Home › Paragraph): Columns {count, spacing?: pt}
+- `format.columns` (Home › Paragraph): Columns {count?: 1-16, spacing?: pt between columns}; a key left out keeps the shape's value, and with neither the Columns dialog opens
 - `format.autofit` (Format Shape › Text Box): Autofit {mode: none|shrink|resize}
 - `format.wrap` (Format Shape › Text Box): Wrap Text in Shape {on: bool}
 - `format.margins` (Format Shape › Text Box): Text Box Margins {left?: pt, top?: pt, right?: pt, bottom?: pt}
@@ -297,7 +306,7 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 ## design
 
 - `design.theme` (Design › Themes): Themes {name} (see design.themes)
-- `design.browseTheme` (Design › Themes): Browse for Themes… {path} | {name, data: base64} — apply the theme of a .thmx, .pptx or .potx file
+- `design.browseTheme` (Design › Themes): Browse for Themes… {path} | {name, data: base64} — apply a .pptx or .potx's slide master and layouts (slides move to the matching layouts), or a .thmx's theme
 - `design.themes`: Theme Gallery {} → themes, colour schemes, font schemes and effect schemes
 - `design.colors` (Design › Variants): Colors {} opens Create New Theme Colors | {name} | {colors: {dk1|lt1|dk2|lt2|accent1..6|hlink|folHlink: #RRGGBB}}
 - `design.variant` (Design › Variants): Variants {index: 0..3} (see design.variants)
@@ -346,12 +355,12 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 
 ## animation
 
-- `animation.set` (Animations › Animation): Animation Styles {effect: fade|fly|zoom|wipe|appear|spin|pulse|fadeOut|lines|… (animation.list), class?: entrance|emphasis|exit|path, option?, ids?} — replaces the shapes' animations
-- `animation.add` (Animations › Advanced Animation): Add Animation {effect, class?, option?, start?: onClick|withPrevious|afterPrevious, duration?: ms, delay?: ms, ids?}
+- `animation.set` (Animations › Animation): Animation Styles {effect: fade|fly|zoom|wipe|appear|spin|pulse|fadeOut|lines|… (animation.list), class?: entrance|emphasis|exit|path, option?, path?: [[x,y],…] or OOXML string, closed?: bool, ids?} — replaces the shapes' animations. path (motion paths): points in slide points, as offsets from where the shape sits, or the OOXML path string (slide fractions) animation.get answers
+- `animation.add` (Animations › Advanced Animation): Add Animation {effect, class?, option?, path?: [[x,y],…] or OOXML string, closed?: bool, start?: onClick|withPrevious|afterPrevious, duration?: ms, delay?: ms, ids?} → {count, path?}
 - `animation.remove` (Animation Pane): Remove Animation {index} | {ids? (all of the shapes' animations)}
 - `animation.move` (Animations › Timing): Reorder Animation {index, to}
 - `animation.timing` (Animations › Timing): Timing {index? (else selected shapes), start?: onClick|withPrevious|afterPrevious, duration?: ms, delay?: ms, repeat?: n, rewind?: bool, trigger?: shape id | null}
-- `animation.options` (Animations › Animation): Effect Options {option?, textBuild?: asOne|byParagraph|byWord|byLetter, index?}
+- `animation.options` (Animations › Animation): Effect Options {option?, textBuild?: asOne|byParagraph|byWord|byLetter, path?: [[x,y],…] or OOXML string, closed?: bool, index?}
 - `animation.clear`: Remove All Animations {index?: slide}
 - `animation.painter` (Animations › Advanced Animation): Animation Painter {sticky?: bool, id?} [Alt+Shift+C]
 - `animation.painterApply`: Apply Animation {ids?} [Alt+Shift+V]
@@ -373,7 +382,7 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 - `table.cellFill` (Table Design › Table Styles): Shading {color? | none?, cells?: [[r,c],…] (default: selected cells or all), id?}
 - `table.borders` (Table Design › Draw Borders): Borders {which: all|outside|inside|insideH|insideV|top|bottom|left|right|diagDown|diagUp|none, color?, width?: pt, dash?: solid|dash|dot…, cells?: [[r,c],…] (default: selected cells or all), id?}
 - `table.cellMargins` (Table Layout › Alignment): Cell Margins {preset?: normal|none|narrow|wide, left?, right?, top?, bottom?: pt, cells?, id?}
-- `table.cellAlign` (Table Layout › Alignment): Align Cell Text {anchor: top|middle|bottom, cells?, id?}
+- `table.cellAlign` (Table Layout › Alignment): Align Cell Text {anchor?: top|middle|bottom (vertical; top when neither anchor nor align is given), align?: left|center|right|justify (horizontal, applied to every paragraph of the cells), cells?, id?}
 - `table.distributeRows` (Table Layout › Cell Size): Distribute Rows {id?}
 - `table.distributeColumns` (Table Layout › Cell Size): Distribute Columns {id?}
 - `table.columnWidth` (Table Layout › Cell Size): Width {col, width: pt, keepTotal?: bool (the next column absorbs the change), id?}
@@ -401,9 +410,10 @@ Groups: `file` (19), `slide` (19), `window` (1), `edit` (12), `section` (5), `sh
 - `review.dictionary` (Review › Proofing): Spelling Dictionary {lang?} → {lang, available, found, folders} (whether review.spelling has a dictionary, and which file)
 - `review.thesaurus` (Review › Proofing): Thesaurus {word? (default: the selected word, or the word at the caret)} → {word, senses: [{word, synonyms}]}
 - `review.replaceWord`: Insert Synonym {with}: replace the selected word (or the word at the caret) while editing text
-- `review.compare` (Review › Compare): Compare {path} | {name, data: base64} — compare with a revised copy → {name, changes}
-- `review.revisions`: Revisions {} → {name, changes: [{kind: inserted|deleted|changed, slide, revised, details}]}
-- `review.accept` (Review › Compare): Accept Revision {index} | {all: true}
+- `review.compare` (Review › Compare): Compare {path} | {name, data: base64} — compare the open deck with another file → {name, changes: [{kind, slide, number, onlyIn?, revised, details}]}; each change is described from the open deck: `onlyIn: "deck"` is in the deck and not in the file, `onlyIn: "file"` is in the file and not in the deck, `changed` is in both and differs; `slide` is 0-based, `number` the editor's slide number; review.accept takes the FILE's side, so it deletes what is only in the deck (Accept All keeps the deck's last remaining slide rather than deleting it)
+- `review.revisions`: Revisions {} → {name, changes: [{kind: inserted|deleted|changed, slide (0-based), number (editor's), onlyIn?: deck|file, revised, details}]}; `onlyIn: deck` = only in the open deck, `file` = only in the compared file; accepting takes the file's side
+- `review.accept` (Review › Compare): Accept Revision {index} | {all: true} — accept the compared file's side of a change (or all): what is only in the file is added, what is only in the open deck is deleted (all: true leaves the deck's last remaining slide in place), a changed slide becomes the file's
+- `review.reject` (Review › Compare): Reject Revision {index} | {all: true} → {rejected} (drop revisions without applying them: the open deck stays as it is; not an undo step)
 - `review.endCompare` (Review › Compare): End Review {}
 
 ## show

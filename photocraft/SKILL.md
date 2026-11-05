@@ -1,7 +1,7 @@
 ---
 name: photocraft
 description: "Photo editing and compositing with PhotoCraft (Photoshop-style): retouch and color-grade photos, levels / curves / hue-saturation, layers and masks, selections, cut-outs, text on images, banners and thumbnails, resize / crop, filters, PSD files, data-driven variants from a CSV, batch-process folders. Export PNG / JPG / WebP / TIFF / PSD."
-version: 0.4.0
+version: 0.5.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,7 +16,7 @@ metadata:
 PhotoCraft is a free, open-source clean-room take on Adobe Photoshop (storytold Crafting Apps). An agent
 drives it through an MCP server (`photocraft-cli mcp`) or one-shot CLI commands. Documents keep real
 layers, masks, adjustment layers, smart objects, live type and layer styles, and round-trip PSD files.
-This skill was tested on PhotoCraft 0.10.0.
+This skill was tested on PhotoCraft 0.20.1.
 
 ## When to Use
 
@@ -50,13 +50,15 @@ Pick a different Crafting App when:
    `photocraft-cli mcp` can still edit documents, but every file tool fails with `automation filesystem access is
    not granted: read authority is absent` (or `write authority`). Then ask the user to run `storytold_tools.py
    register photocraft --replace` and `/reload-mcp`. `PHOTOCRAFT_AUTOMATION_*_ROOT` env vars are **not** honoured
-   by `mcp` (tested on 0.10.0).
+   by `mcp` (tested on 0.20.1).
 4. Until then, use the CLI one-shots (see **CLI**): they take ordinary paths anywhere.
 
 Headless (no desktop app) is a full engine with a CPU renderer; only the `ui_*` tools and `control_call` need
 the live app. For the user to watch, they start `photocraft --control 7878 --control-token-file <tok>
 --automation-read-root <DIR> --automation-write-root <DIR>`, and the server runs as
-`photocraft-cli mcp --bridge 127.0.0.1:7878 --control-token-file <tok>` (the app's roots then apply).
+`photocraft-cli mcp --bridge 127.0.0.1:7878 --control-token-file <tok>`. The app's roots then apply: root flags
+together with `--bridge` are a usage error (exit 2): `error: configure automation roots on the desktop app;
+--automation-read-root and --automation-write-root require headless MCP mode`.
 
 ## Mental Model
 
@@ -69,7 +71,7 @@ the live app. For the user to watch, they start `photocraft --control 7878 --con
   Ids are unique across the session, not per document (a fresh JPEG's Background is often id 2), and change when
   a file is reopened, so keep the ids replies give you. A wrong one fails with the list: `no such layer 1; the
   document's layers are 2 "Background" (a `layer` param takes an id or a name)`.
-- **Every edit is an engine command** (918). `command_run {id, params}` runs one, `command_batch` several.
+- **Every edit is an engine command** (954). `command_run {id, params}` runs one, `command_batch` several.
   Find ids with `command_list {filter: "curves"}` or grep `references/commands.md`.
 - **Destructive vs non-destructive:** `image.adjustments.*` change the active pixel layer;
   `layer.newAdjustmentLayer.*` add an editable adjustment layer (change it later with `layer.setAdjustment`).
@@ -87,9 +89,10 @@ the live app. For the user to watch, they start `photocraft --control 7878 --con
 | `command_batch {steps:[{id, params}], stop_on_error?}` | Several commands in one call; `{completed, failed, results}`. Not atomic: no rollback |
 | `command_list {filter?, enabled_only?}` | Command ids, menu path, **param docs**, `enabled` and `disabledReason` |
 | `doc_render_preview {max_side?, index?}` (alias `render_preview`) | Flattened PNG (default 1024 px, max 2048) so you can **look** at it |
-| `doc_save {path?, quality?, tiffLayers?, tgaBits?, dpxBits?, format?}` / `doc_export` | Save native `.pcraft` or export by extension (under the write root) |
+| `doc_save {path?, quality?, tiffLayers?, tgaBits?, dpxBits?, ddsCompression?, ddsMipmaps?, format?}` / `doc_export` | Save native `.pcraft` or export by extension (under the write root) |
 | `doc_place {path, scale?, fit?, center?}` | Place an image file as an embedded Smart Object layer |
-| `doc_export_layers {dir, format?, prefix?, visible_only?}` | One file per layer (Layers to Files); refuses to overwrite |
+| `doc_replace_smart_object {layer?, path}` | Replace a Smart Object's contents from a file; keeps its transform and filters |
+| `doc_export_layers {dir, format?, prefix?, quality?, visible_only?}` | One file per layer (Layers to Files); refuses to overwrite; lists `skipped` layers |
 | `doc_import_data_sets {path, delimiter?}` / `doc_export_data_sets {dir, format?, naming?, data_sets?}` | Variable data sets from a CSV / one flattened file per data set |
 | `session_list`, `doc_select {index}`, `doc_close {index?}` | Manage open documents (close doesn't save; headless only). A bad `index` is an error: `no document at index 9` |
 | `jobs_list`, `jobs_cancel {job?}` | Background jobs started with `wait: false` |
@@ -118,7 +121,8 @@ Resources: `photocraft://document` (same JSON as `doc_inspect`) and `photocraft:
   tolerance}`, `select.colorRange {points: [[x,y]], fuzziness}`, `select.subject`, `select.sky`, then
   `select.modify.*`, `select.inverse`, `select.deselect`.
 - **An active selection becomes the mask of a new adjustment or fill layer** (an active path becomes its vector
-  mask). With no selection the mask is white. Deselect before adding a layer that should affect everything.
+  mask), and the selection is then gone (a `select.deselect` after it fails with `command `select.deselect` is not
+  available right now: no selection`). With no selection the mask is white.
   For other layers use `layer.layerMask.revealSelection` (or `hideSelection`).
 - `layer.new.layerViaCopy` lifts the selection to a new layer (cut-outs). `edit.fill {contents: "contentAware"}`
   removes what's selected. `layer.createClippingMask` clips the active layer to the one below.
@@ -154,8 +158,7 @@ command_run layer.newAdjustmentLayer.curves        {points:[[0,0],[64,48],[192,2
 command_run layer.newAdjustmentLayer.hueSaturation {saturation:-20}
 command_run select.rect {x:400, y:200, width:800, height:500, ellipse:true, feather:120}
 command_run select.inverse
-command_run layer.newAdjustmentLayer.levels {gamma:0.5}   → the selection becomes its mask: dark edges only
-command_run select.deselect
+command_run layer.newAdjustmentLayer.levels {gamma:0.5}   → the selection becomes its mask (and is used up): dark edges only
 command_run layer.select {layer:<Background id>}   → filters need a pixel layer
 command_run image.crop {x:200, y:100, width:1200, height:800}
 command_run image.imageSize {width:900, height:600, resample:"lanczos"}
@@ -177,9 +180,9 @@ Or copy pixels from another open document:
 
 ```text
 doc_open {path:"logo.png"}                         → index 1
-command_run select.all · command_run edit.copy     → copies the trimmed opaque bounds
+command_run select.all · command_run edit.copy     → {bounds} of what was copied
 doc_close {} · doc_select {index:0}                → the clipboard survives the close
-command_run edit.paste {center:[800,450]}          → {layer, offset}; without center it lands at (0,0)
+command_run edit.paste {center:[800,450]}          → {layer, offset}; without center (or if larger than the canvas) it lands at (0,0)
 command_run layer.setProps {name:"Logo", opacity:1, blend:"Normal"}
 command_run edit.transform {quad:[[600,250],[1000,250],[1000,650],[600,650]]}   → scale/position exactly
 command_run layer.layerStyle.dropShadow {color:"#000000", distance:10, size:20, opacity:60}
@@ -196,7 +199,7 @@ centre, then moved) (tested).
 ```text
 doc_new {width:1200, height:630, background:"#101820", name:"banner"}
 command_run layer.newFillLayer.gradient {from:"#ff5f6d", to:"#ffc371", angle:0, style:"linear"}
-command_run type.create {x:600, y:380, text:"FRACTAL", font:"Segoe UI", fontStyle:"Bold", size:220,
+command_run type.create {x:600, y:380, text:"FRACTAL", font:"Arial", fontStyle:"Bold", size:220,
                          color:"#ffffff", align:"center"}
 (copy a photo from another open doc as above) → command_run edit.paste {center:[600,315]}
 command_run layer.createClippingMask              → photo shows only inside the letters
@@ -207,7 +210,7 @@ doc_render_preview {} · doc_save {path:"out/banner.png"}
 
 ```text
 doc_new {width:800, height:400, background:"#203040", name:"card"}
-command_run type.create {x:400, y:220, text:"Title", font:"Segoe UI", size:80, color:"#ffffff", align:"center"} → layer 3
+command_run type.create {x:400, y:220, text:"Title", font:"Arial", size:80, color:"#ffffff", align:"center"} → layer 3
 command_run shape.create {kind:"ellipse", rect:[680,30,80,80], fill:"#ffcc00"}                                  → layer 4
 command_run image.variables.define {defs:[{name:"title", layer:3, type:"textReplacement"},
                                           {name:"badge", layer:4, type:"visibility"}]}
@@ -227,10 +230,28 @@ bob,"Hi, Bob",false
 
 Variable types: `textReplacement`, `visibility` (`true`/`false`), `pixelReplacement`. Preview one with `image.applyDataSet {name}`.
 
+### Recipe: annotate a photo with an arrow and area type (tested)
+
+```text
+doc_open {path:"shoot/photo.jpg"}
+command_run shape.create {kind:"line", from:[300,700], to:[750,420], weight:12, arrowEnd:true,
+                         arrowWidth:60, arrowLength:60, fill:"#ffffff"}     → live arrow line, editable with shape.edit
+command_run shape.create {kind:"ellipse", rect:[900,150,500,500], fill:"#203040"}   → layer 4
+command_run type.create {x:0, y:0, text:"Long caption …", font:"Arial", size:40, color:"#ffffff"}
+command_run type.fillPath {shape:4}               → the text wraps inside the ellipse (Area Type)
+doc_render_preview {}
+```
+
+`arrowStart`, `arrowConcavity` (0..100) shape the heads. Without `shape`, `type.fillPath` uses the work path.
+
 ### More building blocks
 
 - **Edit a smart object's contents (tested):** `layer.smartObjects.editContents {layer}` opens the contents as a
   new active document → edit it → `layer.smartObjects.saveContents` → `doc_close {}`. The parent updates in memory.
+- **Swap a smart object's file (tested):** `doc_replace_smart_object {layer, path:"shoot/new.jpg"}` → `{instances,
+  layer, warnings}`. Scale, top-left corner and smart filters stay; a bigger file makes a bigger layer.
+- **Video frames over MCP (tested):** `timeline.create {}` then `command_run file.export.renderVideo {dir:"out/frames",
+  format:"png"}` → `{dir, frames}` (`<doc>_0000.png`…). The only `file.export.*` MCP allows, and only headless.
 - **Several layers in one step:** `layer.setProps {layers:[6,7], opacity:0.5}` (tested). **Faces:** `image.detectFaces`.
 - **Rotated crop, corners filled (tested):** `image.crop {x:-100, y:0, width:1700, height:900, angle:5, contentAware:true}`.
 - **Text with effects:** `layer.layerStyle.dropShadow | stroke | outerGlow | colorOverlay | gradientOverlay | bevelEmboss`.
@@ -248,13 +269,17 @@ Variable types: `textReplacement`, `visibility` (`true`/`false`), `pixelReplacem
 ## Formats
 
 - **Read and write:** `.pcraft` (native, lossless), PSD, PSB, layered or flat TIFF, PNG, JPEG, WebP, GIF, BMP,
-  TGA, ICO, QOI, PNM, OpenEXR, Radiance HDR, AVIF, DPX; Cineon (`.cin`) and HEIC (optional build feature)
+  TGA, ICO, QOI, PNM, OpenEXR, Radiance HDR, AVIF, DPX, DDS; Cineon (`.cin`) and HEIC (optional build feature)
   read-only. SVG opens as shape layers and places as a vector smart object.
 - **PDF is write-only** (tested): `doc_save {path:"out/x.pdf"}` writes one flattened page (warning `PDF was saved
   flattened: …`); PhotoCraft can't open it again (`codec: unrecognized image format`).
 - `doc_save` picks the format from the extension (`format` overrides). `quality` 1..100 for JPEG / WebP (WebP
   without `quality` is lossless). `tiffLayers: true` keeps layers in TIFF; `tgaBits: 24|32` for TGA;
-  `dpxBits: 8|10|12|16` for DPX (default 8 for an 8-bit document, else 16).
+  `dpxBits: 8|10|12|16` for DPX (default 8 for an 8-bit document, else 16); `ddsCompression: "none|bc1|bc2|bc3"`
+  and `ddsMipmaps: true` for DDS textures (tested: bc3 with mipmaps re-opens and reads in ffprobe).
+- `doc_save` / `doc_export` replace an existing file only if it is an image or document file; otherwise
+  `automation write refused: `out/notes.txt` already exists and is not an image or document file PhotoCraft writes;
+  save to a new name`.
 - PSD / `.pcraft` keep layers, masks, adjustment layers, smart objects, smart filters and type (tested round trip).
   Only `.pcraft` keeps variables and data sets. Flat formats return the warning `N layer(s) flattened; layers,
   masks and blend modes are not kept`; JPEG adds `lossy compression` and composites transparency over white.
@@ -263,7 +288,7 @@ Variable types: `textReplacement`, `visibility` (`true`/`false`), `pixelReplacem
 
 ```bash
 photocraft-cli info file.psd --compact                       # JSON: size, mode, depth, layer tree
-photocraft-cli convert in.psd out.jpg --quality 85           # any supported format to any other (also .pdf)
+photocraft-cli convert in.psd out.jpg --quality 85           # any supported format to any other (also .pdf, .dds)
 photocraft-cli run in.jpg --cmd image.adjustments.curves --params '{"points":[[0,0],[70,50],[190,215],[255,255]]}' \
                --cmd image.imageSize --params '{"width":800,"height":500}' --out out.jpg --quality 90
 photocraft-cli run --new '{"width":600,"height":400,"background":"#223344"}' \
@@ -276,9 +301,15 @@ photocraft-cli droplet grade.pcdroplet a.jpg ./photos --out ./small   # files an
 photocraft-cli commands --filter blur                        # the command catalog (--json for all fields)
 ```
 
-All of the above were run on 0.10.0. `steps.json` is `[["image.adjustments.hueSaturation", {"saturation": -30}],
+All of the above were run on 0.20.1. `steps.json` is `[["image.adjustments.hueSaturation", {"saturation": -30}],
 {"command": "image.imageSize", "params": {…}}]`; an Actions-panel set (`{"actions":[{name, steps}]}`) also works,
-with `--action <name>`. `batch` refuses `--out` equal to `--in` unless `--in-place`, and exits 1 if any file failed.
+with `--action <name>`. `batch` refuses `--out` equal to `--in` unless `--in-place`, and exits 1 if any file failed. `convert` and `run`
+refuse an output that is the input file the same way (`error: out/same.jpg is the input file, so the result would
+replace the original: choose another output, or pass --in-place to overwrite it`). `run` also takes
+`--tiff-compression none|lzw|zip`, `--jpeg-format baseline|optimized|progressive`, `--dds-compression`, `--dds-mipmaps`.
+`createDroplet` on macOS also writes a `grade.command` shim next to the droplet. A droplet given two inputs with the
+same name fails the second: `not written: ./small/photo.png already holds the result of shoot/photo.jpg from this run
+(same output name)`.
 `run` also allows the path-taking commands MCP refuses, e.g. `file.placeEmbedded {path, scale}` and
 `file.export.layersToFiles {dir}` (tested). `photocraft-cli serve` keeps one headless session open over JSON lines.
 
@@ -309,7 +340,7 @@ with `--action <name>`. `batch` refuses `--out` equal to `--in` unless `--in-pla
 - **PSD drops variables and data sets** without a warning; save `.pcraft` to keep them.
 - **Bridge mode:** `doc_render_preview` returns a screenshot of the app window, not the image. Export a PNG to check
   pixels. `doc_close` fails: ``doc_close` is only available in headless mode (in the GUI use the window/tab UI or
-  control_call)`. (Checked on 0.10.0.)
+  control_call)`. (Checked on 0.10.0; bridge mode not re-tested on 0.20.1.)
 
 ## Verification
 
@@ -320,7 +351,7 @@ with `--action <name>`. `batch` refuses `--out` equal to `--in` unless `--in-pla
 
 ## References
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 918 engine commands with params, grouped by area
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 954 engine commands with params, grouped by area
   (`layer.newAdjustmentLayer`, `filter.blur`, `select`, `type`, `image.variables`…). Grep it rather than reading
   it whole, e.g. `grep -n "unsharp" ${HERMES_SKILL_DIR}/references/commands.md`.
 - Upstream docs: https://github.com/storytold/photocraft/tree/main/docs (`mcp.md`: tools, resources, batch

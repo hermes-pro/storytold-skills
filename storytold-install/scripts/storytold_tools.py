@@ -49,7 +49,13 @@ APPS = {
     "soundcraft": "Audio editing and mixing (Pro Tools-style)",
     "cadcraft": "Computer-aided design and drafting (AutoCAD-style)",
     "figcraft": "Interface design and prototyping (Figma-style)",
+    "solidcraft": "Parametric 3D CAD (SolidWorks-style)",
+    "materialcraft": "Node-based material design (Substance Designer-style)",
+    "texturecraft": "3D texture painting (Substance Painter-style)",
+    "craft-anything": "Study how software works and build your own version",
 }
+# Apps released outside the storytold org.
+OWNERS = {"solidcraft": "tangency-labs"}
 IS_WINDOWS = os.name == "nt"
 EXE = ".exe" if IS_WINDOWS else ""
 PATH_MARKER = "# storytold Crafting Apps"
@@ -119,7 +125,7 @@ def _request(url: str, accept: str = "application/vnd.github+json") -> urllib.re
 
 def release(app: str, version: str | None = None) -> dict:
     tag = f"tags/v{version.lstrip('v')}" if version else "latest"
-    url = f"https://api.github.com/repos/{ORG}/{app}/releases/{tag}"
+    url = f"https://api.github.com/repos/{OWNERS.get(app, ORG)}/{app}/releases/{tag}"
     try:
         with urllib.request.urlopen(_request(url), timeout=30) as resp:
             return json.load(resp)
@@ -351,12 +357,22 @@ def mcp_args(app: str) -> list[str]:
         # Bare `mcp` attaches to whatever listens on 127.0.0.1:7979, even another Crafting App.
         return ["mcp", "--headless"]
     if app == "pdfcraft":
-        # 17 tools (core + tool_search/tool_call) instead of 161: ~3.5k tokens of schemas instead of ~40k.
+        # 17 tools (core + tool_search/tool_call) instead of 184: ~3.5k tokens of schemas instead of ~48k.
         return ["mcp", "--compact"]
     if app == "photocraft":
         # Without roots it can't open or save any file; MCP paths are then relative to this root.
         root = os.environ.get("STORYTOLD_PHOTOCRAFT_ROOT") or str(Path.home())
         return ["mcp", "--automation-read-root", root, "--automation-write-root", root]
+    if app in ("materialcraft", "texturecraft"):
+        # Without roots it can't read or write any file; MCP paths are then relative to this root.
+        root = os.environ.get(f"STORYTOLD_{app.upper()}_ROOT") or str(Path.home())
+        return ["mcp", "--read-root", root, "--write-root", root]
+    if app == "solidcraft":
+        # Without an allowed folder it can't save or export outside its own folders; a missing folder is
+        # dropped silently, so make it. Strict checks turn a misspelt key into an error, not wrong geometry.
+        root = Path(os.environ.get("STORYTOLD_SOLIDCRAFT_ROOT") or Path.home())
+        root.mkdir(parents=True, exist_ok=True)
+        return ["mcp", "--allow-path", str(root), "--param-check", "strict"]
     if app == "lightcraft":
         # Without a library folder the catalog lives in memory and is lost when the server exits.
         library = Path(os.environ.get("STORYTOLD_LIGHTCRAFT_LIBRARY") or install_root() / "lightcraft-library")

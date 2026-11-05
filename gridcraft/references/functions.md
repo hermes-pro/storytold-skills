@@ -1,6 +1,6 @@
 # GridCraft worksheet functions
 
-Generated from `gridcraft-cli functions --json` (GridCraft 0.8.0, 514 functions). Grep for a name or a word
+Generated from `gridcraft-cli functions --json` (GridCraft 0.16.1, 515 functions). Grep for a name or a word
 from the description. The `category` filter of `list_functions` takes these exact names:
 `AddIn`, `Compatibility`, `Cube`, `Database`, `DateTime`, `Engineering`, `Financial`, `Information`, `Logical`, `Lookup`, `MathTrig`, `Statistical`, `Text`, `Web`.
 
@@ -20,6 +20,7 @@ from the description. The `category` filter of `list_functions` takes these exac
 - `CONFIDENCE(alpha, standard_dev, size)` — Confidence interval half-width using the normal distribution.
 - `COVAR(array1, array2)` — Population covariance of paired values.
 - `CRITBINOM(trials, probability_s, alpha)` — Smallest success count whose cumulative binomial probability reaches alpha.
+- `ECMA.CEILING(number, significance)` — Rounds a number up to a multiple of significance.
 - `EXPONDIST(x, lambda, cumulative)` — Exponential distribution density or probability.
 - `FDIST(x, deg_freedom1, deg_freedom2)` — Right-tailed F probability.
 - `FINV(probability, deg_freedom1, deg_freedom2)` — Inverse of the right-tailed F distribution.

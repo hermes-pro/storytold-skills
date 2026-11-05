@@ -1,7 +1,7 @@
 ---
 name: designcraft
 description: "Page layout and publishing with DesignCraft (InDesign-style): brochures, newsletters, magazines, flyers, booklets, reports, certificates and data-merged cards. Multi-page documents with parent pages, page numbers, text frames, columns, paragraph / character styles, images, tables, text wrap; export print PDF, PNG, IDML, EPUB, HTML."
-version: 0.4.0
+version: 0.5.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,7 +16,7 @@ metadata:
 DesignCraft is a free, open-source clean-room take on Adobe InDesign (storytold Crafting Apps). An agent
 drives it through an MCP server (`designcraft-cli mcp`) or CLI one-shots. It has a Knuth–Plass paragraph
 composer, hyphenation, real styles and parent pages. Its exported PDFs embed subset fonts and keep text as text.
-This skill was tested against DesignCraft 0.9.0.
+This skill was tested against DesignCraft 0.17.1.
 
 ## When to Use
 
@@ -45,16 +45,18 @@ Pick a different Crafting App when:
 3. Until the MCP tools appear, use the CLI (`script`/`run`, see **CLI** below).
 
 The MCP server is **headless** by default: an in-process engine with a CPU renderer. It starts with an empty
-Letter document. The window-only tools (`screenshot`, `click`, `drag`, `menu_list`, `ui_inspect`, `ui_set`,
-`dialog_*`) return an error in this mode. For the user to watch live, start `designcraft --control 7979` and
-run the server as `designcraft-cli mcp --connect 7979` (tested). The app starts with no document, so
+Letter document (`mcp --sample` starts with the 4-page sample magazine instead; tested). The window-only tools
+(`screenshot`, `click`, `drag`, `menu_list`, `ui_inspect`, `ui_set`, `dialog_*`) return an error in this mode. For the
+user to watch live, start `designcraft --control 7979` and run the server as `designcraft-cli mcp --connect 7979`
+(tested on 0.9.0; not re-tested on 0.17.1, where only the CLI was installed). The app starts with no document, so
 `new_document` there returns `index: 0`. A request whose reply is lost is not resent: `inspect_document` before retrying.
 
 File access: bare `designcraft-cli mcp` reads and writes any path the user can (tested). To confine it, run
 `designcraft-cli mcp --automation-read-root DIR --automation-write-root DIR`. Then every read (open, place, data sources)
 and write (save, export, `render_page`/`export_png` with a `path`) outside those folders fails, and a root you leave out
-grants none of that access. Relative paths are rejected under roots, so always pass absolute paths. The roots don't
-combine with `--connect` (the app is not confined).
+grants none of that access. Each flag can be given more than once for several folders. Relative paths are rejected under
+roots, so always pass absolute paths (tested). The roots don't combine with `--connect`: the server refuses to start with
+`--automation-read-root and --automation-write-root confine the in-process server; a running app is not confined by them, so drop --connect (or use --connect without the roots)`.
 
 ## Mental Model
 
@@ -63,7 +65,7 @@ combine with `--connect` (the app is not confined).
   (612 for Letter). `inspect_document` lists each spread's pages with their bounds.
 - **Page indices** are 0-based in `render_page`, `export_png`, `layout.pages.*` and the CLI's `--page`.
   `file.exportPdf {pages}`, `layout.section` and `layout.pageSize` take 1-based numbers.
-- **Every action is a command** (519 of them). Run one with `execute {command, params}` or a list with `batch`.
+- **Every action is a command** (547 of them). Run one with `execute {command, params}` or a list with `batch`.
   Find commands with `list_commands {filter}`, or grep `references/commands.md`.
 - **Frames hold content.** A text frame shows a **story**. A story can thread through several frames, and
   `inspect_document → stories` shows `frames` and `overset`. A graphic frame holds a placed image.
@@ -100,10 +102,12 @@ Resources: `designcraft://document` (same as `inspect_document`) and `designcraf
   Add a vertical rule between columns with `columnRule: true, columnRuleWeight, columnRuleColor` (a swatch name) (tested).
 - **Threading frames:** `text.thread {from, rect, spread?}` makes a new text frame at `rect` (on doc spread `spread`,
   0-based) and threads it after `from`. `{from, to}` threads an existing empty frame. It returns `{story, from, to, overset}`,
-  so chain `"$N.to"` for the next frame (tested across two pages). `text.unthread {frame}` and
+  so chain `"$N.to"` for the next frame (tested across two pages). `spread` must already exist: threading to a page you
+  haven't added fails with `execute: no spread Doc(1)`. `text.unthread {frame}` and
   `text.removeFromThread {frame}` undo it.
-- **Flowing long text:** `file.place {path, autoflow: true}`, or `text.thread {from, rect, autoflow: true}`. Both add
-  pages until the story fits, with one threaded frame per **page column** (set `columns`/`gutter` in `new_document`) (tested).
+- **Flowing long text:** `file.place {path, autoflow: true}`, or `text.thread {from, rect, spread, autoflow: true}`. Both add
+  pages until the story fits, with one threaded frame per **page column** (set `columns`/`gutter` in `new_document`), and
+  no empty page at the end (tested with 1 and 2 page columns).
 - **Styles:** `style.paragraph.create {name, basedOn?, nextStyle?, para: {…}, chars: {…}}`,
   `style.character.create {name, chars}`, then `style.paragraph.apply {name}` / `style.character.apply {name}` on the
   caret or selected text. `style.paragraph.edit {name: "[Basic Paragraph]", …}` sets the document's default body text.
@@ -113,11 +117,15 @@ Resources: `designcraft://document` (same as `inspect_document`) and `designcraf
     `leftIndent`, `keepWithNext`, `dropCapLines`, `hyphenate`, and paragraph rules
     `ruleAbove`/`ruleBelow: {on, weight, color, tint?, offset?, leftIndent?, rightIndent?}` (a line under a heading; tested).
   - Unknown keys fail with `unknown attribute`, so you can't silently misspell one. `type.selectionAttrs` lists every key with its current value (plus the selected text's start as `selectedText`).
+- **Lists:** select the paragraphs, then `list.bullets {}` or `list.numbers {}` (a hanging indent of 18 pt is added;
+  `on: false` takes it off) (tested).
 - **Selecting text:** `edit.selectAll` (while a caret is in a story) selects the whole story. Use `text.select {story, anchor, focus}` for a range,
   or `text.selectAt {frame, point, unit: word|line|paragraph|story}` for what a multi-click would select.
   Offsets are **UTF-8 byte** offsets, as `find.find {find, grep?}` returns them: `[{story, start, end, text}]`.
 - **Fonts:** Source Serif 4 (the default) and Source Sans 3 are bundled, and installed system fonts work too. Check with
-  `font.list`: every face reports `missing` and `source`.
+  `font.list`: every face reports `missing`, `source` and its embedding bits (`fsType`, `restrictedLicence`). `type.char`
+  with a font that isn't there still applies and returns `{warnings: ["Missing font: Comic Nonexistent (using Source Sans 3)"]}`.
+  `font.reload` picks up fonts installed after the server started.
 - **Special characters in text:** page number ``, next/previous page number ``/``, section
   marker ``, column break ``, frame break ``, page break ``, forced line break ` `.
 
@@ -204,6 +212,10 @@ Also tested: `standard: "x4"` PDF export, and IDML / EPUB / HTML export with the
 - **Read:** `.designcraft`, `.idml` (and InDesign `.indd`/`.indt`, converted to IDML on open; untested). The native `.designcraft` file is a zip (`mimetype`, `meta.json`, `document.json`,
   `assets/` with each placed image once). `file.place` takes images, SVG, PDF pages (`pdfPage`, kept at their exact size),
   `.txt`, `.docx`, `.rtf`, `.md` (as plain text), and `.xlsx` (as a table).
+- **Metadata:** `file.info {documentTitle, author, description, keywords}` sets the PDF's Title and Author (tested);
+  `file.info.get` reads it.
+- **Print checks:** `ink.separations {page (1-based), dpi?, inkLimit?}` returns each ink's coverage, `maxTotal` and the
+  regions over the ink limit (tested). `designcraft-cli validate-pdf out.pdf` checks a PDF/X file (tested on an `x4` export).
 - **Write:** `file.exportPdf {path, pages?: "1-3", bleed?, marks?, standard?: none|x4|a2b, tagged?, spreads?}` (vector,
   subset-embedded fonts), `export_png`, `file.exportIdml`, `file.exportEpub` / `file.exportFixedEpub`, `file.exportHtml`,
   `file.exportText`, `file.exportPptx`, `file.printBooklet` (imposed PDF), `file.package {dir}` (document + links + fonts).
@@ -220,13 +232,16 @@ designcraft-cli run --in doc.designcraft --page 1 --scale 0.5 --export p2.png   
 designcraft-cli run --sample --all-pages outdir/        # every page to PNG (with bleed)
 designcraft-cli run --in doc.designcraft --pdf-options '{"bleed":true,"marks":true}' --export print.pdf
 designcraft-cli commands frame      ·      designcraft-cli describe file.exportPdf      ·      designcraft-cli links
+designcraft-cli validate-pdf out.pdf            # PDF/X checks → {standard, valid, issues, warnings}
+designcraft-cli thumbnail doc.designcraft t.png 200   # the saved first-page preview
 designcraft-cli app --port 7979 document.list     # one command against a running `designcraft --control 7979`
 ```
 
 `--export` picks the format from the extension. A PNG export is page 0 at 2× unless you pass `--page`/`--scale`.
 `--page`, `--scale` and `--pdf-options` apply to the exports that **follow** them; after the last export they are an error
 (`--page has no --export or --all-pages after it; options apply to the exports that follow them, so put it before its --export`).
-`--pdf-options` must be a JSON object (`--pdf-options: expected a JSON object`). All of the above was run on 0.9.0.
+`--pdf-options` must be a JSON object (`--pdf-options: expected a JSON object`). All of the above except `app` was run on
+0.17.1 (`app` needs the desktop app; last tested on 0.9.0). `script --export` now prints the export's warnings, as `run` does.
 
 ## Pitfalls
 
@@ -235,9 +250,8 @@ designcraft-cli app --port 7979 document.list     # one command against a runnin
 - **`new_document` adds a document.** The headless session already has `Untitled-1` open. `document.list` and `file.activate {index}` switch between documents.
 - **`file.place` for text uses the caret first.** If a text caret is active, the text goes there and `frame` is
   ignored. Create the target frame with `caret: false` (it stays selected), or `selection.set {ids}` first.
-- **Autoflow can overshoot.** On 0.9.0, on 1-column pages both `file.place` and `text.thread` with `autoflow: true` still
-  added one empty last page. With 2 page columns the newsletter came out exact. Render the pages and `layout.pages.delete`
-  any empty one. Autoflowed frames follow the page columns, not the first frame's columns.
+- **Autoflowed frames follow the page columns,** not the first frame's columns. The empty last page that 0.9.0 added on
+  1-column pages is gone in 0.17.1 (checked with `file.place` and `text.thread`).
 - **Fills must name a swatch.** `object.fill {swatch: "#ff0000"}` fails with ``invalid parameters for `object.fill`: swatch:
   no swatch named `#ff0000`; create one with `swatch.create` and use its returned name``. A text `fill` fails with
   ``invalid parameters for `type.char`: fill: no swatch named `Nope`; …``. Create the swatch first.
@@ -247,8 +261,6 @@ designcraft-cli app --port 7979 document.list     # one command against a runnin
   first (`edit.selectAll` or `text.select`). `style.paragraph.apply` does work with only a caret (it styles the caret's paragraph).
 - **`data.placeholder.add` doesn't move the caret.** Several fields inserted at the caret come out in reverse order.
   Give an explicit `at` (byte offset) and insert from the end of the story back to the start.
-- **IDML round trip:** in a test, a paragraph rule drawn in a custom swatch came back black after `file.exportIdml` +
-  `file.open`. Render the reopened document and check colours.
 - **Byte offsets:** `text.select` and `find.find` count UTF-8 bytes, so `·`, `é` and `—` count as 2–3.
 - **Paths:** use absolute paths everywhere. Bare `mcp` resolves a relative path against the server's working directory
   (not yours); with roots it fails: ``automation path rejected: outside the read root <DIR>: r.jpg``. A write with only a
@@ -257,8 +269,14 @@ designcraft-cli app --port 7979 document.list     # one command against a runnin
   ``invalid parameters for `text.thread`: give two of from, to and rect``. Give a `rect` for the first extra frame.
 - **Bad `spread` values now fail** instead of falling back to page 1: ``invalid parameters for `frame.create`: no such spread``
   or ``… `spread.kind` must be `doc` or `parent` ``. Valid indices are in `inspect_document` (`spreads`, `parents`).
-- **Commands need a target.** Item commands with nothing selected fail with ``command `object.fill` is not available right
-  now: nothing selected``. A text caret is not an item selection: pass `ids` or `selection.set {ids}`.
+- **Commands need a target.** Item commands with nothing selected fail, e.g. ``command `object.textWrap` is not available
+  right now: nothing selected`` (also `transform.move`, `object.fit`, `object.opacity`, `object.textFrameOptions`). The
+  exception: `object.fill` and `object.stroke` with nothing selected **succeed** and set the default for the next new
+  object (`{newObject: {fill, stroke, …}}`), so a missed selection changes nothing on the page. A text caret is not an item
+  selection: pass `ids` or `selection.set {ids}`. Text commands with no text selected fail with
+  ``command `style.paragraph.apply` is not available right now: select text or a text frame``.
+- **Overset text is left out of the PDF.** `file.exportPdf` still writes the file and names it in `warnings`:
+  `page 1: 295 character(s) of the story in frame 10 do not fit it and are not in the export`.
 - Error texts are actionable, e.g. `unknown command \`nope.command\``, `invalid parameters for \`frame.create\`: missing rect`,
   `no paragraph style \`Missing\``, `unknown attribute \`colour\``, `render_page: no page 5 (the document has 1 pages, indices are 0-based)`,
   `invalid parameters for \`data.placeholder.add\`: select a data source`.
@@ -274,7 +292,7 @@ designcraft-cli app --port 7979 document.list     # one command against a runnin
 
 ## References
 
-- `references/commands.md`: all 519 commands of 0.9.0 with params, grouped by area (file, layout, frame, object, style,
+- `references/commands.md`: all 547 commands of 0.17.1 with params, grouped by area (file, layout, frame, object, style,
   type, text, table, data, find, toc, book, …). Grep it rather than reading it whole, e.g.
   `grep -n 'textFrameOptions' ${HERMES_SKILL_DIR}/references/commands.md`.
 - Upstream docs: https://github.com/storytold/designcraft/tree/main/docs (`mcp.md`, `agents.md`, `control-protocol.md`).

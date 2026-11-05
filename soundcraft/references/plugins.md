@@ -1,6 +1,6 @@
 # SoundCraft built-in plugins
 
-Generated from `execute engine.plugins` (SoundCraft 0.8.0, 27 plugins). Use the `id` with
+Generated from `execute engine.plugins` (SoundCraft 0.17.1, 30 plugins). Use the `id` with
 `mix.insert {track, plugin, params}` (live insert, slots 0–9) or `audiosuite.process {process: id, params, clips}` (offline render).
 Each param: `id` default [min..max unit]; choice params take the **index** (`{0:Peak|1:Low Shelf…}`); toggles are 0/1.
 Unknown param ids are rejected by `mix.insert` (`` `compressor` has no parameter `thresh` ``) but silently ignored by `audiosuite.process`.
@@ -141,6 +141,23 @@ Unknown param ids are rejected by `mix.insert` (`` `compressor` has no parameter
 
 ## Modulation
 
+### `auto_pan` — Auto Pan
+
+- `output` 0 [-24..12 Db]
+- `width` 100 [0..100 Percent]
+- `manual` 0 [-100..100 Percent]
+- `source` 0 — 0=LFO, 1=Envelope
+- `path` 0 — 0=Left to Right, 1=Right to Left
+- `rate` 120 [1..960 None]
+- `waveform` 0 — 0=Sine, 1=Triangle, 2=Square, 3=Saw Up, 4=Saw Down, 5=Half Sine, 6=4 Step Triangle
+- `trigger` 0 — 0=Free, 1=Single, 2=Beat Clock, 3=Envelope, 4=Manual
+- `retrigger` 0 [0..1 Toggle]
+- `link_tempo` 0 [0..1 Toggle]
+- `duration` 4 — 0=16th Note, 1=8th Note, 2=1 Beat, 3=2 Beats, 4=1 Bar, 5=2 Bars, 6=4 Bars
+- `threshold` -30 [-60..-1 Db]
+- `attack` 5 [0.1..100 Ms]
+- `release` 150 [5..2000 Ms]
+
 ### `chorus` — Chorus
 
 - `rate` 0.8 [0.05..5 Hz]
@@ -167,6 +184,16 @@ Unknown param ids are rejected by `mix.insert` (`` `compressor` has no parameter
 - `center` 800 [100..4000 Hz]
 - `mix` 50 [0..100 Percent]
 
+### `ring_mod` — Ring Modulator
+
+- `effect` 0 — 0=Ring, 1=Frequency Mod, 2=Resonator +, 3=Resonator -
+- `frequency` 440 [20..5000 Hz]
+- `resonance` 50 [0..95 Percent]
+- `mod_source` 0 — 0=LFO, 1=Envelope, 2=Sample & Hold
+- `mod_rate` 1 [0.05..20 Hz]
+- `mod_depth` 0 [0..100 Percent]
+- `mix` 100 [0..100 Percent]
+
 ## Harmonic
 
 ### `saturator` — Saturator
@@ -180,7 +207,7 @@ Unknown param ids are rejected by `mix.insert` (`` `compressor` has no parameter
 ### `lofi` — Lo-Fi
 
 - `bits` 8 [1..24 None]
-- `sample_rate` 11025 [500..48000 Hz]
+- `sample_rate` 11020 [500..48000 Hz]
 - `noise` 0 [0..100 Percent]
 - `mix` 100 [0..100 Percent]
 
@@ -189,6 +216,26 @@ Unknown param ids are rejected by `mix.insert` (`` `compressor` has no parameter
 - `mode` 1 — 0=Half Wave, 1=Full Wave
 - `mix` 100 [0..100 Percent]
 - `output` 0 [-24..12 Db]
+
+### `subharmonic` — Subharmonic
+
+- `input` 0 [-18..18 Db]
+- `range` 2 — 0=120-180 Hz, 1=80-120 Hz, 2=60-90 Hz, 3=40-60 Hz
+- `lower_gain` 0 [-120..24 Db]
+- `upper_gain` -6 [-120..24 Db]
+- `direct_gain` -120 [-120..24 Db]
+- `lower_solo` 0 [0..1 Toggle]
+- `upper_solo` 0 [0..1 Toggle]
+- `direct_solo` 0 [0..1 Toggle]
+- `drive` 0 [-18..18 Db]
+- `character` 0 — 0=Clean I, 1=Clean II, 2=Resonant I, 3=Resonant II, 4=Distort I, 5=Distort II
+- `hp_freq` 20 [5..1000 Hz]
+- `hp_q` 0.707 [0.1..5 None]
+- `lp_freq` 200 [5..1000 Hz]
+- `lp_q` 0.707 [0.1..5 None]
+- `mix` 50 [0..100 Percent]
+- `wet_solo` 0 [0..1 Toggle]
+- `output` 0 [-18..18 Db]
 
 ## PitchShift
 
@@ -304,3 +351,4 @@ Unknown param ids are rejected by `mix.insert` (`` `compressor` has no parameter
 - `time_stretch` {ratio: 1.0, 0.25..4; 2 = twice as long, pitch kept}
 - `pitch_shift` {semitones: 0, -24..24, clamped (36 gave +24); length kept}
 - `varispeed` {speed: 1.0, 0.25..4; changes length and pitch}
+- `speed_ramp` (Vari-Fi) {change: 0 slow down to a stop | 1 speed up from a stop, selection: 0 fit to the clip | 1 extend it (slow-down made it 1.5× longer), fades: 1 on | 0 off}

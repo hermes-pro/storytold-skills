@@ -1,7 +1,7 @@
 ---
 name: wordcraft
 description: "Word processing with WordCraft (Word-style): write, format and edit documents — reports, letters, memos, résumés, proposals, manuals. Headings and styles, lists, tables, pictures, native charts and SmartArt, equations, headers/footers, page numbers, TOC, footnotes, comments, track changes, mail merge. Open and save .docx, export PDF; also ODT, RTF, HTML, Markdown, LaTeX, TXT, .doc (read)."
-version: 0.4.0
+version: 0.5.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -15,7 +15,7 @@ metadata:
 
 WordCraft is a free, open-source clean-room take on Microsoft Word (storytold Crafting Apps). An agent
 drives it through an MCP server (`wordcraft-cli mcp`) or one-shot CLI commands. It reads and writes real
-`.docx` that opens in Word, and exports PDF with selectable text. This skill is written for WordCraft 0.8.0.
+`.docx` that opens in Word, and exports PDF with selectable text. This skill is tested against WordCraft 0.15.2.
 
 ## When to Use
 
@@ -47,16 +47,23 @@ Simple bar/line/pie charts and process/cycle diagrams no longer need another app
 3. Until the MCP tools appear, use the CLI one-shots (see **CLI**).
 
 The server is **headless** by default (no window). Everything works except `screenshot`, `click`, `key` and
-`ui_inspect`. For the user to watch live: `wordcraft --control 7981`, then `wordcraft-cli mcp --connect 127.0.0.1:7981`.
+`ui_inspect`. For the user to watch live: `wordcraft --control 7981`, then `wordcraft-cli mcp --connect 127.0.0.1:7981`
+(the bridge sends the app's control key from `WORDCRAFT_CONTROL_KEY` or the key file the app writes, and keeps serving
+while the app isn't open yet: calls fail with "not reachable … will retry on each call" until it is).
 Plain `wordcraft-cli mcp` reads and writes any path. `--automation-read-root DIR` / `--automation-write-root DIR`
-confine file access to DIR (a root left out grants no access of that kind). `--author NAME` names who tracked
+confine file access to DIR (a root left out grants no access of that kind; they are an error with `--connect`). `--author NAME` names who tracked
 changes and comments are by (default `WordCraft User`).
 
 ## Mental Model
 
 - **One active document**, edited like a person would: a **caret/selection**, and every edit is a **command**
-  (629 of them) that acts at the caret or on the selection. `execute {command, params}` runs one,
+  (655 of them) that acts at the caret or on the selection. `execute {command, params}` runs one,
   `batch {commands: [...]}` runs many in one call (stops at the first error unless `keepGoing`).
+- **Several documents can be open.** A fresh server starts with an empty `Document1` (id 1); `new_document` and
+  `open_document` open another one beside it and make it active (the reply has its `id`; opening a file replaces an
+  unused blank one, and a file already open just becomes active, `alreadyOpen: true`). Tools act on the active document;
+  pass `doc: <id>` to `execute`, `batch`, `type_text`, `select_text`, `get_text`, `inspect_document`, `render_page` or
+  `save_document` to work on another without switching. `list_documents` lists them.
 - **Write top to bottom:** type a paragraph, style it, `text.newParagraph`, repeat. The paragraph after a
   heading comes back as `Normal`.
 - **Positions** are `{story: "body" | {part: n}, path: [block, row, cell, block…], off: byteOffset}`. Every
@@ -73,8 +80,9 @@ changes and comments are by (default `WordCraft User`).
 
 | Tool | Use it for |
 |---|---|
-| `new_document {template?}` | `blank`, `sample`, `letter`, `resume`, `report` (templates have placeholder text to replace) |
-| `open_document {path}` / `save_document {path?}` | Open .docx .doc .odt .rtf .md .tex .html .txt .json (other text files as plain text). Save picks the format from the extension: docx, pdf, odt, rtf, html, md, tex, txt, png, xml (Word Flat XML) |
+| `new_document {template?}` | `blank`, `sample`, `letter`, `resume`, `report` (templates have placeholder text to replace). Opens a new document → `{id}` |
+| `open_document {path, password?}` / `save_document {path?, doc?}` | Open .docx .doc .odt .rtf .md .tex .html .txt .json (other text files as plain text). Save picks the format from the extension: docx, pdf, odt, rtf, html, md, tex, txt, png, xml (Word Flat XML) |
+| `list_documents` | Open documents: `id`, `title`, `path`, `dirty`, `active` |
 | `type_text {text, paragraphs?}` | Type at the caret, replacing the selection. `paragraphs: true` turns `\n` into new paragraphs |
 | `select_text {text, occurrence?}` | Select the n-th match (1-based). Then format it, or type to replace it |
 | `execute` / `batch` | Run commands (see **Commands**) |
@@ -117,7 +125,14 @@ Resources: `wordcraft://document` (same as inspect) and `wordcraft://commands`.
 - **Tables (caret inside):** `table.style {style}`, `table.look {headerRow, bandedRows…}`, `table.insertRowBelow`,
   `table.merge`, `table.columnWidth {width}`, `table.autofit {mode}`, `table.sort`, `table.properties {…}`,
   `table.formula {formula: "=SUM(ABOVE)"}` (a live field in the caret cell).
-- **Check:** `document.layout` (pages and the first block on each), `document.paragraph {path:[i]}`, `format.state`.
+- **Lists & sizes:** `list.multilevelPreset {preset: "headings"|"article"|"outlineHeadings"|"chapter"}` numbers Heading 1–9
+  (1 / 1.1 / 1.1.1…; tested), `design.scaleFontSizes {delta | percent}` grows or shrinks every size.
+- **Languages:** `proof.packs` lists spelling/hyphenation packs; `proof.installPack {locale}` downloads one only when the
+  person has turned downloading on in the app (File › Options › Language), else it fails with `downloading is turned off`
+  (not tested).
+- **Documents:** `view.switchWindows {id?}` (list, or make one active), `file.closeDocument {id?, force?}`.
+- **Check:** `document.layout` (pages and the first block on each), `document.paragraph {path:[i]}`, `format.state`,
+  `font.missing` (fonts drawn with a substitute).
 
 Table style ids: `TableGrid`, `PlainTable1`, `GridTable1Light`, `GridTable4Accent{Blue|Orange|Green|Purple}`,
 `ListTable3Accent{Blue|Orange|Green|Purple}`. Everything else: grep `references/commands.md`.
@@ -230,14 +245,26 @@ execute mailings.finish {path:"/abs/merged.docx"}           → one letter per r
 Only some records, or in another order: `mailings.filterRecipients {rules:[{field:"City", op:"equal", value:"Porto"}],
 sort:[{field:"Name", descending:true}]}` before preview/finish (→ `{records, of}`; `{}` clears it).
 
+### Recipe: work on several documents (tested)
+
+```text
+open_document {path:"/abs/source.docx"}                       → {id: 2}   (replaces the unused Document1)
+new_document {template:"report"}                              → {id: 3}, now the active one
+get_text {doc: 2}                                             ← read the source without switching
+batch {doc: 2, commands:[{command:"caret.docEnd"}, {command:"text.newParagraph"}, {command:"text.insert", params:{text:"…"}}]}
+save_document {doc: 2, path:"/abs/source-v2.docx"}            ← a file opened with a password is saved with it again
+list_documents → execute file.closeDocument {id: 2}           ← unsaved changes need force: true
+```
+
 ## Formats
 
 - **Open:** .docx .doc (Word 97-2003, read only) .odt .rtf .md .tex .html .txt .json .xml (Word XML), and other text files.
 - **Save:** .docx .pdf .odt .rtf .html .md .tex .txt .xml .png (page image). `.doc` can't be written.
   `.xml` is a Word XML Document (Flat OPC); `execute file.save {path, format:"wordml2003"}` writes a Word 2003 XML Document.
 - PDF has real text, links and bookmarks. `save_document` to a new path is "Save As"; omit `path` to save in place.
-- Password-protected Word files: `open_document` fails with `this document is protected with a password`; use
-  `execute file.open {path, password}`. Save encrypted with `execute file.save {path, password}`.
+- Password-protected Word files: `open_document {path}` fails with `this document is protected with a password` (a wrong
+  one: `the password is incorrect`); pass `password`. Save encrypted with `execute file.save {path, password}`. A file
+  opened with a password is saved with it again; PDF, HTML and text exports stay plain.
 
 ## CLI (no MCP needed)
 
@@ -245,16 +272,21 @@ sort:[{field:"Name", descending:true}]}` before preview/finish (→ `{records, o
 wordcraft-cli convert in.md out.docx            # docx doc(read) pdf odt rtf html md tex txt json png
 wordcraft-cli convert in.docx out.pdf --markup  # comments beside each page, tracked changes marked
 wordcraft-cli convert in.docx out.xml --format wordml2003   # Word 2003 XML (default .xml is Flat OPC)
+wordcraft-cli convert in.docx out.pdf --update-fields       # refresh unlocked fields (TOC, page refs) first
 wordcraft-cli info file.docx                     # JSON: pages, words, paragraphs, properties
 wordcraft-cli text file.docx                     # plain text with list labels  ·  wordcraft-cli inspect file.docx  (JSON)
 wordcraft-cli render file.docx page.png --page 2 --scale 0.8
 wordcraft-cli run --template letter --cmd 'edit.replaceAll={"text":"Dear","with":"Hello"}' \
                   --cmd 'select.text={"text":"Hello"}' --cmd format.bold --save /abs/out.docx --print
+wordcraft-cli run --script job.json             # {"template"?|"file"?, "commands":[{"command","params"?} | id…], "save":["out.docx","out.pdf"]}
 wordcraft-cli commands [--json]                  # the full command catalog
 wordcraft-cli <command> --help                   # usage for one command
 ```
 
 `run` takes `--file F` or `--template T`, then any number of `--cmd 'id={json}'`, then `--save`, and `--author NAME`.
+With `--script FILE` (`-` = stdin) the script's commands run first; its relative paths resolve against the script's
+folder, and one run can save several formats (tested: docx + pdf). A protected file: `--password-file PATH` or
+`WORDCRAFT_PASSWORD` (better than `--password PASS`, which other processes can read).
 `wordcraft-cli zotero …` drives a running Zotero (rarely needed).
 
 ## Pitfalls
@@ -264,8 +296,6 @@ wordcraft-cli <command> --help                   # usage for one command
 - **AutoCorrect on Enter.** `text.newParagraph` (and `type_text {paragraphs:true}`) applies AutoCorrect to the word before
   it: `x` → `X`, `teh` → `the`, sentence capitals. For names, codes or lowercase lines, run
   `execute tools.autocorrect {enabled:false}` first. It lasts for the server session only.
-- **Watermarks are not saved to .odt.** `design.watermark` is kept in .docx (and PDF), but a saved .odt has none.
-  Keep the .docx as the master and export the PDF from it.
 - **`design.theme` resets style colours and fonts.** A `styles.modify` colour set before it is replaced by the theme colour.
   Apply the theme first, then `styles.modify`.
 - **Cover page spills onto a second page.** `insert.coverPage` builds the page from empty `Normal` paragraphs, and the
@@ -278,20 +308,27 @@ wordcraft-cli <command> --help                   # usage for one command
   into that part; `get_text` then returns only that part. Run `insert.closeHeader` to get back to the body.
 - **`type_text {paragraphs:true}` then `para.bullets` bullets only the last paragraph.** Turn the list on first, then type.
 - **Colours** are `"RRGGBB"` everywhere, including property objects (`styles.modify chr/para`, `format.set {props}`,
-  `para.set {props}`: color, shading, underlineColor). `"#RRGGBB"`, `"auto"` and `{"Rgb":[r,g,b]}` also work. A bad value
-  fails with `bad parameters: invalid value: string "zz", expected `auto`, `RRGGBB` or `#RRGGBB``.
+  `para.set {props}`: color, shading, underlineColor). `"#RRGGBB"` and `"auto"` also work. A bad value fails with
+  `bad parameters: color must be RRGGBB or auto` (`format.color`) or ``bad parameters: invalid value: string "zz", expected
+  `auto`, `RRGGBB` or `#RRGGBB` `` (property objects); `format.color {color: {"Rgb":[…]}}` fails with ``bad parameters:
+  `color` (string) is required``.
 - **Unknown param keys are silently ignored** (no error). Check the effect with `format.state` or `document.paragraph {path:[i]}`.
 - **Table style names:** `insert.table {style:"Grid Table 4 Accent 1"}` → `bad parameters: no table style `Grid Table 4 Accent 1``.
   Use the ids listed above (`styles.list`).
 - `table.*` with the caret outside a table: `not available: table.style: the cursor isn't in a table`.
 - `styles.create` also applies the new style to the paragraph at the caret.
+- `edit.replaceAll` inserts `with` exactly as given: with `matchCase` off, replacing `region` with `area` also turns
+  `Region` into lowercase `area`. Run a separate pass for capitalised matches.
 - `edit.replaceAll` searches the body only, not headers or footers (edit those with `insert.editHeader`, `select.all`, `type_text`).
   `^p`, `^t` and other `^` codes are special by default; pass `special:false` to match a literal `^`.
 - `references.caption {label:"Table", text:"Sales"}` writes "Table 1: Sales". Don't start `text` with a colon.
 - `render_page` shows red spelling squiggles. PDF and `wordcraft-cli render` don't.
 - **Paths:** use absolute paths. Relative ones resolve against the server's working directory. With automation roots
   set, a path outside them fails with `automation path rejected: outside the write root <DIR>: <path>`.
-- UI-only tools fail headless with `` `ui.screenshot` needs the desktop app: start `wordcraft --control 7981` … ``. That's expected.
+- `file.closeDocument` on a changed document fails with `the document has unsaved changes: save it first, or pass "force": true
+  to discard them`. Closing the last one leaves a new blank document.
+- UI-only tools fail headless with `` `ui.screenshot` needs the desktop app: start `wordcraft --control 7981` and run
+  `wordcraft-cli mcp --connect 127.0.0.1:7981` ``. That's expected.
 
 ## Verification
 
@@ -303,7 +340,7 @@ wordcraft-cli <command> --help                   # usage for one command
 
 ## References
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 629 commands with params, ribbon location and shortcut, grouped by
-  area (text, para, table, chart, smartArt, equation, mailings, review, references, fields, developer…). Grep it
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 655 commands with params, ribbon location and shortcut, grouped by
+  area (text, para, table, chart, smartArt, equation, mailings, review, references, fields, proof, developer…). Grep it
   (`grep -n 'chart[.]' ${HERMES_SKILL_DIR}/references/commands.md`) rather than reading it whole.
 - Upstream docs: https://github.com/storytold/wordcraft/tree/main/docs (`mcp.md`, `control-protocol.md`, `typing-parity.md`).

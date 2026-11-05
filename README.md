@@ -1,7 +1,8 @@
 # Storytold skills for Hermes Agent
 
 [Hermes Agent](https://github.com/NousResearch/hermes-agent) skills for the
-[storytold Crafting Apps](https://github.com/storytold): thirteen free, open-source creative tools written in Rust.
+[storytold Crafting Apps](https://github.com/storytold): seventeen free, open-source creative tools written in Rust
+(SolidCraft comes from [Tangency Labs](https://github.com/tangency-labs/solidcraft)).
 Each app ships a desktop app, a CLI and an MCP server.
 
 The skills give an agent three things:
@@ -24,7 +25,7 @@ Then tell Hermes:
 
 > Install the Storytold skills.
 
-The `storytold` skill tells the agent how to install the other 14 skills. Then start a new session so they load,
+The `storytold` skill tells the agent how to install the other 18 skills. Then start a new session so they load,
 and tell Hermes:
 
 > Set up the Storytold Crafting Apps.
@@ -63,20 +64,24 @@ To review it first, read [`storytold_tools.py`](storytold-install/scripts/storyt
 | [`soundcraft`](soundcraft/SKILL.md) | SoundCraft (Pro Tools-style) | Podcast editing, mixing, mastering, sound design |
 | [`cadcraft`](cadcraft/SKILL.md) | CADCraft (AutoCAD-style) | Floor plans, technical drawings, DXF / DWG |
 | [`figcraft`](figcraft/SKILL.md) | FigCraft (Figma-style) | App and web screens, components, design tokens, prototypes, .fig |
+| [`solidcraft`](solidcraft/SKILL.md) | SolidCraft (SolidWorks-style) | Parametric 3D parts and assemblies, STEP / STL |
+| [`materialcraft`](materialcraft/SKILL.md) | MaterialCraft (Substance Designer-style) | Procedural PBR materials as node graphs, texture maps |
+| [`texturecraft`](texturecraft/SKILL.md) | TextureCraft (Substance Painter-style) | Baking and painting PBR textures on 3D meshes |
+| [`craft-anything`](craft-anything/SKILL.md) | Craft Anything | Study how a website, app or game works, build and check your own version |
 
 Each app skill has a `references/` folder with that app's full command, effect or function catalog, generated
 from the live MCP server. The skills tell the agent to grep these files rather than read them whole.
 
 ## Install the skills
 
-The [Quick start](#quick-start) lets the agent install them. To install all 15 yourself in one line:
+The [Quick start](#quick-start) lets the agent install them. To install all 19 yourself in one line:
 
 ```bash
-for s in storytold-install storytold vectorcraft photocraft lightcraft effectcraft filmcraft designcraft pdfcraft wordcraft gridcraft deckcraft soundcraft cadcraft figcraft; do hermes skills install "hermes-pro/storytold-skills/$s" --yes --force; done
+for s in storytold-install storytold vectorcraft photocraft lightcraft effectcraft filmcraft designcraft pdfcraft wordcraft gridcraft deckcraft soundcraft cadcraft figcraft solidcraft materialcraft texturecraft craft-anything; do hermes skills install "hermes-pro/storytold-skills/$s" --yes --force; done
 ```
 
 ```powershell
-'storytold-install','storytold','vectorcraft','photocraft','lightcraft','effectcraft','filmcraft','designcraft','pdfcraft','wordcraft','gridcraft','deckcraft','soundcraft','cadcraft','figcraft' | % { hermes skills install "hermes-pro/storytold-skills/$_" --yes --force }
+'storytold-install','storytold','vectorcraft','photocraft','lightcraft','effectcraft','filmcraft','designcraft','pdfcraft','wordcraft','gridcraft','deckcraft','soundcraft','cadcraft','figcraft','solidcraft','materialcraft','texturecraft','craft-anything' | % { hermes skills install "hermes-pro/storytold-skills/$_" --yes --force }
 ```
 
 `--force` is only needed for `storytold-install` (see [Quick start](#quick-start)). Single skills install the
@@ -95,7 +100,7 @@ Once the skills are installed, ask Hermes to set up the Crafting Apps, or run th
 Python 3.9+ and nothing else:
 
 ```bash
-python storytold-install/scripts/storytold_tools.py setup            # all thirteen apps
+python storytold-install/scripts/storytold_tools.py setup            # all seventeen apps
 python storytold-install/scripts/storytold_tools.py setup vectorcraft photocraft
 ```
 
@@ -117,9 +122,9 @@ Then start a new Hermes session or run `/reload-mcp`. The tools appear as `mcp_<
 
 The helper also has the subcommands `status`, `install`, `path`, `verify` and `register` (with `--replace`).
 See [`storytold-install/SKILL.md`](storytold-install/SKILL.md) for those, for the environment variables that
-change the locations, and for the per-app MCP arguments. PhotoCraft gets file-access roots, LightCraft gets a
+change the locations, and for the per-app MCP arguments. PhotoCraft, MaterialCraft and TextureCraft get file-access roots, SolidCraft an allowed folder, LightCraft gets a
 persistent library, VectorCraft runs `--headless` (so it never attaches to another app on port 7979), and PdfCraft
-runs `--compact` (17 tools instead of 161).
+runs `--compact` (17 tools instead of 184).
 
 ## How the skills were tested
 
@@ -127,8 +132,9 @@ Every recipe marked **(tested)** was run against the released apps through their
 outputs were checked by rendering and looking at them, by reading values back, or by measuring them with
 ffprobe or ffmpeg. The versions tested were:
 
-vectorcraft 0.13.1 · photocraft 0.10.0 · lightcraft 0.9.1 · effectcraft 0.11.1 · filmcraft 0.9.0 · designcraft 0.9.0 ·
-pdfcraft 0.9.0 · wordcraft 0.8.0 · gridcraft 0.8.0 · deckcraft 0.8.0 · soundcraft 0.8.0 · cadcraft 0.8.0 · figcraft 0.7.0
+vectorcraft 0.21.0 · photocraft 0.20.1 · lightcraft 0.18.1 · effectcraft 0.21.0 · filmcraft 0.17.0 · designcraft 0.17.1 ·
+pdfcraft 0.18.1 · wordcraft 0.15.2 · gridcraft 0.16.1 · deckcraft 0.15.1 · soundcraft 0.17.1 · cadcraft 0.17.1 · figcraft 0.15.0 ·
+solidcraft 0.30.1 · materialcraft 0.1.2 · texturecraft 0.3.2 · craft-anything 0.3.0
 
 Bugs and quirks found along the way, with their exact error text, are in each skill's **Pitfalls** section.
 Each skill also says what wasn't tested. When an app updates, regenerate its `references/` from the live

@@ -1,6 +1,6 @@
 # FilmCraft effects and transitions
 
-Generated from `effects.list {detail: true}` (FilmCraft 0.9.0, 303 entries). Apply a clip effect with `command_run effects.apply {clips: [id], effect: <id or name>}`, then set params with `effects.setParam {clip, effect: <id or index>, param, value, time?}`. Transitions go on with `sequence.applyVideoTransition {clip, edge, effect, frames}` / `sequence.applyAudioTransition {clip, effect, frames}`. Choice params take an index (options listed). `*` = not animatable. Format: `id` **Name**: `param` (default), …
+Generated from `effects.list {detail: true}` (FilmCraft 0.17.0, 304 entries). Apply a clip effect with `command_run effects.apply {clips: [id], effect: <id or name>}`, then set params with `effects.setParam {clip, effect: <id or index>, param, value, time?}`. Transitions go on with `sequence.applyVideoTransition {clip, edge, effect, frames}` / `sequence.applyAudioTransition {clip, effect, frames}`. Choice params take an index (options listed). `*` = not animatable. Format: `id` **Name**: `param` (default), …
 
 ## Video effects
 
@@ -9,7 +9,7 @@ Generated from `effects.list {detail: true}` (FilmCraft 0.9.0, 303 entries). App
 - `motion` **Motion**: `position` ([x,y]), `scale` (100), `scale_width` (100), `uniform_scale`* (true), `rotation` (0), `anchor` ([x,y]), `anti_flicker` (0)
 - `opacity` **Opacity**: `opacity` (100), `blend`* (0: 0=Normal/1=Dissolve/2=Darken/3=Multiply/4=Color Burn/5=Linear Burn/6=Darker Color/7=Lighten/8=Screen/9=Color Dodge/10=Linear Dodge (Add)/11=Lighter Color/12=Ove)
 - `graphic_shape` **Shape**: `name`* (""), `shape`* (0: 0=Rectangle/1=Ellipse/2=Polygon/3=Path), `size` ([400,200]), `sides` (6), `corner_radius` (0), `points`* ([]), `fill`* (true), `fill_color` (#ffffff), `fill_kind`* (0: 0=Solid/1=Linear Gradient), `gradient_start` (#ffffff), `gradient_end` (#262626), `gradient_angle` (0), `stroke`* (false), `stroke_color` (#000000), `stroke_width` (4), `stroke_type`* (0: 0=Outer/1=Center/2=Inner), `stroke2`* (false), `stroke2_color` (#ffd933), `stroke2_width` (10), `stroke2_type`* (0: 0=Outer/1=Center/2=Inner), `background`* (false), `background_color` (#000000), `background_opacity` (75), `background_size` (12), `background_radius` (0), `shadow`* (false), `shadow_color` (#000000), `shadow_opacity` (75), `shadow_angle` (135), `shadow_distance` (10), `shadow_size` (0), `shadow_blur` (40), `position` ([x,y]), `anchor` ([0,0]), `scale` (100), `scale_width` (100), `uniform_scale`* (true), `rotation` (0), `opacity` (100)
-- `graphic_text` **Text**: `name`* (""), `text` (""), `font`* ("Inter"), `font_style`* ("Regular"), `size` (100), `align`* (0: 0=Left/1=Center/2=Right/3=Justify), `tracking` (0), `kerning`* (true), `ligatures`* (true), `leading` (0), `baseline_shift` (0), `faux_bold`* (false), `faux_italic`* (false), `caps`* (0: 0=Normal/1=All Caps/2=Small Caps), `underline`* (false), `box_width` (0), `box_height` (0), `vertical`* (false), `fill`* (true), `fill_color` (#ffffff), `fill_kind`* (0: 0=Solid/1=Linear Gradient), `gradient_start` (#ffffff), `gradient_end` (#262626), `gradient_angle` (0), `stroke`* (false), `stroke_color` (#000000), `stroke_width` (4), `stroke_type`* (0: 0=Outer/1=Center/2=Inner), `stroke2`* (false), `stroke2_color` (#ffd933), `stroke2_width` (10), `stroke2_type`* (0: 0=Outer/1=Center/2=Inner), `background`* (false), `background_color` (#000000), `background_opacity` (75), `background_size` (12), `background_radius` (0), `shadow`* (false), `shadow_color` (#000000), `shadow_opacity` (75), `shadow_angle` (135), `shadow_distance` (10), `shadow_size` (0), `shadow_blur` (40), `position` ([x,y]), `anchor` ([0,0]), `scale` (100), `scale_width` (100), `uniform_scale`* (true), `rotation` (0), `opacity` (100)
+- `graphic_text` **Text**: `name`* (""), `text` (""), `font`* ("Inter"), `font_style`* ("Regular"), `size` (100), `align`* (0: 0=Left/1=Center/2=Right/3=Justify), `tracking` (0), `kerning`* (true), `ligatures`* (true), `leading` (0), `baseline_shift` (0), `faux_bold`* (false), `faux_italic`* (false), `caps`* (0: 0=Normal/1=All Caps/2=Small Caps), `underline`* (false), `strikethrough`* (false), `box_width` (0), `box_height` (0), `vertical`* (false), `fill`* (true), `fill_color` (#ffffff), `fill_kind`* (0: 0=Solid/1=Linear Gradient), `gradient_start` (#ffffff), `gradient_end` (#262626), `gradient_angle` (0), `stroke`* (false), `stroke_color` (#000000), `stroke_width` (4), `stroke_type`* (0: 0=Outer/1=Center/2=Inner), `stroke2`* (false), `stroke2_color` (#ffd933), `stroke2_width` (10), `stroke2_type`* (0: 0=Outer/1=Center/2=Inner), `background`* (false), `background_color` (#000000), `background_opacity` (75), `background_size` (12), `background_radius` (0), `shadow`* (false), `shadow_color` (#000000), `shadow_opacity` (75), `shadow_angle` (135), `shadow_distance` (10), `shadow_size` (0), `shadow_blur` (40), `position` ([x,y]), `anchor` ([0,0]), `scale` (100), `scale_width` (100), `uniform_scale`* (true), `rotation` (0), `opacity` (100)
 - `time_remap` **Time Remapping**: `speed` (100)
 
 ### Adjust
@@ -54,7 +54,7 @@ Generated from `effects.list {detail: true}` (FilmCraft 0.9.0, 303 entries). App
 
 ### Generate
 
-- `four_color_gradient` **4-Color Gradient**: `c1` (#ffff00), `c2` (#00ff00), `c3` (#ff00ff), `c4` (#0000ff), `blend` (100), `opacity` (100)
+- `four_color_gradient` **4-Color Gradient**: `p1` ([x,y]), `c1` (#ffff00), `p2` ([x,y]), `c2` (#00ff00), `p3` ([x,y]), `c3` (#ff00ff), `p4` ([x,y]), `c4` (#0000ff), `blend` (100), `opacity` (100)
 - `gradient` **Gradient**: `start` ([x,y]), `start_color` (#000000), `end` ([x,y]), `end_color` (#ffffff), `shape`* (0: 0=Linear/1=Radial/2=Reflected/3=Diamond), `scatter` (0), `midpoint` (50), `blend` (0)
 
 ### Image Control
@@ -86,7 +86,7 @@ Generated from `effects.list {detail: true}` (FilmCraft 0.9.0, 303 entries). App
 - `alpha_adjust` **Alpha Adjust**: `opacity` (100), `ignore`* (false), `invert`* (false), `mask_only`* (false)
 - `color_key` **Color Key**: `color` (#0000ff), `tolerance` (0), `thin` (0), `feather` (0)
 - `logo_cutout` **Logo Cutout**: `background`* (0: 0=White/1=Black/2=Custom Color), `color` (#ffffff), `threshold` (5), `softness` (10), `unmultiply`* (true), `invert`* (false)
-- `luma_key` **Luma Key**: `threshold` (0), `cutoff` (0)
+- `luma_key` **Luma Key**: `threshold` (0), `cutoff` (0), `invert`* (false)
 - `track_matte` **Track Matte Key**: `matte`* (0: 0=None/1=Video 1/2=Video 2/3=Video 3/4=Video 4/5=Video 5/6=Video 6/7=Video 7/8=Video 8), `composite`* (0: 0=Matte Alpha/1=Matte Luma), `reverse`* (false)
 - `ultra_key` **Ultra Key**: `key_color` (#00cc33), `output`* (0: 0=Composite/1=Alpha Channel/2=Color Channel), `setting`* (0: 0=Default/1=Relaxed/2=Aggressive/3=Custom), `transparency` (45), `highlight` (10), `shadow` (50), `tolerance` (50), `pedestal` (10), `choke` (0), `soften` (0), `spill` (50), `contrast` (0), `mid_point` (50), `desaturate` (25), `range` (50), `spill_luma` (50), `cc_saturation` (100), `cc_hue` (0), `cc_luminance` (100)
 
@@ -122,6 +122,7 @@ Generated from `effects.list {detail: true}` (FilmCraft 0.9.0, 303 entries). App
 - `lightning` **Lightning**: `start` ([x,y]), `end` ([x,y]), `segments` (7), `amplitude` (10), `detail` (2), `detail_amplitude` (0.3), `branching` (0.3), `speed` (10), `width` (10), `core` (0.4), `outside` (#594dff), `inside` (#ffffff), `seed` (0), `mode`* (1: 0=Normal/1=Add/2=Screen/3=Multiply/4=Overlay)
 - `median` **Median**: `radius` (0)
 - `paint_bucket` **Paint Bucket**: `point` ([x,y]), `selector`* (0: 0=Color & Alpha/1=Straight Color/2=Transparency/3=Opacity), `tolerance` (10), `invert`* (false), `color` (#ff0000), `opacity` (100), `mode`* (0: 0=Normal/1=Behind/2=Add/3=Multiply/4=Screen)
+- `three_way_color` **Three-Way Color Corrector**: `shadow_hue` (0), `shadow_balance` (0), `shadow_level` (0), `mid_hue` (0), `mid_balance` (0), `mid_level` (0), `hi_hue` (0), `hi_balance` (0), `hi_level` (0), `shadow_threshold` (33), `shadow_softness` (30), `hi_threshold` (66), `hi_softness` (30), `saturation` (100)
 - `timecode` **Timecode**: `position` ([x,y]), `size` (15), `opacity` (100)
 - `write_on` **Write-on**: `brush` ([x,y]), `color` (#ffffff), `size` (8), `hardness` (75), `opacity` (100), `stroke_length` (0), `spacing` (0.01), `style`* (0: 0=On Original Image/1=On Transparent/2=Reveal Original Image)
 

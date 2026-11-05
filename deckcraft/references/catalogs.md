@@ -1,6 +1,6 @@
 # DeckCraft catalogs
 
-Generated from the live server (DeckCraft 0.8.0): `shape.presets`, `transition.list`, `animation.list`, `design.themes`, `file.templates`, `insert.icons`, `picture.styles`, `picture.recolors`.
+Generated from the live server (DeckCraft 0.15.1): `shape.presets`, `transition.list`, `animation.list`, `design.themes`, `file.templates`, `insert.icons`, `picture.styles`, `picture.recolors`.
 Grep for a name rather than reading the file whole.
 
 ## Themes (new_presentation {theme} / design.theme {name})
@@ -56,5 +56,5 @@ Pass `class` (entrance|emphasis|exit|path) with `animation.add` when an effect n
 
 ## Pictures
 
-- **picture.style {style}:** `simpleFrameWhite`, `beveledMatteWhite`, `metalFrame`, `dropShadowRectangle`, `roundedDiagonalCornerWhite`, `snipDiagonalCornerWhite`, `moderateFrameWhite`, `rotatedWhite`, `perspectiveShadowWhite`, `softEdgeRectangle`, `doubleFrameBlack`, `thickMatteBlack`, `simpleFrameBlack`, `beveledOvalBlack`, `compoundFrameBlack`, `centerShadowRectangle`, `softEdgeOval`, `reflectedRoundedRectangle`, `reflectedBevelWhite`, `metalRoundedRectangle`, `moderateFrameBlack`, `bevelRectangle`, `bevelPerspective`, `metalOval`, `none`
+- **picture.style {style}:** `simpleFrameWhite`, `beveledMatteWhite`, `metalFrame`, `dropShadowRectangle`, `roundedDiagonalCornerWhite`, `snipDiagonalCornerWhite`, `moderateFrameWhite`, `rotatedWhite`, `perspectiveShadowWhite`, `softEdgeRectangle`, `doubleFrameBlack`, `thickMatteBlack`, `simpleFrameBlack`, `beveledOvalBlack`, `compoundFrameBlack`, `centerShadowRectangle`, `softEdgeOval`, `reflectedRoundedRectangle`, `reflectedBevelWhite`, `metalRoundedRectangle`, `moderateFrameBlack`, `bevelRectangle`, `bevelPerspective`, `metalOval`
 - **picture.recolor {preset}:** `none`, `grayscale`, `sepia`, `washout`, `bw25`, `bw50`, `bw75`, `tx2Dark`, `accent1Dark`, `accent2Dark`, `accent3Dark`, `accent4Dark`, `accent5Dark`, `accent6Dark`, `tx2Light`, `accent1Light`, `accent2Light`, `accent3Light`, `accent4Light`, `accent5Light`, `accent6Light`

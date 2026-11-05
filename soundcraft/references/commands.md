@@ -1,6 +1,6 @@
 # SoundCraft command catalog
 
-Generated from `list_commands` (SoundCraft 0.8.0, 478 commands). Run with `execute {command, params}`
+Generated from `list_commands` (SoundCraft 0.17.1, 483 commands). Run with `execute {command, params}`
 or `batch {calls:[{command, params}]}`; `soundcraft-cli describe ID` shows one. `?` = optional, `a|b` = choices.
 Positions: samples (int), `{"seconds": x}`, or `"0:12.500"` / `"bars_beats:5|1|000"`. Tracks by id or name; clips by id.
 Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an error such as `make an edit selection first` means: pass them).
@@ -17,7 +17,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `session.revert` (File › Revert Session to Saved): {}
 - `session.inspect` (Inspect Session): {detail?: summary|full}
 - `session.format_time` (Format Time): {at: samples, format?: bars_beats|min_secs|timecode|feet_frames|samples}
-- `session.audio_health` (Session Audio Health): {} — checks all audio clips, including inactive playlists; no filesystem or signal analysis
+- `session.audio_health` (Session Audio Health): {}; checks all audio clips, including inactive playlists; no filesystem or signal analysis
 
 ## file — Import, bounce, export
 
@@ -25,9 +25,9 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `file.import_midi` (File › Import › MIDI) [Cmd+Alt+I]: {path, at?}
 - `file.import_video` (File › Import › Video) [Cmd+Ctrl+I]: {path, at?} — adds a Video track clip for the movie's picture (H.264, ProRes, Motion JPEG) and imports its audio onto a new track
 - `file.bounce_mix` (File › Bounce Mix) [Cmd+Alt+B]: {path, format?: wav|aiff|flac, bit_depth?: 16|24|32f, start?, end?, source?: main|bus name, normalize?: false, dither?: true, fold_down?: stereo}
-- `file.bounce_stems` (Bounce Stems): {dir, format?: wav|aiff|flac, bit_depth?: 16|24|32f, start?, end?, fold_down?: stereo}
+- `file.bounce_stems` (Bounce Stems): {dir, format?: wav|aiff|flac, bit_depth?: 16|24|32f, start?, end?, dither?: true, fold_down?: stereo}
 - `file.export_midi` (File › Export › MIDI): {path, tracks?}
-- `file.export_session_text` (File › Export › Session Info as Text): {path?}
+- `file.export_session_text` (File › Export › Session Info as Text): {path?, replace?: false}
 - `file.export_clips` (Export Clips as Files) [Cmd+Shift+K]: {dir, clips?, format?: wav}
 - `file.export_selected_tracks_as_session` (File › Export › Selected Tracks as New Session): {path, tracks?, replace?: false}
 - `file.export_sibelius` (File › Export › Sibelius): {path, tracks?} — MIDI tracks as MusicXML (.musicxml)
@@ -83,7 +83,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `edit.trim_to_fill_selection` (Edit › Trim › To Fill Selection): {}
 - `edit.mute_clips` (Edit › Mute) [Cmd+M]: {clips?}
 - `edit.copy_to_new_playlist` (Edit › Copy Selection to... › New Playlist) [Alt+Shift+Down]: {}
-- `edit.strip_silence` (Edit › Strip Silence) [Cmd+U]: {threshold_db?: -48, min_length_ms?: 50, pad_before_ms?: 5, pad_after_ms?: 20}
+- `edit.strip_silence` (Edit › Strip Silence) [Cmd+U]: {threshold_db?: -48, min_length_ms?: 50, pad_before_ms?: 5, pad_after_ms?: 20, mode?: strip|extract|separate, name?, number?: 1, zeros?: 0, suffix?} (strip removes the silence; extract removes the audio and keeps the silence; separate separates the clips at the edges of the silence and does not remove any; with a name, the clips left in the selection are named name, zeros, a number counting up from number, suffix)
 - `edit.fades_create` (Edit › Fades › Create) [Cmd+F]: {shape?: linear|equal power|s-curve|exponential|logarithmic, tracks?, start?, end?} or {clip: id, side: in|out, length: samples, shape?, curvature?: -1..1}
 - `edit.fades_delete` (Edit › Fades › Delete): {tracks?, start?, end?}
 - `edit.fade_to_start` (Edit › Fades › Fade to Start) [Cmd+Ctrl+D]: {}
@@ -134,6 +134,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `edit.automation_glide_pan` (Edit › Automation › Glide Pan Only): {tracks?, start?, end?}
 - `edit.tab` (Tab): {back?: bool, extend?: bool (extend the selection)}
 - `edit.copy_audio_as_midi` (Edit › Copy Special › Audio as MIDI): {track?, start?, end?} — monophonic pitch tracking of the selected audio
+- `edit.strip_silence_preview` (Strip Silence Rectangles): {threshold_db?: -48, min_length_ms?: 50, pad_before_ms?: 5, pad_after_ms?: 20, tracks?, start?, end?} (the ranges edit.strip_silence finds with the same settings, padded, on each track: what Strip keeps and the Strip Silence window draws as rectangles; changes nothing)
 
 ## clip — Clip properties (gain, name, loop, lock)
 
@@ -145,7 +146,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `clip.group` (Clip › Group) [Cmd+Alt+G]: {clips?}
 - `clip.ungroup` (Clip › Ungroup) [Cmd+Alt+U]: {clips?}
 - `clip.ungroup_all` (Clip › Ungroup All): {}
-- `clip.loop` (Clip › Loop) [Cmd+Alt+L]: {clips?, count?: n, length?: samples}
+- `clip.loop` (Clip › Loop) [Cmd+Alt+L]: {clips?, count?: n, length?: samples, fill?: bool}: count is the clip plus its loops; length is the whole looped clip, with the last loop cut short to fit; fill loops up to the next clip on the track, or else to the session end
 - `clip.rename` (Clip › Rename) [Cmd+Alt+Shift+R]: {clip?, name}
 - `clip.gain` (Clip Gain): {clips?, db | delta_db}
 - `clip.gain_nudge_up` (Nudge Clip Gain Up) [Ctrl+Shift+Up]: {clips?}
@@ -153,6 +154,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `clip.gain_render` (Clip › Clip Gain › Render): {clips?}
 - `clip.gain_bypass` (Clip › Clip Gain › Bypass): {clips?}
 - `clip.identify_sync_point` (Clip › Identify Sync Point) [Cmd+,]: {clip?, at?}
+- `clip.remove_sync_point` (Clip › Remove Sync Point): {clips?}
 - `clip.quantize_to_grid` (Clip › Quantize to Grid) [Cmd+0]: {clips?}
 - `clip.color` (Clip Color): {clips?, color: [r,g,b] | null}
 - `clip.elastic_properties` (Clip › Elastic Properties) [Alt+5]: {clips?, ratio?: 1.0} — on Elastic Audio tracks (polyphonic/rhythmic/monophonic/x-form) the stretch is rendered pitch-preserving; elsewhere it is varispeed
@@ -168,13 +170,15 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `clip.conform_to_tempo` (Clip › Conform to Tempo): {clips?, source_bpm?} — stretches audio clips so their length in bars follows the session tempo; the first conform records the clip's tempo
 - `clip.remove_pitch_shift` (Clip › Remove Pitch Shift): {clips?} — re-renders vari-speed (stretched) clips with pitch preserved
 - `clip.clear` (Clear Clips) [Cmd+Shift+B]: {clips?: [id], sources?: [id], with_clips?: bool} — removes clips and audio files from the session (files stay on disk); default: the Clip List selection. A file still used on the timeline needs `with_clips: true`, which removes those clips too
+- `clip.auto_rename` (Auto Rename): {clips?: [id], name?, number?: 0..999999999, zeros?: 0..9, suffix?}: sets the names that editing gives the clips it separates from these clips (default: the Clip List's selected clips): the piece after each cut is named `name`, then `zeros` zeros, then a number counting up from `number` (default 1), then `suffix`, in one number sequence for all of them. Without a name, the clips keep their names when they are separated
 
 ## track — Tracks, routing, playlists, freeze/bounce
 
-- `track.new` (Track › New) [Cmd+Shift+N]: {count?: 1, format?: mono|stereo|5.1…, kind?: audio|aux|master|midi|instrument|vca|folder, name?, timebase?: samples|ticks, instrument?: plugin id}
+- `track.new` (Track › New) [Cmd+Shift+N]: {count?: 1, format?: mono|stereo|5.1…, kind?: audio|aux|master|midi|instrument|vca|folder, name?, timebase?: samples|ticks, instrument?: plugin id, rows?: [objects with the same fields] (1–128 tracks total)}
 - `track.group` (Track › Group) [Cmd+G]: {name?, tracks?, edit?: true, mix?: true}
 - `track.ungroup` (Delete Group): {group: id|name}
 - `track.group_toggle` (Toggle Group Active): {group: id|name}
+- `track.group_modify` (Modify Group): {group: id|name, name?, tracks?, edit?, mix?}
 - `track.duplicate` (Track › Duplicate) [Alt+Shift+D]: {tracks?, playlists?: true, automation?: true, inserts?: true, sends?: true}
 - `track.split_into_mono` (Track › Split into Mono): {tracks?}
 - `track.make_inactive` (Track › Make Inactive): {tracks?, inactive?: bool}
@@ -265,9 +269,9 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `mix.send_surround_pan` (Set Send Surround Pan): {track?, slot: 0..9|a..j, x?, y?, z?, divergence?, center?, lfe_db?, clear?: bool}
 - `mix.insert_state` (Store Plugin State): {track, slot: 0..9 | "a".."j" | "instrument", state: base64 | null} → {bytes}. Not undoable and not journaled (states can be large).
 - `mix.instrument` (Set Instrument): {track?, plugin: id, params?: {id: value}} — an instrument track's instrument: built-in, `clap:`, `vst3:` or `au:` id; `params` sets built-in parameters (clamped into range; unknown ids and other fields are errors)
-- `mix.instrument_param` (Set Instrument Parameter): {track?, param, value} — one parameter of an instrument track's built-in instrument (clamped into range)
-- `mix.sampler_load` (Load Sampler Sample): {track?, path, params?: {root_note, key_low, key_high, attack, loop_mode, …}} — an instrument track plays the file through the built-in Sampler (made its instrument if it is not already) → {track, source, name, frames, channels, sample_rate}
-- `mix.sampler_clear` (Clear Sampler Sample): {track?} — the track's Sampler stops playing its sample
+- `mix.instrument_param` (Set Instrument Parameter): {track?, param, value}: one parameter of an instrument track's built-in instrument (clamped into range)
+- `mix.sampler_load` (Load Sampler Sample): {track?, path, params?: {root_note, key_low, key_high, attack, loop_mode, …}}: an instrument track plays the file through the built-in Sampler (made its instrument if it is not already) → {track, source, name, frames, channels, sample_rate}
+- `mix.sampler_clear` (Clear Sampler Sample): {track?}: the track's Sampler stops playing its sample
 
 ## automation — Automation breakpoints and passes
 
@@ -284,13 +288,13 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 
 ## audiosuite — Offline (destructive-copy) processing
 
-- `audiosuite.process` (AudioSuite Process): {process: <plugin id> | normalize | reverse | invert | gain | duplicate | time_stretch | pitch_shift | varispeed | signal_generator, params?: {..}, clips?, tracks?, start?, end?} — signal_generator fills start..end (default: the selection) with a new clip on each audio track in `tracks` (default: the selected tracks)
+- `audiosuite.process` (AudioSuite Process): {process: <built-in plugin id (engine.plugins)> | normalize | reverse | invert | gain | duplicate | time_stretch | pitch_shift | varispeed | speed_ramp | signal_generator, params?: {..}, clips?, tracks?, start?, end?} — signal_generator fills start..end (default: the selection) with a new clip on each audio track in `tracks` (default: the selected tracks); speed_ramp takes change (0 slow down, 1 speed up), selection (0 fit to, 1 extend) and fades (1 on, 0 off)
 
 ## markers — Memory locations
 
 - `markers.add` (New Memory Location) [Enter]: {name?, at?, start?, end?, kind?: marker|selection|none, ruler?: 1..5}
 - `markers.delete` (Delete Memory Location): {number | id}
-- `markers.edit` (Edit Memory Location): {number | id, name?, comments?, at?, color?}
+- `markers.edit` (Edit Memory Location): {number | id, name?, comments?, at?, color?: [r,g,b] | null}
 - `markers.recall` (Recall Memory Location) [Period + n + Period]: {number}
 - `markers.next` (Go to Next Marker): {}
 - `markers.previous` (Go to Previous Marker): {}
@@ -372,8 +376,8 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `setup.session` (Setup › Session) [Cmd+2]: {frame_rate?: '29.97 Drop'…, bit_depth?: 16|24|32f, timecode_start?: position, name?}
 - `setup.preferences` (Setup › Preferences): {}
 - `setup.reset_edit_state` (Reset Edit Settings): {}
-- `setup.hardware` (Setup › Hardware): {device?, buffer_size?: 16..8192} — audio interface settings (sample rate is the session's)
-- `setup.playback_engine` (Setup › Playback Engine): {device?, buffer_size?: 16..8192, delay_compensation?: bool}
+- `setup.hardware` (Setup › Hardware): {device?: output name, buffer_size?: 16..=8192 or null} — output device and buffer. Applied only in the desktop app (Playback Engine window / ui.audio_device), which returns the open device. Headless stores the request and returns applied: false; buffer_size is null when unset. Any integer in range, not rounded to the window's power-of-two sizes. Sample rate is the session's
+- `setup.playback_engine` (Setup › Playback Engine): {device?: output name, buffer_size?: 16..=8192 or null, delay_compensation?: bool} — device and buffer as setup.hardware (applied only in the desktop app, or via ui.audio_device); delay_compensation is applied here too. Headless returns applied: false and does not invent a buffer
 - `setup.disk_allocation` (Setup › Disk Allocation): {path?, track?} — the record folder for the session, or for one track
 - `setup.peripherals` (Setup › Peripherals): {settings?: {name: number|bool|string}} — control surface / sync device settings
 - `setup.io` (Setup › I/O): {action?: list|create_bus|rename_bus|delete_bus|create_output|rename_output|delete_output, name?, new_name?, format?: stereo, first_channel?: 0}
@@ -526,6 +530,7 @@ Omitted `tracks`/`start`/`end`/`clips` fall back to the current selection (an er
 - `view.transport_expanded` (View › Transport › Expanded): {value?: bool} (toggles when omitted)
 - `view.flags` (View Flags): {prefix?} — lists the view/option flags that are on
 - `view.zoom_toggle` (Zoom Toggle): {width_px?: 1200, height_px?: 600}
+- `view.zoom_toggle_cancel` (Cancel Zoom Toggle) [Alt+Shift+E]: {}
 
 ## video — Video track
 

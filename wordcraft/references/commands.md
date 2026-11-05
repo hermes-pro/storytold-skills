@@ -1,21 +1,22 @@
 # WordCraft command catalog
 
-Generated from `wordcraft-cli commands --json` (WordCraft 0.8.0): 629 commands. Run one with `execute {command, params}`, or several with `batch`.
+Generated from `wordcraft-cli commands --json` (WordCraft 0.15.2): 655 commands. Run one with `execute {command, params}`, or several with `batch`.
 Grep this file for a verb (`grep -n 'table[.]' commands.md`) rather than reading it whole.
 `?` = optional, `a|b` = choices, `→` = what it returns. Unknown param keys are ignored silently, so copy names exactly.
 `(Tab › Group)` is where the command sits in the desktop UI; `[keys]` is its shortcut.
 
-Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `font` (4), `para` (50), `styles` (16), `list` (2), `view` (35), `table` (48), `outline` (26), `insert` (44), `link` (1), `equation` (20), `layout` (18), `review` (35), `file` (28), `document` (6), `design` (11), `references` (25), `fields` (8), `mailings` (19), `picture` (14), `object` (1), `arrange` (15), `shape` (9), `smartArt` (8), `chart` (5), `draw` (16), `canvas` (4), `wordArt` (4), `tools` (11), `hf` (3), `readAloud` (7), `developer` (16)
+Groups: `text` (23), `caret` (16), `select` (14), `edit` (31), `format` (41), `font` (5), `para` (50), `styles` (16), `list` (3), `view` (41), `table` (48), `outline` (26), `insert` (44), `link` (1), `equation` (21), `layout` (18), `review` (36), `file` (30), `document` (6), `proof` (3), `design` (12), `references` (25), `fields` (8), `mailings` (23), `picture` (14), `object` (1), `arrange` (15), `shape` (9), `smartArt` (9), `chart` (5), `draw` (16), `canvas` (4), `wordArt` (4), `tools` (11), `hf` (3), `readAloud` (7), `developer` (16)
 
 ## text
 
-- `text.insert` (Editing): Type Text {"text": string}
+- `text.insert` (Editing): Type Text {"text": string, "raw"?: bool, "paragraphs"?: bool} (paragraphs: each line a paragraph, one undo step, at most 10000 lines)
 - `text.newParagraph` (Editing): New Paragraph {} [Enter]
 - `text.lineBreak` (Editing): Line Break {} [Shift+Enter]
 - `text.pageBreak` (Insert › Pages): Page Break {} [Mod+Enter]
 - `text.columnBreak` (Layout › Breaks): Column Break {} [Mod+Shift+Enter]
 - `text.tab` (Editing): Tab {} [Tab]
 - `text.backTab` (Editing): Shift+Tab {} [Shift+Tab]
+- `text.insertTab` (Editing): Tab Character {} [Alt+Tab]
 - `text.backspace` (Editing): Backspace {} [Backspace]
 - `text.delete` (Editing): Delete {} [Delete]
 - `text.deleteWordBack` (Editing): Delete Previous Word {} [Mod+Backspace / Alt+Backspace]
@@ -23,13 +24,13 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `text.nbsp` (Insert › Symbols): Nonbreaking Space {} [Mod+Shift+Space]
 - `text.nbHyphen` (Insert › Symbols): Nonbreaking Hyphen {} [Mod+Shift+-]
 - `text.optionalHyphen` (Insert › Symbols): Optional Hyphen {} [Mod+-]
-- `text.toggleUnicode` (Editing): Toggle Unicode Character {} [Alt+X]
+- `text.toggleUnicode` (Editing): Toggle Unicode Character {}
 - `text.typeCode` (Editing): Type Character Code {"code": string (decimal digits as typed on the keypad, e.g. "0233"), "ansi"?: 874 | 1250–1258 (the leading-0 code page, default 1252), "oem"?: 437 | 737 | 850 | 852 | 857 | 866 (default from the locale)}
 - `text.emDash` (Insert › Symbols): Em Dash {} [Mod+Alt+-]
-- `text.copyright` (Insert › Symbols): Copyright Sign {} [Mod+Alt+C]
-- `text.registered` (Insert › Symbols): Registered Sign {} [Mod+Alt+R]
-- `text.trademark` (Insert › Symbols): Trademark Sign {} [Mod+Alt+T]
-- `text.ellipsis` (Insert › Symbols): Ellipsis {} [Mod+Alt+.]
+- `text.copyright` (Insert › Symbols): Copyright Sign {}
+- `text.registered` (Insert › Symbols): Registered Sign {}
+- `text.trademark` (Insert › Symbols): Trademark Sign {}
+- `text.ellipsis` (Insert › Symbols): Ellipsis {}
 - `text.overtype` (File › Options › Advanced): Overtype {"value"?: bool (default: toggle)}
 
 ## caret
@@ -38,10 +39,10 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `caret.right` (Navigation): Right {"extend"?: bool} [Right]
 - `caret.up` (Navigation): Up {"extend"?: bool} [Up]
 - `caret.down` (Navigation): Down {"extend"?: bool} [Down]
-- `caret.wordLeft` (Navigation): Word Left {"extend"?: bool} [Mod+Left / Alt+Left]
-- `caret.wordRight` (Navigation): Word Right {"extend"?: bool} [Mod+Right / Alt+Right]
-- `caret.home` (Navigation): Line Start {"extend"?: bool} [Home]
-- `caret.end` (Navigation): Line End {"extend"?: bool} [End]
+- `caret.wordLeft` (Navigation): Word Left {"extend"?: bool} [Alt+Left]
+- `caret.wordRight` (Navigation): Word Right {"extend"?: bool} [Alt+Right]
+- `caret.home` (Navigation): Line Start {"extend"?: bool} [Home / Mod+Left]
+- `caret.end` (Navigation): Line End {"extend"?: bool} [End / Mod+Right]
 - `caret.paraUp` (Navigation): Paragraph Up {"extend"?: bool} [Mod+Up / Alt+Up]
 - `caret.paraDown` (Navigation): Paragraph Down {"extend"?: bool} [Mod+Down / Alt+Down]
 - `caret.docStart` (Navigation): Document Start {"extend"?: bool} [Mod+Home]
@@ -76,6 +77,8 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `edit.redo` (Quick Access Toolbar): Redo {} [Mod+Y / Mod+Shift+Z]
 - `edit.cut` (Home › Clipboard): Cut {} [Mod+X]
 - `edit.copy` (Home › Clipboard): Copy {} [Mod+C / Mod+Insert]
+- `edit.spike` (Editing): Spike {} [Mod+F3]
+- `edit.insertSpike` (Editing): Insert Spike {} [Mod+Shift+F3]
 - `edit.paste` (Home › Clipboard): Paste {"text"?: string, "html"?: string, "rtf"?: string} [Mod+V / Shift+Insert]
 - `edit.pasteText` (Home › Clipboard › Paste): Paste: Keep Text Only {"text"?: string} [Mod+Shift+Alt+V]
 - `edit.pasteMerge` (Home › Clipboard › Paste): Paste: Merge Formatting {"text"?: string, "html"?: string, "rtf"?: string}
@@ -88,10 +91,10 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `edit.find` (Home › Editing): Find {"text": string, "matchCase"?: bool, "wholeWord"?: bool, "matchPrefix"?: bool, "matchSuffix"?: bool, "ignorePunct"?: bool, "ignoreSpace"?: bool, "wildcards"?: bool, "special"?: bool (^p ^t ^# … codes, default true), "regex"?: bool} [Mod+F]
 - `edit.advancedFind` (Home › Editing › Find): Advanced Find {"text"?: string, …options of edit.find, "in"?: "main|selection", "highlight"?: bool}
 - `edit.findNext` (Home › Editing › Find): Find Next {"text"?: string, "matchCase"?: bool, "wholeWord"?: bool, "regex"?: bool} [Mod+G / F3 / Shift+F4 / Mod+PageDown]
-- `edit.findPrevious` (Home › Editing › Find): Find Previous {"text"?: string, "matchCase"?: bool, "wholeWord"?: bool, "regex"?: bool} [Mod+PageUp]
+- `edit.findPrevious` (Home › Editing › Find): Find Previous {"text"?: string, "matchCase"?: bool, "wholeWord"?: bool, "regex"?: bool} [Mod+Shift+G / Mod+PageUp]
 - `edit.replace` (Home › Editing): Replace {"text": string, "with": string, …options of edit.replaceAll}
-- `edit.findReplace` (Home › Editing): Find and Replace {"tab"?: "find|replace|goto" (default replace)} [Mod+H]
-- `edit.replaceAll` (Home › Editing › Replace): Replace All {"text": string, "with": string (^p ^t ^& ^c …; \\1 with wildcards), …options of edit.find}
+- `edit.findReplace` (Home › Editing): Find and Replace {"tab"?: "find|replace|goto" (default replace)} [Mod+H / Ctrl+H]
+- `edit.replaceAll` (Home › Editing › Replace): Replace All {"text": string, "with": string (^p ^t ^& ^c …; \\1 with wildcards; with regex also $1 ${n} ${name} $0 $$ \\1 \\n (paragraph mark) \\t), …options of edit.find}
 - `edit.goto` (Home › Editing › Find): Go To {"page"?: n, "pageBy"?: int (pages forward, negative back, from the caret's page), "bookmark"?: string (selects its text), "paragraph"?: n}; none opens Find and Replace on its Go To tab [Mod+Alt+G / F5]
 - `edit.goBack` (Navigation): Go Back {} [Shift+F5 / Mod+Alt+Z]
 - `edit.formatPainter` (Home › Clipboard): Format Painter {"sticky"?: bool}
@@ -126,21 +129,23 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `format.growFont1` (Home › Font): Grow Font 1 Point {} [Mod+]]
 - `format.shrinkFont1` (Home › Font): Shrink Font 1 Point {} [Mod+[]
 - `format.color` (Home › Font): Font Color {"color": "RRGGBB" | "auto"}
-- `format.highlight` (Home › Font): Text Highlight Color {"color": "yellow|brightGreen|turquoise|pink|blue|red|darkBlue|teal|green|violet|darkRed|darkYellow|gray50|gray25|black|none"} [Mod+Alt+H]
+- `format.underlineColor` (Home › Font › Underline): Underline Color {"color": "RRGGBB" | "auto"} (the underline's own colour; "auto" follows the text colour)
+- `format.highlight` (Home › Font): Text Highlight Color {"color"?: "yellow|brightGreen|turquoise|pink|blue|red|darkBlue|teal|green|violet|darkRed|darkYellow|gray50|gray25|black|none"} (explicit colour sets it; omitted toggles the last chosen colour, initially yellow)
 - `format.shading` (Home › Font): Character Shading {"color": "RRGGBB" | null}
 - `format.changeCase` (Home › Font): Change Case {"mode"?: "sentence|lower|upper|title|toggle"} [Shift+F3]
 - `format.clear` (Home › Font): Clear All Formatting {}
-- `format.resetChar` (Home › Font): Reset Character Formatting {} [Mod+Space]
+- `format.resetChar` (Home › Font): Reset Character Formatting {} [Ctrl+Space]
 - `format.spacing` (Home › Font › Font › Advanced): Character Spacing {"points": number}
 - `format.scale` (Home › Font › Font › Advanced): Character Scale {"percent": number}
 - `format.position` (Home › Font › Font › Advanced): Character Position {"points": number}
+- `format.emphasisMark` (Home › Font › Font): Emphasis Mark {"mark"?: "none" | "dot" | "comma" | "circle" | "underDot"}
 - `format.charStyle` (Home › Styles): Apply Character Style {"style": string}
 - `format.set` (Home › Font › Font): Set Character Formatting {"props": CharProps}
 - `format.fontDialog` (Home › Font): Font Dialog {} [Mod+D]
 - `format.enclose` (Home › Font): Enclose Characters {"shape": "circle|square|triangle|diamond" | null, "style"?: "shrink|enlarge", "text"?: string}
 - `format.state` (Home › Font): Formatting at Selection {}
 - `format.phonetic` (Home › Font): Phonetic Guide {"ruby"?: string | null, "align"?: "center|distributeLetter|distributeSpace|left|right|rightVertical", "size"?: number, "offset"?: number}
-- `format.textEffects` (Home › Font): Text Effects {"style"?: "solid"|"outlined"|"hollow"|"gradient"|"shadowed"|"glowing"|"reflected"|"sunset", "clear"?: bool, "fill"?: "RRGGBB"|"none" (hollow)|{"color": "RRGGBB", "transparency"?: %}|{"gradient": ["RRGGBB", …], "angle"?: deg}|null (the run's colour), "outline"?: "RRGGBB"|"none"|{"color"?: "RRGGBB"|null, "width"?: pt, "transparency"?: %}|null, "shadow"?: preset|{"color"?, "transparency"?, "blur"?, "distance"?, "angle"?}|null, "glow"?: pt|{"color"?, "size"?, "transparency"?}|null, "reflection"?: bool|{"transparency"?: %, "size"?: %, "distance"?: pt}|null}  (an omitted key is left as it is; with a shape selected or the caret in a text box, the box's whole text)
+- `format.textEffects` (Home › Font): Text Effects {"style"?: "solid"|"outlined"|"hollow"|"gradient"|"shadowed"|"glowing"|"reflected"|"sunset", "clear"?: bool, "fill"?: "RRGGBB"|"none" (hollow)|{"color": "RRGGBB", "transparency"?: %}|{"gradient": ["RRGGBB", …], "angle"?: deg}|null (the run's colour), "outline"?: "RRGGBB"|"none"|{"color"?: "RRGGBB"|null, "width"?: pt, "transparency"?: %}|null, "shadow"?: preset|{"color"?, "transparency"?, "blur"?, "distance"?, "angle"?}|null, "glow"?: pt|{"color"?, "size"?, "transparency"?}|null, "reflection"?: bool|"none"|{"transparency"?: %, "size"?: %, "distance"?: pt}|null}  (an omitted key is left as it is; with a shape selected or the caret in a text box, the box's whole text)
 
 ## font
 
@@ -148,6 +153,7 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `font.list` (Home › Font): Added Fonts {"all"?: bool (also every available family)}
 - `font.remove` (Home › Font): Remove Added Font {"family": string}
 - `font.loadSystem` (Home › Font): Load System Installed Fonts… {}
+- `font.missing` (Status Bar): Missing Fonts {} → {"missing": [{"font": string, "shownAs": [string] (the families drawn instead), "metricCompatible": bool (its substitute measures like the font)}]} — the text the current view shows
 
 ## para
 
@@ -171,7 +177,7 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `para.spacing` (Layout › Paragraph): Paragraph Spacing {"before"?: pt, "after"?: pt, "beforeAuto"?: bool, "afterAuto"?: bool (automatic, HTML-style spacing: 14 pt)}
 - `para.addSpaceBefore` (Home › Paragraph › Line Spacing): Add Space Before Paragraph {} [Mod+0]
 - `para.removeSpaceAfter` (Home › Paragraph › Line Spacing): Remove Space After Paragraph {}
-- `para.reset` (Home › Paragraph): Reset Paragraph Formatting {} [Mod+Q]
+- `para.reset` (Home › Paragraph): Reset Paragraph Formatting {} [Ctrl+Q]
 - `para.style` (Home › Styles): Apply Style {"style": string (name or id)}
 - `para.normal` (Home › Styles): Normal Style {} [Mod+Shift+N]
 - `para.heading1` (Home › Styles): Heading 1 {} [Mod+Alt+1]
@@ -182,10 +188,10 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `para.multilevel` (Home › Paragraph): Multilevel List {"kind"?: "legal|outline"}
 - `para.listLevel` (Home › Paragraph › Bullets): Change List Level {"level": 0-8}
 - `para.restartNumbering` (Home › Paragraph › Numbering): Restart at 1 {}
-- `para.moveUp` (Home › Paragraph): Move Paragraph Up {} [Alt+Shift+Up]
-- `para.moveDown` (Home › Paragraph): Move Paragraph Down {} [Alt+Shift+Down]
-- `para.promote` (Home › Paragraph): Promote {} [Alt+Shift+Left]
-- `para.demote` (Home › Paragraph): Demote {} [Alt+Shift+Right]
+- `para.moveUp` (Home › Paragraph): Move Paragraph Up {} [Ctrl+Shift+Up]
+- `para.moveDown` (Home › Paragraph): Move Paragraph Down {} [Ctrl+Shift+Down]
+- `para.promote` (Home › Paragraph): Promote {} [Ctrl+Shift+Left]
+- `para.demote` (Home › Paragraph): Demote {} [Ctrl+Shift+Right]
 - `para.shading` (Home › Paragraph): Shading {"color": "RRGGBB" | null}
 - `para.borders` (Home › Paragraph): Borders {"kind": "bottom|top|left|right|none|all|outside|inside|horizontalLine", "width"?: pt, "color"?: "RRGGBB", "style"?: "single|double|dotted|dashed|thick|triple|dotDash|wave", "sides"?: Sides} where Sides = {"top"|"left"|"bottom"|"right"|"between": {"style"?, "width"?: pt, "color"?: "RRGGBB"} | null}: exactly these sides (others off), instead of `kind`
 - `para.sort` (Home › Paragraph): Sort {"descending"?: bool}
@@ -212,7 +218,7 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `styles.setVisibility` (Home › Styles): Show or Hide Style {"style": string, "gallery"?: bool (Styles gallery, w:qFormat), "hidden"?: bool (hidden from style lists, w:semiHidden)}
 - `styles.list` (Home › Styles): Styles {}
 - `styles.pane` (Home › Styles): Styles Pane {} [Mod+Alt+Shift+S]
-- `styles.apply` (Home › Styles): Apply Styles {"style"?: string (name or id)} [Mod+Shift+S]
+- `styles.apply` (Home › Styles): Apply Styles {"style"?: string (name or id)}
 - `styles.addToGallery` (Home › Styles): Add to Style Gallery {}
 - `styles.inspector` (Home › Styles): Style Inspector {"value"?: bool (show/hide the pane)} [Shift+F1]
 - `styles.inspect` (Home › Styles › Style Inspector): Inspect Styles at Selection {}
@@ -225,6 +231,7 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 
 - `list.define` (Home › Paragraph › Multilevel List): Define New Multilevel List {"levels": [{"format"?: "decimal|lowerLetter|upperLetter|lowerRoman|upperRoman|decimalZero|ordinal|bullet|none", "text"?: "%1.%2." (%n = level n's number; the bullet character for bullet), "start"?: n, "restartAfter"?: 0-8 (0 = never; omit = the level above), "style"?: paragraph style linked to the level | null, "align"?: "left|center|right", "alignedAt"?: pt, "indentAt"?: pt, "follow"?: "tab|space|nothing", "tabAt"?: pt | null, "font"?: string | null, "bold"?: bool, "italic"?: bool, "color"?: "RRGGBB" | null, "legal"?: bool}, …] (index = level, up to 9; fields left out keep the base list's), "num"?: list id to change in place (default: a new list), "apply"?: bool (default true: number the selected paragraphs), "name"?: string}
 - `list.get` (Home › Paragraph › Multilevel List): List Definition {"num"?: list id (default: the caret's list)} → {"num", "levels": [as list.define]}
+- `list.multilevelPreset` (Home › Paragraph › Multilevel List): Multilevel List Library {"preset": "headings" (1 / 1.1 / 1.1.1) | "article" (Article I. / Section 1.01 / (a)) | "outlineHeadings" (I. / A. / 1.) | "chapter" (Chapter 1, lower levels unnumbered)} — a new list whose nine levels are linked to Heading 1–9: every paragraph in those styles is numbered, selected paragraphs already in a Heading style keep it, and any other selected paragraph becomes Heading 1 (the first level)
 
 ## view
 
@@ -237,8 +244,10 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `view.readColumnWidth` (Reading › Layout): Reading Column Width {"value": "auto" | "narrow" | "medium" | "wide" | "page"}
 - `view.readTextSize` (Reading › Layout): Reading Text Size {"value": percent (75–150)}
 - `view.readLineSpacing` (Reading › Layout): Reading Line Spacing {"value": "document" | 1.0 | 1.25 | 1.5 | 2.0}
+- `view.readPageColor` (Reading › Layout): Reading Page Color {"value": "none" | "sepia" | "inverse"}
 - `view.hideWhiteSpace` (View › Show): Hide White Space {"value"?: bool}
-- `view.focus` (View › Immersive): Focus {}
+- `view.focus` (View › Immersive): Focus {"value"?: bool}
+- `view.fullScreenView` (View › Immersive): Full Screen View {"value"?: bool}
 - `view.ruler` (View › Show): Ruler {}
 - `view.gridlines` (View › Show): Gridlines {"value"?: bool}
 - `view.navigationPane` (View › Show): Navigation Pane {}
@@ -250,13 +259,17 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `view.multiplePages` (View › Zoom): Multiple Pages {}
 - `view.pageWidth` (View › Zoom): Page Width {}
 - `view.darkMode` (View › Dark Mode): Switch Modes {}
+- `view.interfaceTheme` (View › Dark Mode): Interface Theme {"value"?: "light" | "dark" | "system"; without it, toggles light and dark}
 - `view.stylesPane` (Home › Styles): Styles Pane {}
+- `view.stylesPaneDock` (Home › Styles): Styles Pane Position {"dock"?: "left" | "right" | "float"}
 - `view.commentsPane` (Review › Comments): Comments Pane {}
 - `view.accessibilityPane` (Review › Accessibility): Accessibility Pane {"value"?: bool}
 - `view.altTextPane` (Review › Accessibility): Alt Text Pane {"value"?: bool}
+- `view.formatShapePane` (Shape Format › Shape Styles): Format Shape Pane {"value"?: bool}
 - `view.newWindow` (View › Window): New Window {}
+- `view.switchWindows` (View › Window): Switch Windows {"id"?: n (make this open document the active one)} → {"documents": [{"id", "title", "path", "dirty", "active"}]} in the order they were opened
 - `view.split` (View › Window): Split {} [Mod+Alt+S]
-- `view.fullScreen` (View › Window): Full Screen {"value"?: bool} [F11]
+- `view.fullScreen` (View › Window): Full Screen {"value"?: bool} [Mod+Ctrl+F / F11]
 - `view.state` (View): View State {}
 - `view.numeral` (File › Options › Advanced): Numerals {"value"?: "arabic|hindi|context|system"}
 - `view.fieldCodes` (View › Show): Field Codes {"value"?: bool} [Alt+F9]
@@ -276,7 +289,7 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `table.deleteTable` (Table Layout › Rows & Columns › Delete): Delete Table {}
 - `table.deleteCells` (Table Layout › Rows & Columns › Delete): Delete Cells {}
 - `table.merge` (Table Layout › Merge): Merge Cells {}
-- `table.split` (Table Layout › Merge): Split Cells {"columns"?: n}
+- `table.split` (Table Layout › Merge): Split Cells {"columns"?: n (2), "rows"?: n (1), "mergeFirst"?: bool (true: several selected cells are merged first)}
 - `table.splitTable` (Table Layout › Merge): Split Table {}
 - `table.style` (Table Design › Table Styles): Table Styles {"style": string}
 - `table.look` (Table Design › Table Style Options): Table Style Options {"headerRow"?: bool, "totalRow"?: bool, "bandedRows"?: bool, "firstColumn"?: bool, "lastColumn"?: bool, "bandedColumns"?: bool}
@@ -292,15 +305,15 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `table.repeatHeader` (Table Layout › Data): Repeat Header Rows {}
 - `table.altText` (Table Layout › Table › Properties): Alt Text {"text"?: string, "title"?: string} (empty clears)
 - `table.sort` (Table Layout › Data): Sort {"column"?: n, "descending"?: bool, "header"?: bool}
-- `table.toText` (Table Layout › Data): Convert to Text {"separator"?: "tab|comma|paragraph"}
+- `table.toText` (Table Layout › Data): Convert to Text {"separator"?: "tab|comma|paragraph|other", "char"?: string (with other)} (the selected rows, or the whole table)
 - `table.formula` (Table Layout › Data): Formula {"formula"?: "=SUM(ABOVE)"}
 - `table.selectTable` (Table Layout › Table › Select): Select Table {}
 - `table.selectRow` (Table Layout › Table › Select): Select Row {}
 - `table.selectColumn` (Table Layout › Table › Select): Select Column {}
 - `table.selectCell` (Table Layout › Table › Select): Select Cell {}
 - `table.rtl` (Table Layout › Table): Right-to-Left Table {"value"?: bool} (true: the first column stands at the right; without a value it toggles)
-- `table.properties` (Table Layout › Table): Properties {"align"?: "left|center|right", "rtl"?: bool, "width"?: pt|null, "widthPct"?: percent, "indent"?: pt, "rowHeight"?: pt|null, "rowHeightRule"?: "atLeast|exact", "allowBreak"?: bool, "headerRow"?: bool, "columnWidth"?: pt, "cellWidth"?: pt|null, "valign"?: "top|center|bottom"} (row, column and cell settings apply to the caret's; without settings it returns the current ones)
-- `table.fromText` (Insert › Tables): Convert Text to Table {"separator"?: "tab|comma"}
+- `table.properties` (Table Layout › Table): Properties {"align"?: "left|center|right", "rtl"?: bool, "width"?: pt|null, "widthPct"?: percent, "indent"?: pt, "rowHeight"?: pt|null, "rowHeightRule"?: "atLeast|exact", "allowBreak"?: bool, "headerRow"?: bool, "columnWidth"?: pt, "cellWidth"?: pt|null, "valign"?: "top|center|bottom"} (row, column and cell settings apply to the selected rows, columns and cells, or the caret's; without settings it returns the caret's current ones)
+- `table.fromText` (Insert › Tables): Convert Text to Table {"separator"?: "tab|comma|paragraph|other", "char"?: string (with other), "columns"?: n, "autofit"?: "initial|fixed|contents|window", "width"?: pt (initial column width, 0 = Auto, at most 1584)}
 - `table.quick` (Insert › Tables): Quick Tables {"kind"?: "calendar|tabular|matrix"}
 - `table.newStyle` (Table Design › Table Styles): New Table Style {"name": string, "basedOn"?: string, "<part>"?: Part for each part name (wholeTable, headerRow|firstRow, lastRow|totalRow, firstColumn|firstCol, lastColumn|lastCol, bandedRows|band1Horz, band2Horz, bandedColumns|band1Vert, band2Vert, nwCell, neCell, swCell, seCell), "part"?: part name (the Part fields then sit at the top level), "parts"?: [Part & {"part": name}], "bandSize"?: n (rows per band), "para"?: ParaProps, "apply"?: bool} where Part = {"fill"?: "RRGGBB" | null, "font"?: string | null (null or "": inherited), "size"?: pt, "bold"?: bool, "italic"?: bool, "underline"?: bool | "single" | "double" | "thick" | "words" | "dotted" | "dash" | "wave" | "none", "color"?: "RRGGBB" | null, "align"?: "left" | "center" | "right" | "justify" | null, "vAlign"?: "top" | "center" | "bottom" | null, "cellAlign"?: "topLeft" | "topCenter" | "topRight" | "centerLeft" | "center" | "centerRight" | "bottomLeft" | "bottomCenter" | "bottomRight" | null (both alignments), "borders"?: bool | null (true: single lines on every edge, false: none, null: inherit) | Edges | [Edges], "borderColor"?: "RRGGBB", "borderWidth"?: pt} and Edges = {"edges"?: "all" | "none" | "outside" | "inside" | "top" | "bottom" | "left" | "right" | "insideH" | "insideV" (default all), "style"?: "single" | "double" | "dotted" | "dashed" | "dotDash" | "thick" | "triple" | "wave" | "none", "width"?: pt, "color"?: "RRGGBB" | null}
 - `table.modifyStyle` (Table Design › Table Styles): Modify Table Style {"style"?: string (default: the current table's), "name"?: string, "basedOn"?: string, "<part>"?: Part for each part name (wholeTable, headerRow|firstRow, lastRow|totalRow, firstColumn|firstCol, lastColumn|lastCol, bandedRows|band1Horz, band2Horz, bandedColumns|band1Vert, band2Vert, nwCell, neCell, swCell, seCell), "part"?: part name (the Part fields then sit at the top level), "parts"?: [Part & {"part": name}], "bandSize"?: n (rows per band), "para"?: ParaProps, "apply"?: bool} where Part = {"fill"?: "RRGGBB" | null, "font"?: string | null (null or "": inherited), "size"?: pt, "bold"?: bool, "italic"?: bool, "underline"?: bool | "single" | "double" | "thick" | "words" | "dotted" | "dash" | "wave" | "none", "color"?: "RRGGBB" | null, "align"?: "left" | "center" | "right" | "justify" | null, "vAlign"?: "top" | "center" | "bottom" | null, "cellAlign"?: "topLeft" | "topCenter" | "topRight" | "centerLeft" | "center" | "centerRight" | "bottomLeft" | "bottomCenter" | "bottomRight" | null (both alignments), "borders"?: bool | null (true: single lines on every edge, false: none, null: inherit) | Edges | [Edges], "borderColor"?: "RRGGBB", "borderWidth"?: pt} and Edges = {"edges"?: "all" | "none" | "outside" | "inside" | "top" | "bottom" | "left" | "right" | "insideH" | "insideV" (default all), "style"?: "single" | "double" | "dotted" | "dashed" | "dotDash" | "thick" | "triple" | "wave" | "none", "width"?: pt, "color"?: "RRGGBB" | null}
@@ -308,7 +321,7 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `table.draw` (Insert › Tables): Draw Table {"page": n, "x0": pt, "y0": pt, "x1": pt, "y1": pt, "story"?: StoryRef} (a pen stroke in page points, 0-based page: a rectangle at least 12 pt each way outside any table inserts a one-cell table of that size at the paragraph under its start; a straight vertical or horizontal line inside a table splits the cells it crosses there. In the app the button turns the pen on.)
 - `table.eraser` (Table Layout › Draw): Eraser {"page": n, "x": pt, "y": pt} (removes the border between two cells within 4 pt of the point: cells that make one rectangle merge, including cells merged down the same rows; otherwise the border is hidden along the whole edge. In the app the button turns the eraser on.)
 - `table.resizeDrag` (Table Layout › Cell Size): Resize Table by Dragging {"page": n, "x": pt, "y": pt, "toX": pt, "toY": pt, "shift"?: bool, "ctrl"?: bool, "reach"?: pt} (a mouse drag in page points, 0-based page, starting on a table border or the resize handle: a column border moves (the column to its right gives or takes the difference, so the table keeps its width; with ctrl the columns right of it share it in proportion; with shift, or on the table's right edge, only the column left of it changes); the table's left edge moves a left-aligned table's indent, the first column making up the difference (a centred or right-aligned table keeps its alignment: only the first column changes); with cells of the table selected, a border of theirs moves only in their rows; a row's bottom border sets that row's height; the handle just outside the bottom-right corner scales every column and the rows on that page. `reach` (default 3) is how near the start has to be.)
-- `table.selectAt` (Table Layout › Table › Select): Select Table Cells by Clicking {"page": n, "x": pt, "y": pt, "toX"?: pt, "toY"?: pt, "reach"?: pt} (a click in page points, 0-based page, on a selection area of a table in the caret's story: just above a column selects the column, left of a row the row, along a cell's left edge inside it the cell, the move handle past the top-left corner the table; with toX/toY (a drag) every column, row or cell from there to that point. `reach` (default 3) is the column borders' resize reach, which the cell areas keep clear of.)
+- `table.selectAt` (Table Layout › Table › Select): Select Table Cells by Clicking {"page": n, "x": pt, "y": pt, "toX"?: pt, "toY"?: pt, "reach"?: pt, "extend"?: bool, "anchorRow"?: n} (a click in page points, 0-based page, on a selection area of a table in the caret's story: just above a column selects the column, left of a row the row, along a cell's left edge inside it the cell, the move handle past the top-left corner the table; with toX/toY (a drag) every column, row or cell from there to that point; the page margin beside a table (its leading side: right for a right-to-left table) is a row area too, and `extend` (Shift+click) on one takes the rows from the selected ones' anchor, or from row `anchorRow` (0-based) when given, so a drag keeps its press's anchor. `reach` (default 3) is the column borders' resize reach, which the cell areas keep clear of.)
 - `table.insertAt` (Table Layout › Rows & Columns): Insert Row or Column by Clicking {"page": n, "x": pt, "y": pt, "reach"?: pt} (a click on a table's insert button: left of a row border adds a row there, above a column border a column; the new row or column is selected, as in Word)
 - `table.moveDrag` (Table Layout › Table): Move Table by Dragging {"page": n, "x": pt, "y": pt, "toX": pt, "toY": pt, "reach"?: pt} (a drag from the move handle past a table's top-left corner: the table floats where it's dropped, the text wrapping around it; tables in the main text only)
 - `table.fitColumn` (Table Layout › Cell Size): AutoFit Column by Double-Clicking {"page": n, "x": pt, "y": pt, "reach"?: pt} (a double-click on a column border: the column left of it fits its contents and the columns right of it keep their widths, moving with the border, so the table narrows or widens (up to the right margin), as in Word)
@@ -339,7 +352,7 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `outline.showLevel8` (Outlining › Outline Tools): Show Level 8 {} [Alt+Shift+8]
 - `outline.showLevel9` (Outlining › Outline Tools): Show Level 9 {} [Alt+Shift+9]
 - `outline.showAll` (Outlining › Outline Tools): Show All Levels {} [Alt+Shift+A]
-- `outline.firstLineOnly` (Outlining › Outline Tools): Show First Line Only {"value"?: bool} [Alt+Shift+L]
+- `outline.firstLineOnly` (Outlining › Outline Tools): Show First Line Only {"value"?: bool}
 - `outline.showFormatting` (Outlining › Outline Tools): Show Text Formatting {"value"?: bool}
 - `outline.close` (Outlining › Close): Close Outline View {}
 - `outline.state` (Outlining): Outline State {}
@@ -372,20 +385,20 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `insert.dateTime` (Insert › Text): Date & Time {"format"?: "M/d/yyyy", "update"?: bool}
 - `insert.symbol` (Insert › Symbols): Symbol {"char": string, "font"?: family (the symbol's own font)}
 - `insert.field` (Insert › Text › Quick Parts): Field {"instr": string, "result"?: string} [Mod+F9]
-- `insert.dateField` (Insert › Text › Quick Parts): Insert Date Field {} [Alt+Shift+D]
-- `insert.timeField` (Insert › Text › Quick Parts): Insert Time Field {} [Alt+Shift+T]
-- `insert.pageField` (Insert › Text › Quick Parts): Insert Page Field {} [Alt+Shift+P]
-- `insert.dropCap` (Insert › Text): Drop Cap {"lines"?: n (0 = none)}
+- `insert.dateField` (Insert › Text › Quick Parts): Insert Date Field {} [Ctrl+Shift+D]
+- `insert.timeField` (Insert › Text › Quick Parts): Insert Time Field {} [Ctrl+Shift+T]
+- `insert.pageField` (Insert › Text › Quick Parts): Insert Page Field {} [Ctrl+Shift+P]
+- `insert.dropCap` (Insert › Text): Drop Cap {"position"?: "none"|"dropped"|"margin" (default dropped), "lines"?: 1..10 (default 3; 0 = none), "distance"?: pt from the text (0..1584, default 0), "font"?: family (omit for the text's font), "keep"?: bool (true: each selected paragraph that has a drop cap keeps its own lines, distance and font unless given here)}
 - `insert.horizontalLine` (Home › Paragraph › Borders): Horizontal Line {}
 - `insert.textFromFile` (Insert › Text › Object): Text from File {"path": string}
 - `insert.equation` (Insert › Symbols): Equation {"linear"?: string, "latex"?: string, "builtin"?: "pythagoras|area|quadratic|binomial|expansion|euler|derivative|taylor|gaussian|fourier|trig1|trig2|normal|bayes", "display"?: bool, "edit"?: bool (default true)} [Alt+=]
-- `insert.crossReference` (Insert › Links): Cross-reference {"to": "heading|bookmark|figure|table|equation", "target": string (text / name / number), "show"?: "text|page|number|aboveBelow"} or {} to list targets
-- `insert.smartArt` (Insert › Illustrations): SmartArt {"layout"?: "basicList|process|cycle|hierarchy|pyramid|radial|matrix|venn", "items"?: [string | {"text": string, "level"?: 0-7}], "colors"?: "accent1…accent6|colorful", "width"?: pt, "height"?: pt} (no items: sample items for the layout)
+- `insert.crossReference` (Insert › Links): Cross-reference {"to": "heading|bookmark|figure|table|equation|label:<Name> (a caption label of your own)", "target": string (text / name / number), "show"?: "text|page|number|aboveBelow"} or {} to list targets
+- `insert.smartArt` (Insert › Illustrations): SmartArt {"layout"?: "basicList|process|cycle|hierarchy|pyramid|radial|matrix|venn", "items"?: [string | {"text": string, "level"?: 0-7, "color"?: RRGGBB}], "colors"?: "accent1…accent6|colorful", "width"?: pt, "height"?: pt} (no items: sample items for the layout)
 - `insert.chart` (Insert › Illustrations): Chart {"type"?: "column|columnStacked|bar|barStacked|line|area|pie|doughnut|scatter", "data"?: {"categories": [string], "series": [{"name": string, "values": [number|null]}]}, "title"?: string, "legend"?: "right|left|top|bottom|none", "dataLabels"?: bool, "width"?: pt, "height"?: pt} (no params: the chart type picker)
 - `insert.canvas` (Insert › Illustrations): Drawing Canvas {"width"?: pt (default 432 = 6"), "height"?: pt (default 216 = 3"), "fill"?: "RRGGBB", "outline"?: "RRGGBB"}  (in line with text at the caret; it stays selected, so the next Pictures, Shapes or Text Box goes inside it)
 - `insert.wordArt` (Insert › Text): WordArt {"text"?: string, "style"?: WordArt style id (see format.textEffects), "transform"?: "textArchUp"|"textArchDown"|"textCircle"|"textWave1"|… (a DrawingML preset text warp)}
-- `insert.quickParts` (Insert › Text): Quick Parts {"save"?: name (from the selection), "insert"?: name, "delete"?: name} → list
-- `insert.autoText` (Insert › Text › Quick Parts): AutoText {"save"?: name, "insert"?: name} [Alt+F3]
+- `insert.quickParts` (Insert › Text): Quick Parts {"save"?: name (from the selection), "in"?: "document" (save into the document's own building blocks, kept in its file; else this session's), "insert"?: name, "delete"?: name} → {"parts": names (this session's, then the document's Quick Parts), "document": the document's Quick Parts}
+- `insert.autoText` (Insert › Text › Quick Parts): AutoText {"save"?: name, "in"?: "document", "insert"?: name, "delete"?: name} → {"parts": names, "document": the document's AutoText}
 - `insert.docProperty` (Insert › Text › Quick Parts): Document Property {"name": "Title|Author|Subject|Keywords|Comments|Category"}
 - `insert.signatureLine` (Insert › Text): Signature Line {"signer"?: string, "title"?: string}
 - `insert.object` (Insert › Text): Object {"path": string}
@@ -405,6 +418,7 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `equation.move` (Equation): Move in Equation {"dir": "left|right|up|down|home|end|next|prev"}
 - `equation.backspace` (Equation): Delete Back in Equation {}
 - `equation.delete` (Equation): Delete in Equation {}
+- `equation.deleteSurrounding` (Equation): Delete Around Caret in Equation {"before": n, "after": n}
 - `equation.enter` (Equation): Enter in Equation {}
 - `equation.convert` (Equation › Conversions): Convert {"to": "professional|linear", "all"?: bool}
 - `equation.inputFormat` (Equation › Conversions): Input Format {"format": "unicode|latex"}
@@ -423,7 +437,7 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `layout.margins` (Layout › Page Setup): Margins {"preset"?: "normal|narrow|moderate|wide|mirrored|office2003", "top"?: pt, "bottom"?: pt, "left"?: pt, "right"?: pt, "gutter"?: pt, "mirror"?: bool}
 - `layout.orientation` (Layout › Page Setup): Orientation {"value": "portrait|landscape"}
 - `layout.size` (Layout › Page Setup): Size {"name"?: "Letter|Legal|A4|…", "width"?: pt, "height"?: pt} (each side clamped to 7.2–1584 pt, 0.1–22 in; the section keeps its orientation)
-- `layout.columns` (Layout › Page Setup): Columns {"count": 1-12, "space"?: pt, "separator"?: bool, "preset"?: "left|right", "widths"?: [[width pt, space after pt], …] (unequal columns; sets the count), "apply"?: "section|document|forward"}
+- `layout.columns` (Layout › Page Setup): Columns {"count": 1-12, "space"?: pt, "separator"?: bool, "preset"?: "left|right", "widths"?: [[width pt, space after pt], …] (unequal columns; sets the count), "apply"?: "section|document|forward|selection"} (default: selection when text is selected in the main text — section breaks around it — else section)
 - `layout.break` (Layout › Page Setup): Breaks {"kind": "page|column|textWrapping|nextPage|continuous|evenPage|oddPage"}
 - `layout.lineNumbers` (Layout › Page Setup): Line Numbers {"value"?: "none|continuous|restartPage|restartSection", "start"?: 1-32767, "countBy"?: 1-100, "distance"?: pt (0 = auto)}
 - `layout.hyphenation` (Layout › Page Setup): Hyphenation {"value"?: bool (automatic; toggles when nothing is given), "zone"?: pt, "caps"?: bool (hyphenate words in capitals), "limit"?: n (consecutive hyphens, 0 = no limit)}
@@ -434,33 +448,33 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `layout.textDirection` (Layout › Page Setup): Text Direction {"value"?: "horizontal|down|up"} (also lrTb|tbRl|btLr; down: rotate all text 90°, lines top to bottom stacking right to left; up: 270°; default: the next after the current). In a table cell it turns the selected cells, in a text box the box; anywhere else the section(s) of the selection
 - `layout.differentFirstPage` (Header & Footer › Options): Different First Page {}
 - `layout.differentOddEven` (Header & Footer › Options): Different Odd & Even Pages {}
-- `layout.pageNumberFormat` (Insert › Header & Footer › Page Number): Format Page Numbers {"format"?: "decimal|lowerRoman|upperRoman|lowerLetter|upperLetter", "start"?: n}
+- `layout.pageNumberFormat` (Insert › Header & Footer › Page Number): Format Page Numbers {"format"?: "decimal|lowerRoman|upperRoman|lowerLetter|upperLetter", "start"?: n | null} ("start" left out: the numbering keeps its start; null: the pages number on from the section before; a number: numbering starts there)
 - `layout.documentGrid` (Layout › Page Setup › Document Grid): Document Grid {"type"?: "none|lines|linesAndChars|snapToChars", "linesPerPage"?: n (sets the line pitch from the text height), "charsPerLine"?: n (sets the character pitch from the text width), "linePitch"?: pt, "charSpace"?: n (4096ths of a point added to the default font size: the character pitch)} — left out stays as it is; returns the grid with its lines per page and characters per line
 - `layout.section` (Layout › Page Setup): Section Properties {}
-- `layout.linkToPrevious` (Header & Footer › Navigation): Link to Previous {"footer"?: bool} [Alt+Shift+R]
+- `layout.linkToPrevious` (Header & Footer › Navigation): Link to Previous {"footer"?: bool}
 
 ## review
 
-- `review.newComment` (Review › Comments): New Comment {"text": string} [Mod+Alt+M]
-- `review.reply` (Review › Comments): Reply {"id": n, "text": string}
-- `review.editComment` (Review › Comments): Edit Comment {"id": n, "text": string}
-- `review.deleteComment` (Review › Comments): Delete {"id"?: n, "all"?: bool}
-- `review.resolveComment` (Review › Comments): Resolve {}
+- `review.newComment` (Review › Comments): New Comment {"text": string} [Mod+Alt+A / Mod+Alt+M]
+- `review.reply` (Review › Comments): Reply {"id": non-negative JSON integer, "text": string}
+- `review.editComment` (Review › Comments): Edit Comment {"id": non-negative JSON integer, "text": string}
+- `review.deleteComment` (Review › Comments): Delete {"id"?: non-negative JSON integer (omit to use the caret), "all"?: bool}
+- `review.resolveComment` (Review › Comments): Resolve {"id"?: non-negative JSON integer (omit to use the caret), "value"?: bool (omit to toggle)}
 - `review.nextComment` (Review › Comments): Next {}
 - `review.previousComment` (Review › Comments): Previous {}
 - `review.comments` (Review › Comments): Show Comments {}
 - `review.trackChanges` (Review › Tracking): Track Changes {"value"?: bool (omit to toggle)} [Mod+Shift+E]
-- `review.acceptAll` (Review › Changes): Accept All Changes {}
-- `review.rejectAll` (Review › Changes): Reject All Changes {}
-- `review.accept` (Review › Changes): Accept {}
-- `review.reject` (Review › Changes): Reject {}
+- `review.acceptAll` (Review › Changes): Accept All Changes {"stopTracking"?: bool (also turn Track Changes off)}
+- `review.rejectAll` (Review › Changes): Reject All Changes {"stopTracking"?: bool (also turn Track Changes off)}
+- `review.accept` (Review › Changes): Accept {"next"?: bool (then select the next change)}
+- `review.reject` (Review › Changes): Reject {"next"?: bool (then select the next change)}
 - `review.nextChange` (Review › Changes): Next Change {}
 - `review.previousChange` (Review › Changes): Previous Change {}
 - `review.markup` (Review › Tracking): Display for Review {}
-- `review.trackingOptions` (Review › Tracking): Track Changes Options {"comments"?: bool, "ink"?: bool, "insertionsDeletions"?: bool, "formatting"?: bool, "balloons"?: "revisions|inline|commentsAndFormatting", "commentDisplay"?: "margin|selected", "insertMark"?: "underline|doubleUnderline|bold|italic|strikethrough|colorOnly|none", "insertColor"?: "byAuthor" | "RRGGBB", "deleteMark"?: "strikethrough|doubleStrikethrough|hidden|caret|hash|underline|colorOnly", "deleteColor"?: "byAuthor" | "RRGGBB", "changedLines"?: "outside|left|right|none", "changedLinesColor"?: "auto" | "RRGGBB", "trackFormatting"?: bool} → the options (omit all to read them)
-- `review.wordCount` (Review › Proofing): Word Count {"includeTextBoxes"?: bool} [Mod+Shift+G]
+- `review.trackingOptions` (Review › Tracking): Track Changes Options {"comments"?: bool, "ink"?: bool, "insertionsDeletions"?: bool, "formatting"?: bool, "balloons"?: "revisions|inline|commentsAndFormatting", "commentDisplay"?: "margin|selected", "insertMark"?: "underline|doubleUnderline|bold|italic|strikethrough|colorOnly|none", "insertColor"?: "byAuthor" | "RRGGBB", "deleteMark"?: "strikethrough|doubleStrikethrough|hidden|caret|hash|underline|doubleUnderline|bold|italic|colorOnly|none", "deleteColor"?: "byAuthor" | "RRGGBB", "changedLines"?: "outside|left|right|none", "changedLinesColor"?: "auto" | "RRGGBB", "trackFormatting"?: bool, "moveFromMark"?: (as deleteMark; none = plain text, no colour), "moveFromColor"?: "byAuthor" | "RRGGBB", "moveToMark"?: (as insertMark; none = plain text, no colour), "moveToColor"?: "byAuthor" | "RRGGBB", "trackMoves"?: bool (the document's setting; off = a cut and paste is a deletion and an insertion, not a move)} → the options (omit all to read them)
+- `review.wordCount` (Review › Proofing): Word Count {"includeTextBoxes"?: bool}
 - `review.changes` (Review › Tracking): Reviewing Pane {}
-- `review.spelling` (Review › Proofing): Spelling & Grammar {} [F7 / Alt+F7]
+- `review.spelling` (Review › Proofing): Spelling & Grammar {"wrap"?: bool (default true; false stops at the end of the current story)} [F7 / Alt+F7 / Mod+Alt+L]
 - `review.issues` (Review › Proofing): Proofing Issues {}
 - `review.suggestions` (Review › Proofing): Spelling Suggestions {"pos"?: Pos}
 - `review.addToDictionary` (Review › Proofing): Add to Dictionary {"word"?: string}
@@ -471,7 +485,8 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `review.hideInk` (Review › Ink): Hide Ink {"value"?: bool}
 - `review.compare` (Review › Compare): Compare {"path"?: string (revised document), "text"?: string (revised text), "original"?: string (original document; default: this one), "author"?: string (label changes with), "caseChanges"?: bool, "whiteSpace"?: bool, "formatting"?: bool (default true: differences count), "level"?: "word|character", "showIn"?: "original|revised|new" (revised/new: an untitled document), "moves"|"comments"|"tables"|"headersFooters"|"footnotes"|"textBoxes"|"fields"?: bool (accepted; not honoured yet except tables, always compared)}
 - `review.combine` (Review › Compare): Combine {"path"?: string (revised document), "text"?: string (revised text), "original"?: string (original document; default: this one), "author"?: string (label changes with), "caseChanges"?: bool, "whiteSpace"?: bool, "formatting"?: bool (default true: differences count), "level"?: "word|character", "showIn"?: "original|revised|new" (revised/new: an untitled document), "moves"|"comments"|"tables"|"headersFooters"|"footnotes"|"textBoxes"|"fields"?: bool (accepted; not honoured yet except tables, always compared)}
-- `review.language` (Review › Language): Language {"lang"?: "en-US|en-GB|pl-PL|fr-FR|…" (BCP 47; default en-US), "noProof"?: bool, "detect"?: bool (detect language automatically, a preference), "default"?: bool (also the document's default language)}
+- `review.language` (Review › Language): Language {"lang"?: "en-US|en-GB|pl-PL|fr-FR|…" (BCP 47; default en-US), "noProof"?: bool, "detect"?: bool (detect language automatically, a preference), "default"?: bool (also the document's default and the saved language for future blank documents)}
+- `review.language.preferred` (File › Options › Language): Set as Default Language {"lang": "en-US|en-GB|pl-PL|nl-NL|…" (BCP 47)} — only the saved default proofing language, what future blank documents are written in, as Options › Language › Set as default does; the open document, the selection and the undo history don't change. Returns {"preferred": tag}.
 - `review.showMarkup` (Review › Tracking): Show Markup {}
 - `review.editor` (Home › Editor): Editor {}
 - `review.restrict` (Review › Protect): Restrict Editing {"mode"?: "none|readOnly|comments|trackedChanges|forms" (start enforcing; "none" stops), "formatting"?: bool (limit formatting to unlocked styles), "lockedStyles"?: [style id or name] (the styles that can't be applied; every other style is unlocked), "password"?: string (set when enforcing; required to stop a password-protected document), "stop"?: bool, "exception"?: "add" (the selection stays editable for everyone) | "remove" (exceptions touching the selection) | "removeAll"} → state
@@ -479,34 +494,36 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 
 ## file
 
-- `file.rename` (File › Info): Rename Document {"name": string (document name without its extension)}
+- `file.rename` (File › Info): Rename Document {"name": string (document name; its extension is kept, so the name may be given with or without it)}
 - `file.new` (File): New {"template"?: "blank|sample|letter|resume|report"} [Mod+N]
 - `file.open` (File): Open {"path": string, "data"?: base64 (the file's bytes; `path` then only names it), "password"?: string (for a password-protected Word document)} [Mod+O / Mod+F12 / Mod+Alt+F2]
 - `file.save` (File): Save {"path"?: string, "password"?: string (encrypt this and later saves with it, as file.encrypt does), "markup"?: bool (Print Markup for a PDF, PNG, HTML, Markdown or text copy: comments shown; default file.printMarkup), "format"?: "wordml2003" (an .xml file as a Word 2003 XML Document) | "flatopc" (as a Word XML Document, the default; saving over a Word 2003 XML file keeps that format)} [Mod+S / Shift+F12 / Alt+Shift+F2]
-- `file.saveAs` (File): Save As {"path": string, "password"?: string, "markup"?: bool, "format"?: string (as file.save)} [F12 / Alt+F2]
+- `file.saveAs` (File): Save As {"path": string, "password"?: string, "markup"?: bool, "format"?: string (as file.save)} [F12 / Mod+Shift+S]
 - `file.encrypt` (File › Info › Protect Document): Encrypt with Password {"password": string (Word documents are saved encrypted with it) | null or "" (saved unencrypted)}
 - `file.exportPdf` (File › Export): Export PDF {"path": string, "markup"?: bool (Print Markup: tracked changes marked up and each page scaled down beside the comments in balloons; default file.printMarkup)}
 - `file.exportPng` (File › Export): Export Page as PNG {"path": string, "page"?: n (1-based), "scale"?: px per pt, "markup"?: bool (the page with its comments in balloons beside it; default file.printMarkup)}
 - `file.printMarkup` (File › Print): Print Markup {"value"?: bool (omit to toggle)} — PDFs, prints and copies show comments (balloons beside each page; a list at the end of HTML, Markdown and text) and tracked changes
-- `file.printPdf` (File › Print): Print to PDF {"path": string, "range"?: "all" | "current" | "selection" (the pages the selection touches) | "custom", "pages"?: "1-3,5" (implies custom), "parity"?: "all" | "odd" | "even", "copies"?: 1-999, "collate"?: bool (default true)}
+- `file.printPdf` (File › Print): Print to PDF {"path": string, "pagesPerSheet"?: 1 | 2 | 4 | 6 | 9 | 16 | "booklet" | "bookletReverse", "range"?: "all" | "current" | "selection" (the pages the selection touches) | "custom", "pages"?: "1-3,5" (implies custom), "parity"?: "all" | "odd" | "even", "copies"?: 1-999, "collate"?: bool (default true), "paper"?: "none" | "Letter" | "Legal" | "A4" | … (a Layout › Size name: scale every page to this paper, centred; the document keeps its size)}
 - `file.print` (File): Print {} [Mod+P / Mod+Shift+F12 / Mod+F2 / Mod+Alt+I]
-- `file.close` (File): Close {"force"?: bool (desktop app's control channel and MCP bridge only: without it a document with unsaved changes is an error and stays open; with it the changes are discarded. Headless sessions never ask)} [Mod+W / Mod+F4]
-- `file.properties` (File › Info): Properties {"title"?, "subject"?, "author"?, "keywords"?, "comments"?, "category"?, "custom"?: {name: string | null (removes)}}
+- `file.close` (File): Close {"force"?: bool (desktop app's control channel and MCP bridge only: without it a document with unsaved changes is an error and stays open; with it the changes are discarded. Headless sessions never ask; file.closeDocument closes a document there)} [Mod+W / Mod+F4]
+- `file.closeDocument` (Agents): Close Document {"id"?: n (an open document, see view.switchWindows; default the active one), "force"?: bool (discard unsaved changes; without it a document with unsaved changes is an error and stays open)} → {"closed": id, "active": id, "documents": [{"id", "title", "path", "dirty", "active"}]}; closing the last document leaves a new blank one
+- `file.properties` (File › Info): Properties {"title"?, "subject"?, "author"?, "keywords"?, "comments"?, "category"?, "custom"?: {name: string | {"value": string, "linkTarget"?: string | null} | null (removes)}}; text values and bookmark targets are at most 1 MiB; a string keeps an existing target, an object replaces it (omitted/null target unlinks)
 - `file.info` (File): Info {}
 - `file.setAuthor` (File › Options › General): User Name {"name": string (author of new tracked changes and comments)}
 - `file.privacyOptions` (File › Options › Save): Privacy Options {"removePersonalInfo"?: bool (save comment and revision authors as "Author", no creator or last-modified-by), "removeDateTime"?: bool (save comments and tracked changes without dates)} — at least one; the open document keeps its real names and dates
 - `file.privacy` (File › Options › Save): Privacy Settings {} → {"removePersonalInfo": bool, "removeDateTime": bool} (file.privacyOptions changes them)
-- `file.options` (File): Options {"pane"?: "general|display|proofing|save|language|accessibility|advanced|agents", "author"?: string, "initials"?: string, "units"?: "inches|centimeters|millimeters|points|picas|auto" (auto: the region's), "region"?: string (a locale tag like pl-PL, saved: the paper File › New starts on, the default units and the decimal separator; auto: the system's), "typingReplacesSelection"?: bool, "insertKeyOvertype"?: bool, "overtype"?: bool, "marks"?: {"tabs"?: bool, "spaces"?: bool, "paragraphs"?: bool, "hidden"?: bool}, "checkSpelling"?: bool, "markGrammar"?: bool, "ignoreUppercase"?: bool, "ignoreNumbers"?: bool, "ignoreInternet"?: bool, "dictionariesFolder"?: string (a folder of Hunspell .aff/.dic files searched first, saved; auto: the system locations only), "addWords"?: [string], "removeWords"?: [string]} — with any setting it changes them and opens nothing; without, it opens File › Options (at `pane`). Returns the settings.
+- `file.options` (File): Options {"pane"?: "general|display|proofing|save|language|accessibility|advanced|agents", "author"?: string, "initials"?: string, "units"?: "inches|centimeters|millimeters|points|picas|auto" (auto: the region's), "region"?: string (a locale tag like pl-PL, saved: the paper File › New starts on, the default units and the decimal separator; auto: the system's), "typingReplacesSelection"?: bool, "insertKeyOvertype"?: bool, "overtype"?: bool, "marks"?: {"tabs"?: bool, "spaces"?: bool, "paragraphs"?: bool, "hidden"?: bool}, "checkSpelling"?: bool, "markGrammar"?: bool, "ignoreUppercase"?: bool, "ignoreNumbers"?: bool, "ignoreInternet"?: bool, "dictionariesFolder"?: string (a folder of Hunspell .aff/.dic files searched first, saved; auto: the system locations only), "userTemplatesFolder"?: string (the folder File › New lists personal templates from, saved; auto: the app's own Templates folder; not a network folder), "addWords"?: [string], "removeWords"?: [string]} — with any setting it changes them and opens nothing; without, it opens File › Options (at `pane`). Returns the settings.
 - `file.accessibility` (Review › Accessibility): Check Accessibility {}
-- `file.inspect` (File › Info): Inspect Document {"remove"?: ["comments", "revisions", "properties", "hidden", "headers"]} → {found: {comments, revisions, properties, hiddenText, hiddenCount, hidden: [{story: "body|header|footer|footnote|endnote|comment|textBox", part?, text}] (at most 1000), truncated, unsupported: [{story, object: "table|opaque", ..}] (hidden text not inspected: table styles, verbatim objects), headers}, removed, residual: [..] (hidden text a removal couldn't reach), removedNotes: [{kind, part, text}] (notes whose hidden reference was removed)}; whole hidden paragraphs go with their marks
-- `file.protect` (File › Info): Protect Document {"mode": "none|readOnly|comments|trackedChanges"}
+- `file.inspect` (File › Info): Inspect Document {"remove"?: ["comments", "revisions", "properties", "hidden", "headers"]} → {found: {comments, revisions, properties, hiddenText, hiddenCount, hidden: [{story: "body|header|footer|footnote|endnote|comment|textBox", part?, text}] (at most 1000), truncated, unsupported: [{story, object: "table|opaque", ..}] (hidden text not inspected: table styles, verbatim objects), headers}, removed, residual: [..] (hidden text a removal couldn't reach), removedNotes: [{kind, part, text}] (notes whose hidden reference was removed)}; whole hidden paragraphs go with their marks; the removals are refused while the document tracks changes
+- `file.protect` (File › Info): Protect Document {"mode": "none|readOnly|comments|trackedChanges"} (starting enforcement; "none" doesn't stop a protected document — use review.restrict {"stop": true})
 - `file.versions` (File › Info): Version History {"save"?: label, "restore"?: index}
 - `file.recover` (File › Info): Recover Unsaved Documents {"restore"?: recoveryId, "discard"?: recoveryId, "refresh"?: true}; desktop only; returns {enabled,busy,documents,error}; restore loads asynchronously without a file path
-- `file.newFromTemplate` (File › New): New from Template {"path": string}
+- `file.newFromTemplate` (File › New): New from Template {"path": string} → a new, untitled document from the template, attached to it
 - `file.saveTemplate` (File › Save As): Save as Template {"path": string}
 - `file.autosave` (Quick Access Toolbar): AutoSave {}
 - `file.compatibility` (File › Info): Check Compatibility {}
 - `file.share` (File): Share {}
+- `file.listTemplates` (File › New): Personal Templates {"dir"?: string (the user templates folder; default: the one saved in File › Options)} → {"dir", "templates": [{"label" (the file name without its extension), "title": string|null (dc:title), "path", "category" ("" at the top level, else the subfolder's name), "modified": ISO-8601|null}] (.dotx and .dotm, at most 500, by category then label), "truncated": bool}; a network folder is refused
 
 ## document
 
@@ -517,6 +534,12 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `document.layout` (Agents): Layout Summary {}
 - `document.setText` (Agents): Replace Document Text {"text": string}
 
+## proof
+
+- `proof.packs` (File › Options › Language): Language Packs {"refresh"?: bool (fetch the pinned index again; only while downloading is on; in the app it runs in the background: see "refreshing")} — opens nothing. Returns {"packs": [{"locale", "name", "size" (bytes), "licence" (SPDX), "class", "source" (where the data comes from), "archive" (the download), "spelling", "hyphenation", "installed"}], "languages": [{"tags", "pack", "installed", "size", "proofing" (built_in, installed, own_dictionary, system_dictionary, install, grammar_built_in, not_available), "default"}] (Options › Language › Your languages), "installed": [{"locale", "name", "licence"}], "installing": [{"locale", "done", "total"} (bytes)], "refreshing": bool, "errors": {locale or "" (the list): message} (the last failure of each), "index_override": string|null (a test index in use instead of the pinned one), "network": bool (downloading on), "available": bool (a font store to install into)}
+- `proof.installPack` (File › Options › Language): Install Language Pack {"locale": string (a pack's locale from proof.packs, like nl or pt-pt)} — downloads, verifies (sha256) and installs it; spelling and hyphenation in that language use it at once. Needs downloading on (only the person in the app can turn it on). Opens nothing. In the app it runs in the background and returns {"started": true}: follow it with proof.packs ("installing", then "installed" or "errors"); elsewhere it returns when installed.
+- `proof.removePack` (File › Options › Language): Remove Language Pack {"locale": string} — removes the installed pack. Opens nothing.
+
 ## design
 
 - `design.theme` (Design › Document Formatting): Themes {"name": string}
@@ -524,6 +547,7 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `design.themeColors` (Design › Document Formatting): Colors {}
 - `design.styleSet` (Design › Document Formatting): Style Set {"name": "default|basic|lines|shaded|casual|centered|minimalist|title"}
 - `design.paragraphSpacing` (Design › Document Formatting): Paragraph Spacing {"value": "default|none|compact|tight|open|relaxed|double"}
+- `design.scaleFontSizes` (Design › Document Formatting): Scale Font Sizes {"delta": pt (-1638..1638, not 0) | "percent": number (-99..1000, not 0; 10 = +10%)} (exactly one)
 - `design.watermark` (Design › Page Background): Watermark {"text"?: string, "remove"?: bool, "diagonal"?: bool, "color"?: "RRGGBB"}
 - `design.pageColor` (Design › Page Background): Page Color {"color": "RRGGBB" | null}
 - `design.pageBorders` (Design › Page Background): Page Borders {"kind"?: "box|none", "width"?: pt, "color"?: "RRGGBB", "style"?: "single|double|dotted|dashed|thick|triple|dotDash|wave", "sides"?: {"top"|"left"|"bottom"|"right": {"style"?, "width"?: pt, "color"?: "RRGGBB"} | null} (exactly these sides, instead of `kind`), "applyTo"?: "section|document"}
@@ -538,24 +562,24 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `references.removeToc` (References › Table of Contents): Remove Table of Contents {}
 - `references.addText` (References › Table of Contents): Add Text {"level": 0 (do not show) | 1-9}
 - `references.footnote` (References › Footnotes): Insert Footnote {"text"?: string, "mark"?: string (a custom mark instead of the number)} [Mod+Alt+F]
-- `references.endnote` (References › Footnotes): Insert Endnote {"text"?: string, "mark"?: string (a custom mark instead of the number)} [Mod+Alt+D]
+- `references.endnote` (References › Footnotes): Insert Endnote {"text"?: string, "mark"?: string (a custom mark instead of the number)} [Mod+Alt+E]
 - `references.convertNotes` (References › Footnotes): Convert Notes {"to": "endnote" (footnotes become endnotes) | "footnote" (endnotes become footnotes) | "swap"}
-- `references.nextFootnote` (References › Footnotes): Next Footnote {} [Alt+Shift+> / Alt+Shift+.]
+- `references.nextFootnote` (References › Footnotes): Next Footnote {}
 - `references.notes` (References › Footnotes): Show Notes {}
 - `references.caption` (References › Captions): Insert Caption {"label"?: "Figure|Table|Equation|any label", "text"?: string, "position"?: "below|above", "excludeLabel"?: bool, "format"?: "ARABIC|alphabetic|ALPHABETIC|roman|ROMAN", "chapter"?: heading level 1-9, "separator"?: "-|.|:|—|–"}
-- `references.updateFields` (References): Update Field {} [F9]
-- `references.sources` (References › Citations & Bibliography): Manage Sources {"add"?: Source, "remove"?: tag} → list
+- `references.updateFields` (References): Update Field {"all"?: bool (the body and every header, footer, note and text box, wherever the caret is; default: the story the caret is in)} [F9]
+- `references.sources` (References › Citations & Bibliography): Manage Sources {"add"?: Source, "remove"?: tag, "import"?: path (a Word bibliography file, `b:Sources` / `Sources.xml`)} → list
 - `references.citation` (References › Citations & Bibliography): Insert Citation {"tag"?: string, "source"?: Source (added if new), "pages"?: string}
 - `references.citationStyle` (References › Citations & Bibliography): Style {"style": "APA|Chicago|GB/T 7714|GOST (name sort)|GOST (title sort)|Harvard (Anglia)|IEEE|ISO 690 (author-date)|ISO 690 (numerical)|MLA|SIST02|Turabian" (Word's style names work too)}
 - `references.bibliography` (References › Citations & Bibliography): Bibliography {"title"?: string}
-- `references.tableOfFigures` (References › Captions): Insert Table of Figures {"label"?: "Figure|Table|Equation"}
+- `references.tableOfFigures` (References › Captions): Insert Table of Figures {"label"?: "Figure|Table|Equation" or a caption label of your own, "includeLabel"?: bool, "pageNumbers"?: bool, "rightAlign"?: bool, "tabLeader"?: "dot|hyphen|underscore|none"}
 - `references.updateFigures` (References › Captions): Update Table {}
-- `references.markCitation` (References › Table of Authorities): Mark Citation {"entry"?: string} [Alt+Shift+I]
+- `references.markCitation` (References › Table of Authorities): Mark Citation {"entry"?: string}
 - `references.tableOfAuthorities` (References › Table of Authorities): Insert Table of Authorities {}
 - `references.updateAuthorities` (References › Table of Authorities): Update Table {}
 - `references.noteOptions` (References › Footnotes): Footnote and Endnote {"kind"?: "footnote|endnote", "pos"?: "pageBottom|beneathText" (footnotes) | "sectEnd|docEnd" (endnotes), "numFmt"?: "decimal|lowerRoman|upperRoman|lowerLetter|upperLetter|…", "numStart"?: 1-32767, "numRestart"?: "continuous|eachSect|eachPage" (each page: footnotes only), "scope"?: "document|section", "footnoteFormat"?: …, "endnoteFormat"?: …} — no settings: the options in effect at the caret
 - `references.researcher` (References › Research): Researcher {}
-- `references.markEntry` (References › Index): Mark Entry {"entry"?: string (the selection), "subentry"?: string, "crossReference"?: "See …", "bookmark"?: page-range bookmark, "bold"?: bool, "italic"?: bool, "all"?: bool (Mark All: every paragraph's first match of "text" or the selection)} [Alt+Shift+X]
+- `references.markEntry` (References › Index): Mark Entry {"entry"?: string (the selection), "subentry"?: string, "crossReference"?: "See …", "bookmark"?: page-range bookmark, "bold"?: bool, "italic"?: bool, "all"?: bool (Mark All: every paragraph's first match of "text" or the selection)}
 - `references.index` (References › Index): Insert Index {"type"?: "indented|runIn", "columns"?: 1-4, "rightAlign"?: bool, "tabLeader"?: "dot|hyphen|underscore|none", "headings"?: bool (letter headings)} (replaces an existing index's settings)
 - `references.updateIndex` (References › Index): Update Index {}
 
@@ -574,40 +598,44 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 
 - `mailings.start` (Mailings › Start Mail Merge): Start Mail Merge {"kind": "letters|emails|envelopes|labels|directory|normal"}
 - `mailings.recipients` (Mailings › Start Mail Merge): Select Recipients {"csv"?: string, "path"?: string (.csv/.tsv/.txt, or a .xlsx/.xlsm/.xls/.ods workbook), "data"?: base64 (a file's bytes, as for path), "encoding"?: string (a text list's encoding, e.g. "gbk", "big5", "shift_jis", "utf-16le"; default: detected), "sheet"?: name | number (1 = first; a workbook with several sheets and no sheet answers {"sheets": [...], "chooseSheet": true} and loads nothing), "headers"?: bool (default true: the first non-blank row names the fields; false: fields are Column 1…N), "rows"?: [{field: value}] | [[value]], "fields"?: [string] (column order; required with array rows)}
-- `mailings.editRecipients` (Mailings › Start Mail Merge): Edit Recipient List {"rows"?: [{field: value}] | [[value]], "fields"?: [string]} (no params: the list as {headers, rows (every record), records (how many merge), rules, sort}) [Alt+Shift+E]
+- `mailings.editRecipients` (Mailings › Start Mail Merge): Edit Recipient List {"rows"?: [{field: value}] | [[value]], "fields"?: [string]} (no params: the list as {headers, rows (every record), records (how many merge), rules, sort})
 - `mailings.filterRecipients` (Mailings › Start Mail Merge › Edit Recipient List): Filter Recipients {"rules"?: [{"field": string, "op": "equal|notEqual|less|greater|lessOrEqual|greaterOrEqual|blank|notBlank|contains|notContains", "value"?: string, "join"?: "and|or" (with the rule before; And binds tighter)}], "sort"?: [{"field": string, "descending"?: bool}]} (replaces the filter; `sort` too when given; {} clears both). Preview, Finish & Merge and labels use only the matching records, in sort order
 - `mailings.sortRecipients` (Mailings › Start Mail Merge › Edit Recipient List): Sort Recipients {"sort"?: [{"field": string, "descending"?: bool}]} | {"field": string, "descending"?: bool} (no params: the list's own order)
-- `mailings.insertField` (Mailings › Write & Insert Fields): Insert Merge Field {"field": string} [Alt+Shift+F]
+- `mailings.insertField` (Mailings › Write & Insert Fields): Insert Merge Field {"field": string}
 - `mailings.addressBlock` (Mailings › Write & Insert Fields): Address Block {}
 - `mailings.greetingLine` (Mailings › Write & Insert Fields): Greeting Line {}
 - `mailings.rules` (Mailings › Write & Insert Fields): Rules {"rule": "IF|SKIPIF|NEXTIF|NEXT|MERGEREC", "field"?, "value"?, "then"?, "else"?}
 - `mailings.matchFields` (Mailings › Write & Insert Fields): Match Fields {}
 - `mailings.highlightFields` (Mailings › Write & Insert Fields): Highlight Merge Fields {}
-- `mailings.preview` (Mailings › Preview Results): Preview Results {} [Alt+Shift+K]
+- `mailings.preview` (Mailings › Preview Results): Preview Results {}
 - `mailings.next` (Mailings › Preview Results): Next Record {}
 - `mailings.previous` (Mailings › Preview Results): Previous Record {}
+- `mailings.first` (Mailings › Preview Results): First Record {}
+- `mailings.last` (Mailings › Preview Results): Last Record {}
+- `mailings.goToRecord` (Mailings › Preview Results): Go to Record {"record": n (1 = the first; past either end goes to the first or last record)}
 - `mailings.findRecipient` (Mailings › Preview Results): Find Recipient {}
 - `mailings.checkErrors` (Mailings › Finish): Check for Errors {}
-- `mailings.finish` (Mailings › Finish): Finish & Merge {"path"?: string (save the merged document), "from"?: n, "to"?: n} [Alt+Shift+N]
+- `mailings.finish` (Mailings › Finish): Finish & Merge {"path"?: string (save the merged document), "records"?: "all|current" (current: the previewed record; default all, or from/to), "from"?: n, "to"?: n (record numbers, 1 = the first)}
+- `mailings.printDocuments` (Mailings › Finish › Finish & Merge): Print Documents {"records"?: "all|current", "from"?: n, "to"?: n} (merges into a new document, as Finish & Merge does, and opens Print for it)
 - `mailings.envelopes` (Mailings › Create): Envelopes {"delivery": string, "return"?: string, "size"?: "Envelope #10|#9|Monarch|DL|C4|C5|C6|B5", "width"?: pt, "height"?: pt, "add"?: bool (add to this document instead of a new one)}
-- `mailings.labels` (Mailings › Create): Labels {"text"?: string, "product"?: "letter-3x10|letter-2x10|letter-2x7|letter-2x5|letter-4x20|a4-3x7|a4-2x7|a4-3x8|a4-2x4", "rows"?: n, "cols"?: n, "fromRecipients"?: bool, "single"?: {"row": n, "col": n}}
+- `mailings.labels` (Mailings › Create): Labels {"text"?: string, "product"?: "letter-3x10|letter-2x10|letter-2x7|letter-2x5|letter-4x20|a4-3x7|a4-2x7|a4-3x8|a4-2x4", "rows"?: n, "cols"?: n, "fromRecipients"?: bool (one label per selected recipient, continuing across sheets), "single"?: {"row": n, "col": n}}
 
 ## picture
 
-- `picture.size` (Picture Format › Size): Size {"width"?: pt, "height"?: pt, "lockAspect"?: bool, "scale"?: percent}
-- `picture.crop` (Picture Format › Size): Crop {"left"?, "top"?, "right"?, "bottom"? (fractions of the source 0–0.45; a side left out is uncropped), "width"?: pt, "height"?: pt (the new display size, in the same undo step; a floating picture also moves by what a left/top crop trims, so the visible part stays put)}
+- `picture.size` (Picture Format › Size): Size {"width"?: pt, "height"?: pt, "lockAspect"?: bool, "scale"?: percent, "original"?: bool} (scale: of the current size, or with original of the picture's original size, its pixels at 96 ppi less what is cropped; original alone restores that size; one side alone keeps the proportions unless lockAspect is false; 1–4000 pt: when the proportions are kept, a side past 4000 pt shrinks the other with it)
+- `picture.crop` (Picture Format › Size): Crop {"left"?, "top"?, "right"?, "bottom"? (fractions of the source 0–0.95; the two sides of an axis keep at least 5% between them; a side left out is uncropped), "width"?: pt, "height"?: pt (the new display size, in the same undo step; a floating picture also moves by what a left/top crop trims, so the visible part stays put)}
 - `picture.altText` (Picture Format › Accessibility): Alt Text {"text": string, "title"?: string, "decorative"?: bool}
 - `picture.corrections` (Picture Format › Adjust): Corrections {"brightness"?: -100..100, "contrast"?: -100..100, "sharpen"?: -100..100}
 - `picture.color` (Picture Format › Adjust): Color {"mode": "grayscale|sepia|washout|blackAndWhite|saturation|tint", "saturation"?: 0..400}
 - `picture.iconColor` (Picture Format › Adjust): Icon Color {"color": "RRGGBB"}
-- `picture.effects` (Picture Format › Adjust): Artistic Effects {"effect": "blur|sharpen|invert|posterize|pixelate"}
+- `picture.effects` (Picture Format › Adjust): Artistic Effects {"effect": "blur|sharpen|invert|posterize|pixelate|none"} (replaces the picture's effect)
 - `picture.transparency` (Picture Format › Adjust): Transparency {"percent": 0..100}
 - `picture.removeBackground` (Picture Format › Adjust): Remove Background {"tolerance"?: 0..255}
 - `picture.compress` (Picture Format › Adjust): Compress Pictures {"maxPixels"?: n}
 - `picture.reset` (Picture Format › Adjust): Reset Picture {}
 - `picture.change` (Picture Format › Adjust): Change Picture {"path"?: string, "data"?: base64}
-- `picture.style` (Picture Format › Picture Styles): Picture Styles {"style": "simpleFrame|thickFrame|rounded|softEdge|shadow"}
-- `picture.border` (Picture Format › Picture Styles): Picture Border {"color"?: "RRGGBB", "width"?: px}
+- `picture.style` (Picture Format › Picture Styles): Picture Styles {"style": "simpleFrame|thickFrame|rounded|softEdge|shadow"} (replaces the picture's style and border)
+- `picture.border` (Picture Format › Picture Styles): Picture Border {"color"?: "RRGGBB", "width"?: px} (replaces the picture's border)
 
 ## object
 
@@ -625,15 +653,14 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `arrange.sendBackward` (Layout › Arrange): Send Backward {}
 - `arrange.align` (Layout › Arrange): Align {"value": "left|center|right"}
 - `arrange.selectionPane` (Layout › Arrange): Selection Pane {}
-- `arrange.bounds` (Layout › Arrange): Move or Resize {"width"?: pt, "height"?: pt, "x"?: pt, "y"?: pt, "page"?: n}  (x/y: the top-left on page `page` (0-based, default its page); moving an inline object floats it)
-- `arrange.copyTo` (Layout › Arrange): Copy to {"x": pt, "y": pt, "page"?: n}  (Ctrl+drag: a copy of the selected object lands with its top-left there and is selected; the original and the clipboard stay as they were)
+- `arrange.bounds` (Layout › Arrange): Move or Resize {"width"?: pt, "height"?: pt, "x"?: pt, "y"?: pt, "page"?: n, "to"?: Pos}  (x/y: the top-left on page `page` (0-based, default its page); moving an inline object by x/y floats it. to: an In Line with Text object moves to that text position and stays inline, as a drag does)
+- `arrange.copyTo` (Layout › Arrange): Copy to {"x": pt, "y": pt, "page"?: n} | {"to": Pos}  (Ctrl+drag: a copy of the selected object lands with its top-left there, or an In Line with Text one at the text position `to`, and is selected; the original and the clipboard stay as they were)
 - `arrange.nudge` (Layout › Arrange): Nudge {"dx"?: pt, "dy"?: pt}
 - `arrange.group` (Layout › Arrange): Group {}  (groups the selected pictures, shapes and text boxes: the selected one plus those added with select.addObject)
 - `arrange.ungroup` (Layout › Arrange): Ungroup {}
 
 ## shape
 
-- `shape.fill` (Shape Format › Shape Styles): Shape Fill {"color": "RRGGBB" | null}  (a selected drawing canvas: its background)
 - `shape.outline` (Shape Format › Shape Styles): Shape Outline {"color": "RRGGBB" | null, "width"?: pt}  (a selected drawing canvas: its border)
 - `shape.effects` (Shape Format › Shape Styles): Shape Effects {"shadow"?: preset|{"preset"?, "color"?: "RRGGBB", "transparency"?: %, "blur"?: pt, "distance"?: pt, "angle"?: deg}|null, "glow"?: pt|{"color"?: "RRGGBB", "size"?: pt, "transparency"?: %}|null, "softEdge"?: pt|null}  (shadow presets: offsetBottomRight, offsetBottom, offsetBottomLeft, offsetRight, offsetCenter, offsetLeft, offsetTopRight, offsetTop, offsetTopLeft; an omitted key is left as it is; applies to every shape in the selection)
 - `shape.change` (Shape Format › Insert Shapes): Change Shape {"kind": string}
@@ -641,17 +668,19 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 - `shape.alignText` (Shape Format › Text): Align Text {"anchor": "t|ctr|b"}  (top, middle, bottom of the box: for turned text, from the side its lines start on)
 - `shape.link` (Shape Format › Text): Create Link {"target": Pos | n}  (the empty text box the selected box's text continues in: its position, or its Selection Pane index)
 - `shape.breakLink` (Shape Format › Text): Break Link {}  (the text stops at the end of the selected box; the boxes after it go back to their own text)
+- `shape.fill` (Shape Format › Shape Styles): Shape Fill {"color": "RRGGBB" | null, "transparency"?: %} | {"gradient": {"stops": [{"pos": %, "color": "RRGGBB", "transparency"?: %}], "type"?: "linear|radial|rectangular|path", "angle"?: deg, "focus"?: [l, t, r, b], "tile"?: [l, t, r, b], "scaled"?: bool, "rotateWithShape"?: bool}}  (tile: percent insets of the gradient's area; scaled: a linear angle scaled with the shape; a colour alone keeps the shape's transparency; angle: linear only, 0 = left to right, 90 = top to bottom; focus: percent insets of where a radial, rectangular or path gradient starts; applies to every selected shape, text box and canvas background)
 - `shape.connect` (Shape Format › Insert Shapes): Connect Shapes {"start"?: end, "end"?: end}  end: {"path": [..], "off": n, "site"?: n} (glue to that body shape's connection site; nearest one when omitted) | {"x": pt, "y": pt, "page"?: n} (drag the end there: it glues to a shape's site within 12 pt, else stays free there) | null (unglue)
 
 ## smartArt
 
-- `smartArt.items` (SmartArt Design › Create Graphic): Edit Items {"items": [string | {"text": string, "level"?: 0-7}]} (replaces the outline)
+- `smartArt.items` (SmartArt Design › Create Graphic): Edit Items {"items": [string | {"text": string, "level"?: 0-7, "color"?: RRGGBB}]} (replaces the outline)
 - `smartArt.textPane` (SmartArt Design › Create Graphic): Text Pane {"value"?: bool} (no value: show or hide the Text Pane)
 - `smartArt.addShape` (SmartArt Design › Create Graphic): Add Shape {"after"?: item index (default: the last), "text"?: string, "below"?: bool (a sub-item instead of the next item)}
 - `smartArt.promote` (SmartArt Design › Create Graphic): Promote {"index"?: item index (default: the last)} (the item and the items under it move up a level)
 - `smartArt.demote` (SmartArt Design › Create Graphic): Demote {"index"?: item index (default: the last)} (the item and the items under it move down a level)
 - `smartArt.layout` (SmartArt Design › Layouts): Change Layout {"layout": "basicList|process|cycle|hierarchy|pyramid|radial|matrix|venn"}
-- `smartArt.colors` (SmartArt Design › SmartArt Styles): Change Colors {"variant": "accent1|accent2|accent3|accent4|accent5|accent6|colorful"}
+- `smartArt.colors` (SmartArt Design › SmartArt Styles): Change Colors {"variant": "accent1|accent2|accent3|accent4|accent5|accent6|colorful"} (the items' own colours are dropped)
+- `smartArt.itemColor` (SmartArt Design › SmartArt Styles): Item Color {"index"?: item index (default: the last), "color"?: "RRGGBB" (none: the style's colour)}
 - `smartArt.reset` (SmartArt Design › Reset): Reset Graphic {} (back to the default colours; the items and layout stay)
 
 ## chart
@@ -699,10 +728,10 @@ Groups: `text` (22), `caret` (16), `select` (14), `edit` (29), `format` (39), `f
 
 - `tools.recordMacro` (View › Macros): Record Macro {"name"?: string} (call again to stop)
 - `tools.macros` (View › Macros): Macros {"run"?: name, "define"?: {"name": string, "steps": [{"command", "params"}]}, "delete"?: name} [Alt+F8]
-- `tools.autocorrect` (File › Options › Proofing): AutoCorrect Options {"enabled"?: bool (all of AutoCorrect), "replaceText"|"twoInitialCaps"|"capSentences"|"capCells"|"capDays"|"capsLock"|"smartQuotes"|"fractions"|"ordinals"|"dashes"|"links"|"bullets"|"numbering"|"borderLines"?: bool, "add"?: {"from": string, "to": string} (adds or replaces an entry), "delete"?: string (an entry's "from", built in or added), "addException"?: string, "deleteException"?: string, "addInitialCapsException"?: string (keeps TWo INitial CApitals, like "IDs"), "deleteInitialCapsException"?: string} → options, entries and exceptions
+- `tools.autocorrect` (File › Options › Proofing): AutoCorrect Options {"enabled"?: bool (all of AutoCorrect), "replaceText"|"twoInitialCaps"|"capSentences"|"capCells"|"capDays"|"capsLock"|"smartQuotes"|"fractions"|"ordinals"|"dashes"|"links"|"bullets"|"numbering"|"borderLines"?: bool, "boldItalic"?: bool (*bold* and _italic_ with real formatting; default false), "tabIndent"?: bool (Set left- and first-indent with tabs and backspaces; default false), "headingStyles"?: bool (Built-in Heading styles; default false), "doubleSpacePeriod"?: bool (Add a period with double-space; default false), "autoAddFirstLetter"|"autoAddInitialCaps"?: bool (Automatically add words to the exception lists when an automatic capital is undone; default true), "add"?: {"from": string, "to": string} (adds or replaces an entry), "delete"?: string (an entry's "from", built in or added), "addException"?: string, "deleteException"?: string, "addInitialCapsException"?: string (keeps TWo INitial CApitals, like "IDs"), "deleteInitialCapsException"?: string} → options, entries and exceptions
 - `tools.customizeKeyboard` (File › Options): Customize Keyboard {"command"?: id (its keys), "key"?: "Mod+Shift+K" (the command it runs), "assign"?: {"command": id, "key": string}, "remove"?: {"command": id, "key": string}, "reset"?: true (built-in keys only)} → {custom: {assigned: {key: id}, removed: [key]}, …}; no params opens the dialog
 - `tools.customizeRibbon` (File › Options): Customize Ribbon {"hide"?: tab, "show"?: tab, "newTab"?: {"name"?, "after"?: tab}, "newGroup"?: {"tab", "name"?}, "add"?: {"tab", "group", "command", "after"?: id}, "remove"?: {"tab", "group"?, "command"?}, "rename"?: {"tab", "group"?, "to"}, "move"?: {"tab", "group"?, "command"?, "by": int}, "qatAdd"?: id, "qatRemove"?: id, "qatMove"?: {"command", "by": int}, "reset"?: true | "ribbon" | "qat", "layout"?: object} → {tabs: [{name, custom?, hidden?, groups?: [{name, commands}]}], qat: [id]}; only custom tabs and groups can be renamed or removed (built-in tabs can be hidden and moved); no params opens the dialog
-- `tools.search` (Title Bar): Search {"query"?: string} → {matches: [{id, label, location, shortcut}]} (every word of the query in the label, location or id; at most 50); no query opens the Search box [Alt+Q]
+- `tools.search` (Title Bar): Search {"query"?: string} → {matches: [{id, label, location, shortcut}]} (every word of the query in the label, location or id; at most 50); no query opens the Search box
 - `tools.templates` (View › Templates): Templates and Add-ins {} → {"template": path|null, "linkStyles": bool} (from the ribbon, the app shows the dialog)
 - `tools.attachTemplate` (View › Templates › Templates and Add-ins): Attach Template {"path": string, "linkStyles"?: bool, "update"?: bool (update the styles from it now), "data"?: base64 (the template's bytes, for "update")}
 - `tools.detachTemplate` (View › Templates › Templates and Add-ins): Detach Template {}

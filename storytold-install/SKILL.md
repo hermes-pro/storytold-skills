@@ -1,20 +1,21 @@
 ---
 name: storytold-install
 description: "Install the storytold Crafting Apps (VectorCraft, PhotoCraft, FilmCraft, …) on PATH and wire their MCP servers into Hermes."
-version: 0.3.0
+version: 0.4.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
 metadata:
   hermes:
-    tags: [Creative, Design, Illustration, Photo, Video, Audio, Office, CAD, UI, MCP]
+    tags: [Creative, Design, Illustration, Photo, Video, Audio, Office, CAD, 3D, UI, MCP]
     related_skills: [storytold]
 ---
 
 # storytold Crafting Apps
 
 The [storytold](https://github.com/storytold) Crafting Apps are free, open-source, clean-room creative
-tools written in Rust. Every release ships a desktop app `<app>` and an automation CLI `<app>-cli`.
+tools written in Rust (SolidCraft comes from [Tangency Labs](https://github.com/tangency-labs/solidcraft) and installs
+the same way). Every release ships a desktop app `<app>` and an automation CLI `<app>-cli`.
 `<app>-cli mcp` is a stdio MCP server that can drive every menu item, tool, panel and export.
 
 | App | What it is |
@@ -32,12 +33,16 @@ tools written in Rust. Every release ships a desktop app `<app>` and an automati
 | `soundcraft` | Audio editing and mixing (Pro Tools-style) |
 | `cadcraft` | Computer-aided design and drafting (AutoCAD-style) |
 | `figcraft` | Interface design and prototyping (Figma-style) |
+| `solidcraft` | Parametric 3D CAD (SolidWorks-style) |
+| `materialcraft` | Node-based material design (Substance Designer-style) |
+| `texturecraft` | 3D texture painting (Substance Painter-style) |
+| `craft-anything` | Study how a website, app or game works and build your own version |
 
 ## When to Use
 
 - The user asks to install, update or set up any storytold / Crafting App (by name or "the craft apps").
 - The user wants to create or edit vector art, photos, video, audio, documents, spreadsheets, slides,
-  PDFs, CAD drawings or UI designs, and a Crafting App is the tool for it.
+  PDFs, CAD drawings, 3D parts, materials and textures or UI designs, and a Crafting App is the tool for it.
 - A `<app>-cli` command is "not found", or a storytold MCP server fails to start.
 
 ## Quick Reference
@@ -53,7 +58,7 @@ python ${HERMES_SKILL_DIR}/scripts/storytold_tools.py register [APP ...]  # herm
 python ${HERMES_SKILL_DIR}/scripts/storytold_tools.py setup   [APP ...]   # install + verify + register
 ```
 
-Leave `APP` out to act on all thirteen apps. Every command prints one JSON object per line.
+Leave `APP` out to act on all seventeen apps. Every command prints one JSON object per line.
 
 | Where | Windows | Linux / FreeBSD | macOS |
 |---|---|---|---|
@@ -70,7 +75,7 @@ if the GitHub API rate limit (60 requests an hour without a token) gets in the w
 1. **Check first.** Run `status`. An app counts as present when its `<app>-cli` is on PATH, whether
    this skill installed it or an MSI, .deb or Flatpak did. Don't reinstall an app that's already there
    unless the user asks, or `latest` is newer than `installed`.
-2. **Install.** Run `install` with the apps the user wants. Leave `APP` out to install all thirteen, about 1.2 GB of
+2. **Install.** Run `install` with the apps the user wants. Leave `APP` out to install all seventeen, about 1.6 GB of
    downloads. For each app it finds the latest GitHub release, downloads the asset for this OS and CPU,
    checks it against the release's `SHA256SUMS.txt`, unpacks it and links `<app>` and `<app>-cli` into the bin
    dir. Then it adds the bin dir to the persistent PATH unless it's already there. Running it again does no
@@ -88,9 +93,13 @@ if the GitHub API rate limit (60 requests an hour without a token) gets in the w
    | App | MCP args | Why |
    |---|---|---|
    | most apps | `mcp` | headless in-process engine |
-   | `pdfcraft` | `mcp --compact` | 17 tools instead of 161 (about 3.5k tokens of schemas instead of 40k). The rest run through `tool_call` |
+   | `pdfcraft` | `mcp --compact` | 17 tools instead of 184 (about 3.5k tokens of schemas instead of 48k). The rest run through `tool_call` |
    | `vectorcraft` | `mcp --headless` | bare `mcp` attaches to anything on port 7979, even another Crafting App |
    | `photocraft` | `mcp --automation-read-root <HOME> --automation-write-root <HOME>` | without roots it can't open or save files. Paths are relative to HOME. Override HOME with `STORYTOLD_PHOTOCRAFT_ROOT` |
+   | `materialcraft` | `mcp --read-root <HOME> --write-root <HOME>` | without roots it can't open, save or export files. Paths are relative to HOME. Override HOME with `STORYTOLD_MATERIALCRAFT_ROOT` |
+   | `texturecraft` | `mcp --read-root <HOME> --write-root <HOME>` | the same as MaterialCraft. Override HOME with `STORYTOLD_TEXTURECRAFT_ROOT` |
+   | `solidcraft` | `mcp --allow-path <HOME> --param-check strict` | without an allowed folder it can't save or export outside its own folders. Strict checks make a misspelt key an error instead of wrong geometry. Override HOME with `STORYTOLD_SOLIDCRAFT_ROOT` |
+   | `craft-anything` | `mcp` | Clean room, 29 tools. Its website tools also need `--allow-run`, which approves everything that runs code or changes a device: add it only after the user agrees (`register craft-anything --replace` won't add it; use `hermes mcp add` by hand). Never run Craft Anything's own `setup --client hermes`: it installs a second skill named `craft-anything` |
    | `lightcraft` | `mcp --library <install root>/lightcraft-library` | without a library the catalog lives in memory only. Override with `STORYTOLD_LIGHTCRAFT_LIBRARY` |
 5. **Report.** List the installed versions, PATH changes, MCP results and anything that failed, with its
    `error`.

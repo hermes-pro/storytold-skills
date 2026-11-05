@@ -1,6 +1,6 @@
 # PdfCraft Action Wizard and app commands
 
-Generated from `action_list` and `command_list` (PdfCraft 0.9.0).
+Generated from `action_list` and `command_list` (PdfCraft 0.18.1).
 
 ## Built-in actions (`action_run {action: <name>, paths, folder}`)
 
@@ -25,7 +25,7 @@ Generated from `action_list` and `command_list` (PdfCraft 0.9.0).
 - `detect_form_fields`: Detect form fields
 - `run_javascript`: Run a JavaScript (takes `arg`)
 
-## App commands (200)
+## App commands (212)
 
 Ids for the live desktop app (`pdfcraft-cli ui --control FILE command id=<id>`). The `tool` column names the
 MCP tool that does the same thing headlessly; prefer the tool. `command_run {id, params}` runs only the ids that have a
@@ -33,6 +33,8 @@ tool (it calls that tool; `params` are the tool's arguments).
 
 | id | label | menu | shortcut | tool |
 |---|---|---|---|---|
+| `view.select_tool` | Select |  |  |  |
+| `view.hand_tool` | Hand |  |  |  |
 | `file.open` | Open… | File | Ctrl+O | `doc_open` |
 | `file.open_recent` | Open Recent | File |  |  |
 | `file.clear_recent` | Clear Recent Files |  |  |  |
@@ -70,6 +72,7 @@ tool (it calls that tool; `params` are the tool's arguments).
 | `view.layout.single` | Single page |  |  |  |
 | `view.layout.two_up` | Two-page view |  |  |  |
 | `view.continuous` | Continuous scrolling |  |  |  |
+| `view.page_gaps` | Show gaps between pages |  |  |  |
 | `view.layout.cover` | Show cover page in two-page view |  |  |  |
 | `view.fit_width_scrolling` | Fit to width scrolling |  |  |  |
 | `view.fit_one_page` | Fit one full page |  |  |  |
@@ -85,7 +88,9 @@ tool (it calls that tool; `params` are the tool's arguments).
 | `view.previous_view` | Previous view |  | Ctrl+[ |  |
 | `view.next_view` | Next view |  | Ctrl+] |  |
 | `view.focus_page_input` | Go to page… | View | Ctrl+Shift+N |  |
-| `ui.dock.reset` | Reset panel layout | View |  |  |
+| `view.side_panel` | Show or hide the side panel | View | F4 |  |
+| `view.tools_pane` | Show or hide the Tools panel | View | Shift+F4 |  |
+| `ui.dock.reset` | Reset side panels | View |  |  |
 | `view.theme` | Switch light / dark theme |  |  |  |
 | `view.theme.system` | Use system setting |  |  |  |
 | `view.theme.light` | Light gray |  |  |  |
@@ -97,6 +102,7 @@ tool (it calls that tool; `params` are the tool's arguments).
 | `comment.underline` | Underline text |  |  |  |
 | `comment.strikeout` | Strikethrough text |  |  |  |
 | `comment.squiggly` | Squiggly underline text |  |  |  |
+| `comment.freehand_highlight` | Freehand-Highlight |  |  |  |
 | `comment.ink` | Draw freehand |  |  |  |
 | `comment.line` | Draw a line |  |  |  |
 | `comment.arrow` | Draw an arrow |  |  |  |
@@ -132,9 +138,11 @@ tool (it calls that tool; `params` are the tool's arguments).
 | `form.tab_order.row` | Tab order: by rows |  |  |  |
 | `form.tab_order.column` | Tab order: by columns |  |  |  |
 | `form.tab_order.structure` | Tab order: by document structure |  |  |  |
+| `form.calculation_order` | Calculation order |  |  | `form_calculation_order` |
 | `edit.text` | Add text |  |  | `page_add_text` |
 | `edit.edit_text` | Edit text & images |  |  | `text_lines` |
 | `edit.link` | Add or edit links |  |  | `link_add` |
+| `edit.attach` | Attach a file… | Edit |  | `attachment_add` |
 | `edit.links_from_urls` | Create links from URLs |  |  | `links_from_urls` |
 | `edit.remove_links` | Remove all links |  |  | `links_remove` |
 | `edit.bates` | Add Bates numbering… |  |  |  |
@@ -149,6 +157,7 @@ tool (it calls that tool; `params` are the tool's arguments).
 | `redact.sanitize` | Sanitize document… |  |  |  |
 | `form.field.properties` | Field properties… |  |  |  |
 | `form.add.text` | Add a text field |  |  |  |
+| `form.add.text_table` | Add text field table |  |  | `form_add_field_table` |
 | `form.add.checkbox` | Add a checkbox |  |  |  |
 | `form.add.radio` | Add a radio button |  |  |  |
 | `form.add.combo` | Add a drop-down list |  |  |  |
@@ -213,12 +222,14 @@ tool (it calls that tool; `params` are the tool's arguments).
 | `page.organize` | Organize pages | Pages |  |  |
 | `bookmark.add` | New bookmark | Pages | Ctrl+B |  |
 | `bookmark.from_structure` | New bookmarks from structure | Pages |  |  |
+| `bookmark.from_text_styles` | New bookmarks from text styles… | Pages |  |  |
 | `page.rotate` | Rotate pages clockwise | Pages |  | `page_rotate` |
 | `page.rotate_ccw` | Rotate pages counterclockwise | Pages |  |  |
 | `page.delete` | Delete pages | Pages |  | `page_delete` |
 | `page.insert_blank` | Insert blank page | Pages |  | `page_insert_blank` |
 | `page.rotate_dialog` | Rotate pages… | Pages |  |  |
 | `page.duplicate` | Duplicate pages | Pages |  | `page_duplicate` |
+| `page.reverse` | Reverse pages | Pages |  | `page_reverse` |
 | `page.crop` | Crop pages | Pages |  |  |
 | `page.boxes` | Set page boxes… | Pages |  | `page_set_box` |
 | `page.insert` | Insert pages from file… | Pages |  | `page_insert_file` |
@@ -226,6 +237,7 @@ tool (it calls that tool; `params` are the tool's arguments).
 | `page.extract` | Extract pages… | Pages |  | `page_extract` |
 | `page.split` | Split document… | Pages |  | `doc_split` |
 | `page.number` | Number pages… | Pages |  |  |
+| `page.properties` | Page properties… | Pages |  |  |
 | `help.shortcuts` | Keyboard shortcuts | Help |  |  |
 | `help.discord` | Join the ArtCraft Discord | Help |  |  |
 | `help.app_page` | PdfCraft web page | Help |  |  |

@@ -1,7 +1,7 @@
 ---
 name: lightcraft
-description: "Photo development and cataloguing with LightCraft (Lightroom-style): import and cull a shoot, rate / flag / keyword, develop RAW (DNG, CR2, CR3, NEF, ARW, RAF…) and JPEG photos (exposure, white balance, tone curve, HSL, B&W, crop, masks), HDR editing, apply presets, sync edits across a batch, HDR / panorama merge, slideshows (AV1 video / PDF), print layouts and contact sheet PDFs, batch export JPEG / PNG / TIFF / WebP / AVIF / JPEG XL / PSD / DNG."
-version: 0.4.0
+description: "Photo development and cataloguing with LightCraft (Lightroom-style): import and cull a shoot, rate / flag / keyword, develop RAW (DNG, CR2, CR3, NEF, ARW, RAF…) and JPEG photos (exposure, white balance, tone curve, HSL, B&W, crop, masks), HDR editing, apply presets, sync edits across a batch, HDR / panorama merge, slideshows (AV1 video / PDF), print layouts, print templates and contact sheet PDFs, batch export JPEG / PNG / TIFF / WebP / AVIF / JPEG XL / PSD / DNG."
+version: 0.5.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,7 +16,7 @@ metadata:
 LightCraft is a free, open-source clean-room take on Adobe Lightroom (storytold Crafting Apps): a photo
 library plus a non-destructive raw developer. An agent drives it through an MCP server
 (`lightcraft-cli mcp`) or one-shot CLI commands. Edits are settings stored per photo, never baked into the
-original file. Pixels only change in an export. This skill is written against LightCraft 0.9.1.
+original file. Pixels only change in an export. This skill is tested against LightCraft 0.18.1.
 
 ## When to Use
 
@@ -56,7 +56,9 @@ between sessions. Bare `lightcraft-cli mcp` is **in-memory**: the library disapp
 Your exported files stay, but the ratings and edits don't. Other modes:
 
 - `lightcraft-cli mcp --library DIR` opens or creates a persistent library in another folder, e.g. one per project.
-- `lightcraft-cli mcp --compact` lists only the helper tools; every command stays reachable via `command_run`.
+- `lightcraft-cli mcp --compact` lists only the 17 helper tools; every command stays reachable via `command_run`.
+- `lightcraft-cli mcp --demo` starts with a procedurally generated demo library (in memory); `lightcraft-cli mcp FILES…`
+  imports those files or folders at start.
 - `lightcraft-cli mcp --connect 7980` (a bare port means 127.0.0.1) drives a desktop app the user started with
   `lightcraft --control 7980`, so they can watch. Only this mode has the UI tools (`screenshot`, `ui_screenshot`,
   `inspect_ui`, `ui_inspect`, `set_ui`, `click`, `press_key`, `type_text`, `clipboard`, `pointer_gesture`, `list_widgets`).
@@ -73,7 +75,7 @@ Your exported files stay, but the ratings and edits don't. Other modes:
   `vignette.amount`, `detail.sharpen_amount`).
 - **Positions are normalized image coordinates**, 0..1 with the origin at the top-left: crop rects, mask points,
   white-balance picks, spots.
-- **Every action is a command** (371). Each one is also its own tool: `photo.rate` → `mcp_lightcraft_cmd_photo_rate`,
+- **Every action is a command** (383). Each one is also its own tool: `photo.rate` → `mcp_lightcraft_cmd_photo_rate`,
   or use `command_run {id, params}`, or `command_batch {steps}` for several. Grep `references/commands.md`, or
   `command_list {filter}`.
 - Every edit is undoable (`cmd_edit_undo` / `cmd_edit_redo`). `cmd_history_list` → `{history, cursor}` for the active
@@ -88,7 +90,7 @@ Your exported files stay, but the ratings and edits don't. Other modes:
 | `select_photos {ids, active?, mode?}` | Selection and active photo. An unknown id is an error and changes nothing |
 | `doc_inspect` | Selection, active photo, filter, sort, undo label, plus counts |
 | `list_controls {section?}` | Sliders with min, max, default and **current value** for the active photo |
-| `set_develop {id?, values?, settings?}` | `values: {"light.exposure": 0.7}` sets sliders. `settings` deep-merges develop JSON |
+| `set_develop {id?, values?, settings?, label?}` | `values: {"light.exposure": 0.7}` sets sliders. `settings` deep-merges develop JSON (`label` names that undo step) |
 | `get_develop {id?}` | The full develop JSON (plus `process`, the rendering process version) |
 | `crop {id?, rect?, angle?, reset?}` | `rect: [x0,y0,x1,y1]` normalized, `angle` in degrees (straighten) |
 | `apply_preset {preset, ids?, amount?}` | Preset ids from `cmd_presets_list` (`lc.golden-hour`…). `amount` 0..200 % |
@@ -150,9 +152,12 @@ detector (232 KB, `cmd_faces_models_download {id: "yunet-2023mar"}`); ask before
 
 ## Library, culling, batch
 
-- **Rate, flag, label:** `cmd_photo_rate {rating, ids}`, `cmd_photo_flag {flag: pick|reject|none, ids}`, `cmd_photo_label {label: red|…, ids}`.
+- **Rate, flag, label:** `cmd_photo_rate {rating, ids}`, `cmd_photo_flag {flag: pick|reject|none, ids}`, `cmd_photo_label {label: red|…, ids}`,
+  `cmd_photo_clearLabel {ids}`.
   `cmd_photo_cycleFlag` / `cmd_photo_increaseFlag` / `cmd_photo_decreaseFlag {ids}` step each photo's own flag.
 - **Metadata:** `cmd_photo_setMeta {ids, title, caption, keywords: [..], creator, copyright}`, `cmd_keyword_create {name, addToSelected?}`.
+  Tag many photos with the same keywords (tested): `cmd_keyword_setShortcut {keywords: "beach, sunset"}`, then
+  `cmd_keyword_toggleShortcut {ids}` adds them (or removes them when every photo already has them) → `{changed, keywords, added}`.
 - **Filter** (`query_photos` / `cmd_catalog_query` / `cmd_library_filter`): `{rating: 3, ratingOp: "atLeast"|"exactly"|"atMost"}`,
   `{flag: "pick"}`, `{label: "red"}`, `{keyword: "sky"}`, `{kind: "raw"}`, `{edited: true}`, `{album: id}`,
   `{merged: "any"}`, `{text}`. `cmd_library_selectBy {rating|flag|label}` selects directly.
@@ -166,6 +171,9 @@ detector (232 KB, `cmd_faces_models_download {id: "yunet-2023mar"}`); ask before
   `.xmp`/`.lrtemplate` presets with `cmd_preset_import {paths}`. A Lightroom Classic catalog: `cmd_library_importLightroom {path}`.
 - **Assisted culling:** `cmd_photo_analyze {ids, rejectBelow?, pickBest?}` scores focus (0..100) and clipping.
   `cmd_library_findSimilar`, `cmd_stack_auto`.
+- **Lens profiles:** `cmd_lens_downloadDatabase` fetches lensfun's lens database (CC BY-SA 3.0, a network download in
+  the background; not tested); `cmd_lens_databaseStatus` shows it, and `cmd_library_refreshLensProfiles {ids?, all?}` re-reads
+  lens profiles for raws once it's in place.
 - **Contact sheet:** `cmd_export_contactSheet {path: "/abs/sheet.pdf", ids, paper?: a4|letter, columns?, rows?, captions?}` → `{pages, photos}`.
 
 ## Procedure
@@ -257,8 +265,13 @@ motion? Export the JPEG slides or the video and finish in FilmCraft.
 **Print layouts to PDF (tested):** `cmd_print_set {layout: {style: "contactSheet", page: {paper: "a4", orientation:
 "portrait"}, grid: {columns: 2, rows: 2}}, image: {strokeEnabled: true}, job: {ppi: 240}}`, then
 `cmd_print_exportPdf {path, ids}` → `{pages, photos}`. Styles: `singleImage|contactSheet|picturePackage|customPackage`;
-papers a3 a4 a5 letter legal tabloid 4x6 5x7 8x10 13x19. A picture package: `style: "picturePackage"`, then
-`cmd_print_cell_add {width: 5, height: 3.5}` per cell (inches), and the photo fills every cell. `cmd_print_get` shows it.
+papers a3 a4 a5 letter legal tabloid 4x6 5x7 8x10 13x19, and the Japanese sizes l 2l kg postcard double-postcard 6cut
+4cut business-card. A picture package: `style: "picturePackage"`, then `cmd_print_cell_add {width: 5, height: 3.5}` per
+cell (inches), and the photo fills every cell. `cmd_print_get` shows it.
+
+**Print templates (tested):** `cmd_print_template_save {name}` stores the layout, image, page and job settings;
+`cmd_print_template_apply {name}`. To share one: `cmd_print_template_export {name, path}` writes a `.lcprint` JSON file
+(the extension is added when the path has none) and `cmd_print_template_import {path}` reads it back (a name taken gets " (2)").
 
 ## Export
 
@@ -271,9 +284,12 @@ papers a3 a4 a5 letter legal tabloid 4x6 5x7 8x10 13x19. A picture package: `sty
   float DNG of the rendered photo with the edit baked in; works for any photo and honours the size) and
   `format: "original"` (the file copied, plus an `.xmp` sidecar Lightroom can read).
 - Size: nothing = **3000 px long edge**, `longEdge: 0` = full size, `longEdge|shortEdge|width+height|megapixels|percent`.
+  With `width` + `height`, `fit: "dimensions"` (default) fits either orientation, so 500×800 on a landscape photo gives
+  750×500; `fit: "widthHeight"` caps the width and the height as the photo stands (500×333).
   `dontEnlarge` defaults to true, so a 1800 px photo stays 1800 px.
 - Options: `quality` 1..100, `limitKb` (JPEG fits a file size), `colorSpace: srgb|displayP3|adobeRgb|proPhoto|rec2020`,
-  `bitDepth` (PNG 8/16, TIFF 8/16/32, PSD 8/16, AVIF 8/10, JXL 8/16), `metadata: all|allExceptCamera|copyright|none`,
+  `bitDepth` (PNG 8/16, TIFF 8/16/32, PSD 8/16, AVIF 8/10, JXL 8/16; another value is an error:
+  `` `bitDepth` must be 8 or 16 for png ``), `tiffCompression: none|lzw|zip` (default zip), `metadata: all|allExceptCamera|copyright|none`,
   `removeLocation`, `sharpen: screen|matte|glossy`, `ppi`, `watermark: "text"` or `{text, anchor, size, opacity…}`,
   `jxlLossless`, `hdr` (see HDR editing), `hdrTransfer: pq|hlg` (HDR AVIF only; default pq).
 - **Read:** JPEG, PNG, TIFF, WebP, PSD composites, JPEG XL, HEIC, and raws: DNG, CR2, CR3, NEF, ARW, RAF (incl.
@@ -293,16 +309,20 @@ lightcraft-cli run --import /abs/a.jpg develop.auto develop.set control=light.ex
 lightcraft-cli run --library /abs/lib --import /abs/shoot photo.rate rating=5 'ids=[1,2]'   # persists
 lightcraft-cli run --library /abs/lib catalog.query 'filter={"rating":5}'
 lightcraft-cli merge hdr|panorama|hdr-panorama|hdr-batch [--preview OUT.png] FILES…  # hdr-batch: a folder works
+lightcraft-cli run --script steps.jsonl                    # also JSON lines {"command": id, "params": {…}}
 lightcraft-cli snapshot --library /abs/lib -o ui.png --size 1600x1000   # the full app UI, headless, as a PNG
+lightcraft-cli synth-merge hdr|panorama -o /abs/dir         # synthetic brackets (DNG) or pano views (PNG) to test with
 lightcraft-cli commands --json  ·  lightcraft-cli controls --json   # the catalogs
 ```
 
 `run` exits non-zero when a command fails (`--keep-going` continues). Words without `=` start the next command.
+If an `--import` fails, nothing runs: `import failed for 1 item(s): […]; no commands were run`.
+`render --set` refuses non-numbers: `--set light.exposure: `inf` is not a finite number`.
 `render` writes `.jpg .png .tif .webp .avif .jxl .psd .dng` by extension.
 
 ## Pitfalls
 
-- **`query_photos {filter: {minRating: 3}}` (the example in its own description) is silently ignored** and returns
+- **`query_photos {filter: {minRating: 3}}` (the example in its `filter` schema) is silently ignored** and returns
   every photo. Use `{rating: 3, ratingOp: "atLeast"}`. Unknown filter keys never raise an error, so check `total`.
 - **`set_develop`, `crop` and `export` with `id` replace the selection with just that photo.** `render_preview`,
   `render_photo` and `get_develop` with `id` don't change it. Re-`select_photos` before batch commands.
@@ -321,15 +341,18 @@ lightcraft-cli commands --json  ·  lightcraft-cli controls --json   # the catal
   read `results[]` to see which steps ran.
 - **Helper tools refuse unknown keys** with a protocol error (`unknown argument "bogusOpt" for export; expected: …`).
 - **One program per library.** While the MCP server has its library open, `lightcraft-cli run --library` on the same folder
-  fails: `This library is already open in lightcraft-cli 0.9.1 (process N on this computer). Close it there first.`
-  The same happens when the desktop app has it open; use `--connect` then. Use a separate `--library` for CLI work.
+  fails: `This library is already open in lightcraft-cli 0.18.1 (process N). Close it there first.` (followed by a hint to
+  use `--control PORT` and `mcp --connect`). The same happens when the desktop app has it open; use `--connect` then.
+  Use a separate `--library` for CLI work.
 - `kind: "prompt"`/`"object"` masks without the model fail with `The SAM 3 model is not installed. Download it (about
   3.4 GB, SAM License (Meta)) … with `segment.model.download {"acknowledged": true}`…`.
-- AI Denoise has no bundled or downloadable model: `cmd_denoise_toggle` fails with `AI Denoise needs a model: install
-  one in Settings > AI Denoise`. Use `detail.nrLuminance` instead.
+- AI Denoise has no bundled or downloadable model: on a raw `cmd_denoise_toggle` fails with `AI Denoise needs a model: install
+  one in Settings > AI Denoise`; on a JPEG with `AI Denoise applies to raw photos developed from their sensor data`.
+  Use `detail.nrLuminance` instead.
 - **A `.dng` path (or `format: "dng"`) only works for raws:** a JPEG/PNG fails with `b_gradient.jpg: DNG export needs
   a raw photo`, and a raw comes out at full size whatever `longEdge` says. Use `format: "rendereddng"` instead.
-- A merge writes its DNG **next to the source files**, so copy them first if that folder must stay untouched.
+- A merge writes its DNG **next to the source files**, so copy them first if that folder must stay untouched. An existing
+  name isn't overwritten: a second merge of the same brackets gives `bracket-0-HDR-2.dng`.
 - Raws get default sharpening (40) and colour noise reduction (25); JPEGs get none.
 - Paths: use absolute paths. Relative ones resolve against the server's working directory, not yours.
 - Bad ids name the problem: `unknown command `photo.nope``, `unknown preset `nope``, `no such photo 9999`,
@@ -348,7 +371,7 @@ lightcraft-cli commands --json  ·  lightcraft-cli controls --json   # the catal
 
 ## References
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 371 commands with params, grouped by area. Grep it rather than
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 383 commands with params, grouped by area. Grep it rather than
   reading it whole, e.g. `grep -n "mask\." ${HERMES_SKILL_DIR}/references/commands.md`.
 - `${HERMES_SKILL_DIR}/references/controls.md`: all 122 develop slider ids with ranges and defaults, by section. Grep it too.
 - Upstream docs: https://github.com/storytold/lightcraft/tree/main/docs (`mcp.md`, `control-protocol.md`, `ai-masks.md`,

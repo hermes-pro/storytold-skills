@@ -1,6 +1,6 @@
 # DesignCraft command catalog
 
-Generated from `designcraft-cli commands` (DesignCraft 0.9.0, 519 commands). Run any of these with
+Generated from `designcraft-cli commands` (DesignCraft 0.17.1, 547 commands). Run any of these with
 `execute {command, params}` or several with `batch {commands: [...]}`; check one live with `list_commands {filter}`
 or `designcraft-cli describe <id>`. `params` use the engine's shorthand: `?` = optional, `a|b` = choices,
 `→ {...}` = what it returns. Coordinates are spread points (y down); `page` params say whether they are 0- or 1-based.
@@ -8,13 +8,13 @@ Grep this file rather than reading it whole.
 
 ## anchor
 
-- `anchor.create` (Type › Hyperlinks & Cross-References › New Hyperlink Destination…): {name} — a text anchor at the insertion point
+- `anchor.create` (Type › Hyperlinks & Cross-References › New Hyperlink Destination…): {name} — a text anchor at the insertion point; the name is the document's, so it must not be one another anchor already has
 - `anchor.list` (Text Anchors): {} → [{id, name, story, pos, page}]
 
 ## anchored
 
-- `anchored.insert` (Object › Anchored Object › Insert Anchored Object…): {ids, story?, pos? (default: the text insertion point), position?: inline\|aboveLine\|custom, yOffset?, align?: left\|center\|right, spaceBefore?, spaceAfter?, xRelative? \| yRelative?: anchor\|textFrame\|columnEdge\|pageMargin\|pageEdge, xOffset?, objectPoint? \| refPoint?: 0..8, keepWithinColumn?} — moves the items into the text
-- `anchored.options` (Object › Anchored Object › Anchored Object Options…): {story?, index? (default: the object at the insertion point), position?: inline\|aboveLine\|custom, yOffset?, align?: left\|center\|right, spaceBefore?, spaceAfter?, xRelative? \| yRelative?: anchor\|textFrame\|columnEdge\|pageMargin\|pageEdge, xOffset?, objectPoint? \| refPoint?: 0..8, keepWithinColumn?}
+- `anchored.insert` (Object › Anchored Object › Insert Anchored Object…): {ids, story?, pos? (default: the text insertion point), position?: inline\|aboveLine\|custom, yOffset?, align?: left\|center\|right, spaceBefore?, spaceAfter?, xRelative? \| yRelative?: anchor\|textFrame\|columnEdge\|pageMargin\|pageEdge, xOffset?, objectPoint? \| refPoint?: 0..8, keepWithinColumn?, spineRelative? (custom: the settings describe a left-hand page and mirror on a right-hand page)} — moves the items into the text
+- `anchored.options` (Object › Anchored Object › Anchored Object Options…): {story?, index? (default: the object at the insertion point), position?: inline\|aboveLine\|custom, yOffset?, align?: left\|center\|right, spaceBefore?, spaceAfter?, xRelative? \| yRelative?: anchor\|textFrame\|columnEdge\|pageMargin\|pageEdge, xOffset?, objectPoint? \| refPoint?: 0..8, keepWithinColumn?, spineRelative? (custom: the settings describe a left-hand page and mirror on a right-hand page)}
 - `anchored.release` (Object › Anchored Object › Release): {story?, index? (default: the object at the insertion point)} — puts the object back on the page where it is now and removes it from the text
 - `anchored.list` (Anchored Objects): {story?} → [{story, index, pos, position, size}]
 
@@ -104,6 +104,7 @@ Grep this file rather than reading it whole.
 
 ## document
 
+- `document.epubSplit` (EPUB Split Document): {split?: "off"\|"exportTags"\|{style: name}} — EPUB Export Options › Split Document, stored with the document: one content file (off, the default), a file before each paragraph whose style has Export Tagging › Split Document on (exportTags), or before each paragraph of one style → {split}
 - `document.preferences` (Document Preferences): {horizontalUnits?, verticalUnits?: points\|picas\|inches\|millimeters\|…, keyboardIncrement? (pt), kerningIncrement? (1/1000 em: Alt+Left/Right in text), baselineGrid?: {start, increment, relativeTo, color, viewThreshold}, grid?: {horizontal, vertical, subdivisions, color, inBack}, pasteboard?: [h, v], marginColor?, columnColor?, bleedColor?, slugColor?: [r, g, b], advancedType?: {superscriptSize, superscriptPosition, subscriptSize, subscriptPosition} (%), overprintBlack?, glyphFallback? (draw characters the font lacks from fallback fonts; off: as the font's missing-glyph box), rulerOrigin?: spread\|page\|spine (what rulers and X/Y measure from, with the zero point)} → those settings
 - `document.inspect` (Inspect Document): {} → pages, spreads, items, stories (with overset), styles, swatches, selection
 - `document.list` (List Documents): {}
@@ -115,7 +116,7 @@ Grep this file rather than reading it whole.
 - `edit.redo` (Edit › Redo, Cmd+Shift+Z): {}
 - `edit.selectAll` (Edit › Select All, Cmd+A): {} — all items on the active spreads, or all text in the story
 - `edit.deselectAll` (Edit › Deselect All, Cmd+Shift+A): {}
-- `edit.clear` (Edit › Clear, Delete): {ids?} — delete selected items (or the selected text)
+- `edit.clear` (Edit › Clear, Delete): {ids?} — delete selected items (or the selected text, points or ruler guides)
 - `edit.copy` (Edit › Copy, Cmd+C): {} → {text} when text is selected (with formatting, footnotes, markers)
 - `edit.cut` (Edit › Cut, Cmd+X): {}
 - `edit.pasteWithoutFormatting` (Edit › Paste without Formatting, Cmd+Shift+V): {text?} — plain text at the insertion point, in the format there
@@ -145,7 +146,7 @@ Grep this file rather than reading it whole.
 - `file.presets` (Document Presets): {} → the built-in presets [{name, intent, width, height, units}], then the saved ones (with `saved: true`)
 - `file.savePreset` (Save Document Preset): {name, …the settings as file.new} — kept with the preferences; `file.new {preset: name}` uses it. A saved preset of that name is replaced; built-in names are refused
 - `file.deletePreset` (Delete Document Preset): {name} — a saved document preset
-- `file.open` (File › Open…, Cmd+O): {path} — a DesignCraft or IDML file (recognised by its content, so the extension may be missing), or an InDesign .indd/.indt (recognised by its signature or extension, converted to IDML; its conversion warnings join `warnings`); the fonts in a `Document Fonts` folder beside it load first → {index, documentFonts: faces loaded, warnings: font files skipped, GREP styles whose pattern can't compile, Based on Parent links cleared and, for IDML and InDesign files, package parts missing}
+- `file.open` (File › Open…, Cmd+O): {path} — a DesignCraft or IDML file (recognised by its content, so the extension may be missing), or an InDesign .indd/.indt (recognised by its signature or extension, converted to IDML; its conversion warnings join `warnings`); the fonts in a `Document Fonts` folder beside it load first → {index, documentFonts: faces loaded, warnings: font files skipped, GREP styles whose pattern can't compile, Based on Parent links cleared and, for IDML and InDesign files, package parts missing; warningItems (IDML and InDesign files): per warning, the id of the frame it is about, or null}
 - `file.openBytes` (Open Bytes): {name, base64} — DesignCraft JSON, an IDML package or an InDesign .indd/.indt → {index, warnings}
 - `file.openRecent` (Open Recent File): {index} — reopen entry `index` of File › Open Recent (as file.open); a file that is gone is an error and stays listed
 - `file.recentFiles` (Recent Files): {} → [{path, name, exists}] File › Open Recent, most recent first
@@ -161,10 +162,12 @@ Grep this file rather than reading it whole.
 - `file.close` (File › Close, Cmd+W): {index?}
 - `file.activate` (Activate Document): {index}
 - `file.place` (File › Place…, Cmd+D): {path?\|base64?, name?, frame?: id (place into), spread?, x?, y?, width?: finite number > 0 (null: absent), height? (video/audio), pdfPage?: n (1-based, Image Import Options), pdfCrop?: crop\|art\|trim\|bleed\|media\|contentVisible\|contentAll (the box the graphic shows; `width` is the whole page's), loadCursor? (with no frame to fill and no x/y, an image loads into the place cursor, as File › Place), layoutPage?: n (IDML / .designcraft: that page's objects as a group), page?, rect?: [x0,y0,x1,y1] (text: a new frame there), autoflow? (threads one frame per page column from the first frame on, adding pages until the text fits), removeStyles?, styleMap?: {imported name: document style}, styleConflicts?: useExisting\|redefine\|autoRename, link? (keep the file linked in the Links panel; default: the linkTextFiles preference)} — places an image into `frame` when given; otherwise any explicit x/y/spread/width creates a new frame; otherwise uses the selected empty or graphic frame, or creates a new frame; text files (.txt, .docx, .rtf, .md) and Excel workbooks (.xlsx, as a table) go into the insertion point, the selected frame or a new frame on `page`/`rect`
+- `file.info` (File › File Info…): {documentTitle?, author?, description?, keywords?: ["a", "b"] \| "a; b", copyrightNotice?, copyrightInfoUrl?}: each field given replaces the stored one ("" or null clears it) → the file info
+- `file.info.get` (File Info): {} → the file info, without changing the document
 - `file.exportIdml` (Export IDML…): {path?, embedImages?: true} — writes an IDML package to `path`, or returns {base64} without a path
 - `file.openIdml` (Open IDML): {path \| base64, name?} — opens an IDML package, or an InDesign document or template (.indd, .indt: converted to IDML first; its conversion warnings join `warnings`), as a new document (linked images are read next to the file or from its Links/ folder; the fonts in a `Document Fonts` folder beside it load first) → {index, documentFonts, warnings: conversion warnings, package parts missing, font files skipped, GREP styles whose pattern can't compile}
-- `file.exportPdf` (File › Export PDF…): {path?, pages?: "1-3,5" \| [1,3] (1-based positions; default all), flatten?: high\|medium\|low\|ppi (Transparency Flattener: spreads with transparency are rasterised), spreads?: bool, fullScreen?: bool, bookmarksPanel?: bool, pageLayout?: single\|continuous\|twoUp\|twoUpCover\|twoUpContinuous, view?: fitPage\|fitWidth\|actual, advanceSeconds?: number (interactive PDF), bleed?: bool (document bleed), marks?: bool \| {crop?, bleed?, pageInfo?, weight?, offset?}, standard?: "none"\|"x4"\|"a2b", compressImages?: bool, tagged?: bool (structure tree: stories as paragraphs, figures with alt text), media?: bool (interactive: embed placed video and sound), title?, author?} → {path, bytes, pages, warnings} (no path: {base64, …})
-- `file.exportEpub` (File › Export EPUB (Reflowable)…): {path?, title?, author?, language?: "en", identifier?: str (dc:identifier; a stable urn:uuid by default), coverImage?: path (a PNG or JPEG as the cover), tocTitle?: str (the table of contents' title; from the language by default), cover?: bool (the first page as the cover image), embedFonts?: bool (package the stylesheet's fonts whose licence allows it, whole files), fixedLayout?: bool (pre-paginated: each page as an image with its text)} → {path, bytes, warnings} (no path: {base64, bytes, warnings}); warnings name images without alt text, exported as decorative, and fonts that could not be embedded
+- `file.exportPdf` (File › Export PDF…): {path?, pages?: "1-3,5" \| [1,3] (1-based positions: "1" is the first page, which ui.render and app.export take as page 0; default all), flatten?: high\|medium\|low\|ppi (Transparency Flattener: spreads with transparency are rasterised; with standard x1a, the resolution complex transparent regions are rasterized at: high 300, medium 150, low 72, default 300), spreads?: bool, fullScreen?: bool, bookmarksPanel?: bool, pageLayout?: single\|continuous\|twoUp\|twoUpCover\|twoUpContinuous, view?: fitPage\|fitWidth\|actual, advanceSeconds?: number (interactive PDF), bleed?: bool (document bleed), marks?: bool \| {crop?, bleed?, pageInfo?, weight?, offset?}, standard?: "none"\|"x4"\|"x1a"\|"a2b" (x1a: PDF/X-1a:2003, the PDF/X-4 file flattened in its inks by craft-prepress: no transparency, only CMYK, gray and spot color), compressImages?: bool, tagged?: bool (structure tree: stories as paragraphs, figures with alt text), media?: bool (interactive: embed placed video and sound), title?, author?, created?: int (creation date in Unix seconds; default now, for reproducible files)} → {path, bytes, pages, warnings} (no path: {base64, …})
+- `file.exportEpub` (File › Export EPUB (Reflowable)…): {path?, title?, author?, language?: "en", identifier?: str (dc:identifier; a stable urn:uuid by default), coverImage?: path (a PNG or JPEG as the cover), tocTitle?: str (the table of contents' title; from the language by default), cover?: bool (the first page as the cover image), embedFonts?: bool (package the stylesheet's fonts whose licence allows it, whole files), split?: "off"\|"exportTags"\|{style: name} (Split Document for this export, not stored; the document's `document.epubSplit` by default), fixedLayout?: bool (pre-paginated: each page as an image with its text)} → {path, bytes, warnings} (no path: {base64, bytes, warnings}); warnings name images without alt text, exported as decorative, and fonts that could not be embedded
 - `file.exportFixedEpub` (File › Export EPUB (Fixed Layout)…): {path?, title?, author?, language?} — pre-paginated EPUB → {path, bytes} (no path: {base64, bytes})
 - `file.printBooklet` (File › Print Booklet…): {path?, type?: saddleStitch\|twoUpConsecutive, spaceBetween? (pt)} — printer spreads as PDF (pages imposed in booklet order) → {path, bytes, sheets} (no path: {base64, …})
 - `file.exportHtml` (File › Export HTML…): {path?, title?, language?} — one self-contained page (styles inline, images embedded), stories and graphics in reading order → {path, bytes, warnings} (no path: {text, bytes, warnings})
@@ -172,17 +175,17 @@ Grep this file rather than reading it whole.
 - `file.exportText` (File › Export Text…): {path?, format?: "txt"\|"rtf"\|"tagged" (Tagged Text; default from the path, else txt), story?, frame?} — the story being edited or of the selected frame → {path, bytes} (no path: {text, bytes})
 - `file.exportXml` (File › Export XML…): {path?} — the tagged content in reading order → {path, bytes} (no path: {text})
 - `file.importXml` (File › Import XML…): {path \| text} — each element's content goes into the next text frame with that tag (child elements of mapped tags become paragraphs in their style) → {placed, unmatched}
-- `file.package` (File › Package…): {dir: folder to create, idml?: true, pdf?: false, instructions?: text} — the document (its placed files relinked to Links/), Links/, the font files that draw its text in Document Fonts/ (fallback fonts included; unless their licence restricts it), an IDML copy (linking the files in Links/, nothing embedded), an optional PDF and a report → {dir, files, report}
+- `file.package` (File › Package…): {dir: folder to create, idml?: true, pdf?: false\|true\|{…options of file.exportPdf}, instructions?: text} — the document (its placed files relinked to Links/), Links/, the font files that draw its text in Document Fonts/ (fallback fonts included; unless their licence restricts it), an IDML copy (linking the files in Links/, nothing embedded), an optional PDF and a report → {dir, files, report, warnings: PDF export warnings}
 - `file.printers` (Printers): {} → {printers: [names], default}
-- `file.print` (File › Print…, Cmd+P): {printer?, copies?: 1, pages?: "1-3,5", spreads?, marks?, bleed?, dryRun?: bool (export and preview submission without printing)} → {printer, copies, pages, command, bytes}
+- `file.print` (File › Print…, Cmd+P): {printer?, copies?: 1, pages?: "1-3,5", dryRun?: bool (export and preview submission without printing), …the PDF settings of file.exportPdf (the PDF it writes is what prints)} → {printer, copies, pages, command, bytes, warnings}
 
 ## find
 
 - `find.objects` (Find Object): {fill?, stroke?: swatch, strokeWeight?, opacity? (0–1), kind?: text\|graphic\|shape\|line\|group, layer?, label?, select?: bool (default true)} → {ids} — Find/Change › Object, through the document
 - `find.changeObjects` (Change All (Object)): {…the criteria of find.objects, change: {fill?, stroke?, strokeWeight?, opacity?}} → {changed}
-- `find.find` (Edit › Find/Change › Find): {find, grep?: bool, caseSensitive?: bool, wholeWord?: bool, scope?: document\|story\|selection, story?, change?\|first?\|attrs?: ignored (find.change takes them; one request serves all three Find/Change commands)} → matches [{story, start, end, text}]
-- `find.change` (Edit › Find/Change › Change All): {find, change, grep?, caseSensitive?, wholeWord?, scope?, story?, first?: bool (change only the first match), attrs?: {character attributes applied to changed text}} → {count}
-- `find.next` (Edit › Find Next, Cmd+Alt+F): {find, grep?, caseSensitive?, wholeWord?, scope?: document\|story\|selection, story?, change?\|first?\|attrs?: ignored (find.change takes them; one request serves all three Find/Change commands)} — Selection starts at its original beginning; later calls advance within the scope
+- `find.find` (Edit › Find/Change › Find): {find, grep?: bool, caseSensitive?: bool, wholeWord?: bool, scope?: document\|story\|selection, story?, findFormat?: {charStyle?, paraStyle?, chars?: resolved character attributes} (Find Format: only text with it all through; with an empty find, each stretch of text with it), change?\|first?\|found?\|attrs?\|charStyle?\|paraStyle?: ignored (find.change takes them; one request serves all three Find/Change commands)} → matches [{story, start, end, text, cell?: {table, row, col}}] (document scope also searches table cells; start/end then index the cell's text)
+- `find.change` (Edit › Find/Change › Change All): {find, change, grep?, caseSensitive?, wholeWord?, scope?, story?, findFormat?: {charStyle?, paraStyle?, chars?: resolved character attributes} (Find Format: only text with it all through; with an empty find, each stretch of text with it), first?: bool (change only the first match), found?: bool (Change: only the text Find Next found, while it is selected and still a match; it stays selected, and Find Next goes on after it in the same domain), attrs?: {character attributes applied to changed text}, charStyle?: a character style applied to it, paraStyle?: a paragraph style applied to its paragraphs} → {count} — attrs, charStyle and paraStyle are the Change Format: with one and an empty change, the found text stays and is only formatted; with no find, change is literal text
+- `find.next` (Edit › Find Next, Cmd+Alt+F): {find, grep?, caseSensitive?, wholeWord?, scope?: document\|story\|selection, story?, findFormat?: {charStyle?, paraStyle?, chars?: resolved character attributes} (Find Format: only text with it all through; with an empty find, each stretch of text with it), change?\|first?\|found?\|attrs?\|charStyle?\|paraStyle?: ignored (find.change takes them; one request serves all three Find/Change commands)} — Selection starts at its original beginning; later calls advance within the scope
 
 ## flex
 
@@ -194,8 +197,9 @@ Grep this file rather than reading it whole.
 
 ## font
 
-- `font.list` (Fonts in Document): {} → [{family, style, characters, missing, styleMissing, source: bundled\|installed\|document\|added (null when missing), matchStatus: exact\|styleSubstitute\|missing, resolvedFamily, resolvedStyle, replacementFamily, replacementStyle}] (missing first)
+- `font.list` (Fonts in Document): {} → [{family, style, characters, missing, styleMissing, source: bundled\|installed\|document\|added (null when missing), matchStatus: exact\|styleSubstitute\|missing, resolvedFamily, resolvedStyle, replacementFamily, replacementStyle, fsType, restrictedLicence, bitmapOnly, noSubsetting, editable, previewPrint (the OS/2 fsType embedding bits of the face that sets the text and what they mean; null when missing or the face has no OS/2 table)}] (missing first)
 - `font.replace` (Type › Find/Replace Font…): {family, style?, toFamily, toStyle?, redefineStyles?: true} — replaces the font in text and (by default) in paragraph and character styles
+- `font.reload` (Type › Reload Fonts): {} — scans the font folders again and reads again the installed font files changed or removed since they were read, then recomposes the open documents → {cataloged, changed: [path]}
 
 ## footnote
 
@@ -224,11 +228,15 @@ Grep this file rather than reading it whole.
 ## guide
 
 - `guide.liquid` (Convert to Liquid Guide): {spread?, page, index, on?: bool (default true)}
-- `guide.add` (New Guide): {orientation: horizontal\|vertical, position (spread coordinate), spread?, page? (index in the spread; default: the page under `at` or the position), at? (the other coordinate), spreadGuide?: bool, liquid?: bool (a liquid guide, as the Page tool draws from the rulers)} or {orientation: both, point: [x, y], spread?, page?, spreadGuide?: bool, liquid?: bool} → {page, index}; `both` adds a horizontal guide through y and a vertical guide through x as one undo step → {guides: [{page, index}, {page, index}]}
-- `guide.move` (Move Guide): {spread?, page, index, position}
-- `guide.delete` (Delete Guide): {spread?, page, index}
+- `guide.add` (New Guide): {orientation: horizontal\|vertical, position (spread coordinate, at most 1000000 pt either way), spread?, page? (index in the spread; default: the page under `at` or the position), at? (the other coordinate), spreadGuide?: bool, liquid?: bool (a liquid guide, as the Page tool draws from the rulers)} or {orientation: both, point: [x, y], spread?, page?, spreadGuide?: bool, liquid?: bool} → {page, index}; `both` adds a horizontal guide through y and a vertical guide through x as one undo step → {guides: [{page, index}, {page, index}]}. The new guides become the selection; objects are deselected
+- `guide.move` (Move Guide): {spread?, page, index, position (at most 1000000 pt either way)}
+- `guide.moveBy` (Move Guides): {dx?, dy?, guides?: [{spread?, page, index}] (default: the selected guides)} — vertical guides move by dx, horizontal ones by dy, as one undo step
+- `guide.delete` (Delete Guide): {spread?, page, index}, or {} for the selected guides; an address without page or index is an error
 - `guide.deleteAll` (View › Grids & Guides › Delete All Guides on Spread): {spread?}
-- `guide.list` (Guides): {spread?} → [{page, index, orientation, position, spread}]
+- `guide.list` (Guides): {spread?} → [{page, index, orientation, position, spread, selected}]
+- `guide.select` (Select Guide): {spread?, page, index, guides?: [{spread?, page, index}] (several, in place of page and index), add?: bool (keep the guides already selected), toggle?: bool (deselect a selected guide instead: Shift-click)} — selects ruler guides and deselects objects → {selected: n}
+- `guide.selectAll` (Edit › Select All Guides, Cmd+Alt+G): {spread?} — every guide on the spread that is not locked or on a locked or hidden layer → {selected: n}
+- `guide.deselect` (Deselect Guides): {}
 
 ## hyperlink
 
@@ -255,6 +263,7 @@ Grep this file rather than reading it whole.
 
 - `ink.list` (Ink Manager): {} → {allToProcess, inks: [{name, process: bool (printed as process), alias?}]} — the spot inks
 - `ink.options` (Ink Manager): {allToProcess?: bool, ink?: spot swatch, toProcess?: bool, alias?: spot swatch \| null} — output: spots to process, ink aliases
+- `ink.separations` (Separations Preview): {page?: 1-based page position (default 1; its spread is separated), dpi?: 9–300 (default 72), inkLimit?: percent, standard?: none\|x4\|a2b, compressImages?: bool, flatten?: high\|medium\|low\|ppi (as file.exportPdf)} — the spread exported as Export PDF prints it and separated → {spread, dpi, width, height, conversion, inks: [{name, spot, max, mean, area} (percent)], unseparated: [spot names past 32], maxTotal, maxTotalAt?: [x, y] (pt, spread), overLimit?: {limit, pixels, regions: [{x, y, width, height}] (pt, spread)}, warnings}
 
 ## layer
 
@@ -271,20 +280,24 @@ Grep this file rather than reading it whole.
 ## layout
 
 - `layout.createAlternate` (Layout › Create Alternate Layout…): {name, width, height, rule?: page rule for the copies (default: keep each page's)} — every page copied after the last at the new size (a new section marked `name`), objects following the liquid rules
-- `layout.pages.insert` (Layout › Pages › Insert Pages…, Cmd+Shift+P): {count?: 1, after?: page index (default: last), parent?: id\|"A-Parent"\|"A"\|null}
+- `layout.pages.insert` (Layout › Pages › Insert Pages…, Cmd+Shift+P): {count?: 1 (1 to 9999), after?: 0-based page index (default: the last page; past it: at the end), before?: 0-based page index (instead of `after`; 0: at the start), parent?: id\|"A-Parent"\|"A"\|null}
 - `layout.rotateSpreadView` (Rotate Spread): {spread?: index (0), angle: 90 (clockwise) \| -90 \| 180 \| 0 (clear)} — turn one spread on screen (output is unaffected)
 - `layout.pages.delete` (Layout › Pages › Delete Pages): {pages: [index]}
 - `layout.pages.move` (Layout › Pages › Move Pages…): {from, to}
 - `layout.pages.duplicateSpread` (Layout › Pages › Duplicate Spread): {spread, atEnd?: bool (Duplicate Spread at End of Document; the Pages panel's New Page button takes a dropped page there), to?: page index the copied pages move to in the same undo step (the Pages panel's Alt-drag)} → {page: the copy's first page (0-based)} — the spread's pages (size, margins, columns, guides, liquid rule) and items
 - `layout.pages.applyParent` (Layout › Pages › Apply Parent to Pages…): {pages: [index], parent: id\|"A-Parent"\|"A"\|null (null or "[None]" clears)}
 - `layout.parents.new` (Layout › Pages › New Parent…): {prefix?, name?: "Parent"}
+- `layout.parents.delete` (Delete Parent): {id: parent spread id} — unapply the parent and keep local overrides as ordinary items
 - `layout.parents.edit` (Edit Parents): {on?: bool, parent?: id\|"A-Parent"\|"A"} — show parent spreads on the canvas; `parent` shows that parent (and implies on). Turning on without `parent` shows the first parent
 - `layout.parents.options` (Parent Options…): {parent: id\|"B-Parent"\|"B", basedOn: id\|"A-Parent"\|"A"\|null (= [None])} — the parent shows its base's items under its own, and so do the pages that use it → {parent, basedOn}
 - `layout.marginsAndColumns` (Layout › Margins and Columns…): {pages?: [index] (default all), margins?: number\|{top,bottom,inside,outside}, columns?, gutter?, adjustLayout?: bool (objects follow the margins), parent? (a parent's prefix, label or index)} — document pages take these as their own margins; with `parent` the parent's pages change instead (`pages` then indexes them), and so do the document pages without their own
+- `layout.moveColumnGuide` (Move Column Guide): {spread?, parent? (a parent's prefix, label or index: its spread instead of `spread`), page (index in the spread), gutter (0 = between the first two columns), position (the gutter's new left edge, spread x)} → {positions (each column's left and right edge from the margin box's left edge), left (where the gutter's left edge went, spread x)} — both guides of the gutter move, keeping its width, and stop at the neighbouring guides and the margins; a document page takes the result as its own columns, a parent page passes it to the pages that follow it; refused while column guides are locked
 - `layout.documentSetup` (File › Document Setup…, Cmd+Alt+P): {width?, height?, pages?: count, startPage?: n, facingPages?, binding?: leftToRight\|rightToLeft, intent?: print\|web\|mobile, margins?: n \| {top, bottom, inside, outside} (every page and parent page), bleed?, slug?: n \| [top, bottom, inside, outside], adjustLayout?: bool (objects follow the new page size and margins)} → the document setup (margins: the first page's)
 - `layout.pages.toSpread` (Layout › Pages › Add Page to Spread): {page (1-based), spread (0-based)} — the page joins that spread (up to 10 pages; the spread stops shuffling)
 - `layout.spreadShuffle` (Layout › Pages › Allow Selected Spread to Shuffle): {spread (0-based), allow: bool} — off keeps the spread's pages together when pages are added or removed
 - `layout.pageSize` (Page Size): {pages: [1-based page numbers], width?, height?, preset?: "A4"\|"Letter"\|…, anchor?: 0–8 (reference point that stays put, row-major from the top-left; default 0)} — pages of their own size (Page tool); objects keep their place relative to the anchor, or follow the page's liquid rule
+- `layout.parentPageSize` (Parent Page Size): {parent: spread id, page: 0-based parent page index, width?, height?, anchor?: 0–8} — resize only this parent page, keeping document page sizes independent
+- `layout.selectParentPage` (Select Parent Page): {parent: spread id\|null, page?: 0-based parent page index} — select a parent page with the Page tool; null clears the selection
 - `layout.pageOptions` (Page Options): {pages: [1-based], showParentOverlay?: bool} — Page tool options (Show Parent Page Overlay: the parent page's size drawn over the page)
 - `layout.selectPage` (Select Page): {page: 1-based \| null, ids?: [item ids] (objects selected with it: the Page tool on an object-based page)} — the page the Page tool selects (its handles, the Control panel)
 - `layout.section` (Layout › Numbering & Section Options…): {page (1-based; starts a section there), startNumber?: n (1–99999)\|null (continue), style?: arabic\|upperRoman\|lowerRoman\|upperLetters\|lowerLetters\|arabicLeadingZero\|arabicThreeDigits\|arabicFourDigits\|kanji, prefix? (up to 8 characters; no + or comma), includePrefix?, marker?, remove?: bool}
@@ -327,6 +340,8 @@ Grep this file rather than reading it whole.
 
 ## list
 
+- `list.bullets` (Type › Bulleted & Numbered Lists › Apply Bullets): {on?: bool (default: off when every selected paragraph has bullets, else on)} — the Bulleted List button: paragraphs with no indents get the default hanging indent (left 18 pt, first line −18 pt); taking bullets off removes that indent if it is still as applied
+- `list.numbers` (Type › Bulleted & Numbered Lists › Apply Numbers): {on?: bool (default: off when every selected paragraph is numbered, else on)} — the Numbered List button, as list.bullets
 - `list.define` (Type › Bulleted & Numbered Lists › Define Lists…): {name, continueAcrossStories?: true, rename?} — paragraphs join it with type.para {listType: numbers, listName}
 - `list.delete` (Delete List): {name}
 
@@ -343,10 +358,14 @@ Grep this file rather than reading it whole.
 ## note
 
 - `note.new` (Type › Notes › New Note): {text, author?} — at the insertion point → {story, id}
+- `note.convertFromText` (Type › Notes › Convert to Note): {author?} → {story, id}. The selected text moves into a new note anchored where it was.
 - `note.edit` (Edit Note): {story, id, text?, author?}
 - `note.delete` (Type › Notes › Delete Note): {story, id}
 - `note.convertToText` (Type › Notes › Convert Note to Text): {story, id} — the note's text replaces its anchor
+- `note.split` (Type › Notes › Split Note): {story, id, at} → {story, id}. The note's text from byte `at` on moves into a new note anchored right after it.
 - `note.list` (Notes): {} → [{story, id, at, author, text}] in story order
+- `note.previous` (Type › Notes › Previous Note): {} → {story, id, pos}. The caret moves after the anchor of the story's previous note.
+- `note.next` (Type › Notes › Next Note): {} → {story, id, pos}. The caret moves after the anchor of the story's next note.
 
 ## object
 
@@ -366,26 +385,27 @@ Grep this file rather than reading it whole.
 - `object.fill` (Fill): {swatch? (a swatch's name, e.g. [Paper]), tint?: 0..1, ids?} — at least one; a tint alone keeps each object's own swatch (the Swatches panel's Tint field). With nothing selected: the fill of new shapes
 - `object.swapFillStroke` (Swap Fill and Stroke): {ids?} — each object's fill and stroke colours (and tints) trade places; locked objects stay as they are. With nothing selected: those of new shapes
 - `object.defaultFillStroke` (Default Fill and Stroke): {ids?} — no fill and a black stroke; locked objects stay as they are. With nothing selected: for new shapes
-- `object.stroke` (Stroke): {swatch?, tint?, weight?, align?: center\|inside\|outside, type?: {kind:…}, cap?: butt\|round\|projecting, join?: miter\|round\|bevel, miterLimit?, start?, end?: none\|simple\|simpleWide\|triangle\|triangleWide\|barbed\|curved\|circle\|circleSolid\|square\|squareSolid\|bar, gapSwatch?, gapTint?, gapOverprint?: bool, ids?}
+- `object.stroke` (Stroke): {swatch?, tint?, weight?, align?: center\|inside\|outside, type?: {kind: solid\|dashed\|dotted\|thickThin\|thinThick\|thinThin\|thickThick\|thinThickThin\|thickThinThick\|wavy\|hashed\|stripes\|style, pattern?: [dash, gap, …] (dashed: required, points), bands?: [[start, width], …] (stripes: required, fractions of stroke weight), name?: string (style: required, document stroke style name)} (other kinds take no extra fields; unknown type fields are errors), cap?: butt\|round\|projecting, join?: miter\|round\|bevel, miterLimit?, start?, end?: none\|simple\|simpleWide\|triangle\|triangleWide\|barbed\|curved\|circle\|circleSolid\|square\|squareSolid\|bar, gapSwatch?, gapTint?, gapOverprint?: bool, ids?}
 - `object.opacity` (Opacity): {opacity: 0..1, blend?: normal\|multiply\|…, ids?}
-- `object.dropShadow` (Object › Effects › Drop Shadow, Cmd+Alt+M): {on?: bool, distance?, angle?, globalLight?: bool, opacity?, size?, spread? (%), color? (swatch), ids?}
-- `object.innerShadow` (Object › Effects › Inner Shadow): {on?: bool, distance?, angle?, globalLight?: bool, opacity?, size?, choke? (%), color?, ids?}
-- `object.outerGlow` (Object › Effects › Outer Glow): {on?: bool, opacity?, size?, spread? (%), color?, ids?}
+- `object.dropShadow` (Object › Effects › Drop Shadow, Cmd+Alt+M): {on?: bool, distance?, angle?, globalLight?: bool, opacity?, size?, spread? (%), color? (swatch), mode?: blend mode (multiply…), ids?}
+- `object.innerShadow` (Object › Effects › Inner Shadow): {on?: bool, distance?, angle?, globalLight?: bool, opacity?, size?, choke? (%), color?, mode?: blend mode, ids?}
+- `object.outerGlow` (Object › Effects › Outer Glow): {on?: bool, opacity?, size?, spread? (%), color?, mode?: blend mode (screen…), ids?}
 - `object.exportOptions` (Object › Object Export Options…): {ids?, artifact?: bool (tagged PDF decoration), rasterize?: bool (EPUB/HTML image), align?: left\|center\|right\|"", pageBreakBefore?: bool, altText?}
 - `object.innerGlow` (Object › Effects › Inner Glow): {on?: bool, opacity?, size?, choke? (%), center?: bool (glow from the centre), color?, ids?}
 - `object.bevel` (Object › Effects › Bevel and Emboss): {on?: bool, size?, depth? (%), angle?, globalLight?: bool, highlight?, highlightOpacity?, shadow?, shadowOpacity?, ids?}
 - `object.satin` (Object › Effects › Satin): {on?: bool, opacity?, angle?, distance?, size?, invert?: bool, color?, ids?}
 - `object.directionalFeather` (Object › Effects › Directional Feather): {on?: bool, widths?: [top, left, bottom, right] \| number, ids?}
-- `object.effects` (Effects): {effects?: {dropShadow?: {on?, color?, opacity?, angle?, globalLight?, distance?, size?, spread?}, innerShadow?, outerGlow?, innerGlow? {on?, color?, opacity?, size?, choke?, center?, mode? (blend mode: Screen, Multiply, …; Screen by default), technique?: softer\|precise}, bevel?, satin?, feather? (width), featherOptions? {choke? (%), corners?: sharp\|rounded\|diffused}, directionalFeather?, gradientFeather?} (the fields given replace the object's, as the Effects dialog sets them), opacity?: 0..1, blend?, ids?} — every effect at once, one undo step
+- `object.effects` (Effects): {effects?: {dropShadow?: {on?, color?, opacity?, angle?, globalLight?, distance?, size?, spread?}, innerShadow?, outerGlow?, innerGlow? {on?, color?, opacity?, size?, choke?, center?, mode? (blend mode: Screen, Multiply, …; Screen by default), technique?: softer\|precise}, bevel?, satin?, feather? (width), featherOptions? {choke? (%), corners?: sharp\|rounded\|diffused}, directionalFeather?, gradientFeather?} (the fields given replace the object's, as the Effects dialog sets them), opacity?: 0..1, blend?, globalLight? (the document's global light angle, as an Angle field with Use Global Light sets it), ids?} — every effect at once, one undo step
 - `object.feather` (Object › Effects › Basic Feather): {width (0 = off), ids?}
 - `object.content` (Object › Content › Content): {type: graphic\|text\|unassigned, ids?}
-- `object.textFrameOptions` (Object › Text Frame Options…, Cmd+B): {columns?, gutter?, inset?: number\|[t,l,b,r] (null keeps that side), verticalJustification?: top\|center\|bottom\|justify, columnsKind?: fixedNumber\|fixedWidth, columnWidth? (pt, Fixed Width), firstBaseline?: ascent\|capHeight\|leading\|xHeight\|emboxHeight\|fixed, firstBaselineMin? (pt), autoSize?: off\|heightOnly\|widthOnly\|heightAndWidth\|heightAndWidthProportionally, autoSizeReference?: topLeft\|topCenter\|topRight\|leftCenter\|center\|rightCenter\|bottomLeft\|bottomCenter\|bottomRight (the point that stays put), useMinimumHeight?: bool, minimumHeight? (pt), useMinimumWidth?: bool, minimumWidth? (pt), noLineBreaks?: bool, ignoreWrap?, balanceColumns?, columnRule?: bool, columnRuleWeight? (pt), columnRuleColor? (swatch name), columnRuleTint? (0..1), columnRuleOffset? (pt, horizontal), columnRuleTopInset? (pt), columnRuleBottomInset? (pt), vertical?: bool (sets the story direction of the frames' stories, as Type ▸ Story Direction), ids?}
-- `object.cornerOptions` (Object › Corner Options…): {shape: none\|rounded\|inverseRounded\|inset\|bevel\|fancy, size, corners?: [{shape, size}] (4 entries in path order: top-left, top-right, bottom-right, bottom-left; replaces shape and size), ids?}
-- `object.textWrap` (Window › Text Wrap, Cmd+Alt+W): {mode?: none\|boundingBox\|contour\|jumpObject\|jumpToNextColumn (boundingBox when absent, unless side or contour is given: then unchanged), offset?: number\|[t,l,b,r], invert?: bool, side?: bothSides\|leftSide\|rightSide\|towardsSpine\|awayFromSpine\|largestArea, contour?: boundingBox\|graphicFrame\|sameAsClipping, content?: bool (the placed graphic instead of its frame; default: whether the selection is the frame's content), ids?}; offset or contour drops an imported custom wrap boundary
+- `object.textFrameOptions` (Object › Text Frame Options…, Cmd+B): {columns?, gutter?, inset?: number\|[t,l,b,r] (null keeps that side), verticalJustification?: top\|center\|bottom\|justify, paragraphSpacingLimit? (pt: Justify adds at most this between paragraphs, the rest between lines), columnsKind?: fixedNumber\|fixedWidth, columnWidth? (pt, Fixed Width), firstBaseline?: ascent\|capHeight\|leading\|xHeight\|emboxHeight\|fixed, firstBaselineMin? (pt), autoSize?: off\|heightOnly\|widthOnly\|heightAndWidth\|heightAndWidthProportionally, autoSizeReference?: topLeft\|topCenter\|topRight\|leftCenter\|center\|rightCenter\|bottomLeft\|bottomCenter\|bottomRight (the point that stays put), useMinimumHeight?: bool, minimumHeight? (pt), useMinimumWidth?: bool, minimumWidth? (pt), noLineBreaks?: bool, ignoreWrap?, balanceColumns?, columnRule?: bool, columnRuleWeight? (pt), columnRuleColor? (swatch name), columnRuleTint? (0..1), columnRuleOffset? (pt, horizontal), columnRuleTopInset? (pt), columnRuleBottomInset? (pt), baselineGrid?: {start? (pt), increment? (pt), relativeTo?: page\|margin\|frame\|inset} (the frame's custom baseline grid; fields not given keep the frame's, or come from the document grid; null turns it off), vertical?: bool (sets the story direction of the frames' stories, as Type ▸ Story Direction), ids?}
+- `object.cornerOptions` (Object › Corner Options…): {shape: none\|rounded\|inverseRounded\|inset\|bevel\|fancy, size, corners?: [{shape, size} \| null] (4 entries in path order: top-left, top-right, bottom-right, bottom-left; replaces shape and size; null keeps that corner of each object), ids?}
+- `object.textWrap` (Window › Text Wrap, Cmd+Alt+W): {mode?: none\|boundingBox\|contour\|jumpObject\|jumpToNextColumn (boundingBox when absent, unless side or contour is given; null or those: each object's own, unchanged), offset?: number\|[t,l,b,r] (a null side keeps each object's own), invert?: bool, side?: bothSides\|leftSide\|rightSide\|towardsSpine\|awayFromSpine\|largestArea, contour?: boundingBox\|graphicFrame\|sameAsClipping, content?: bool (the placed graphic instead of its frame; default: whether the selection is the frame's content), ids?}; offset or contour drops an imported custom wrap boundary
 - `object.fit` (Object › Fitting › Fitting): {mode: fillProportionally (preserves aspect ratio, covers frame, clips overflow)\|fitProportionally (preserves aspect ratio, shows whole image, may leave empty space)\|fitContentToFrame (stretches content to frame)\|centerContent (keeps current size, positions at fitting alignment)\|fitFrameToContent (resizes frame to content), axis?: both\|height\|width (frame-local sides Fit Frame to Content moves; default both), ids?} — locked objects and objects on locked layers are left as they are
 - `object.fittingOptions` (Object › Fitting › Frame Fitting Options…): {autoFit?: bool, fitting?: none\|fillProportionally\|fitProportionally\|fitContentToFrame\|centerContent, align?: 0..8 (reference point, 4 = centre), crop?: n \| [t, l, b, r] (negative adds space), ids?}
+- `object.clearFittingOptions` (Object › Fitting › Clear Frame Fitting Options): {ids?} — the frames' fitting options back to the defaults: no auto-fit, no crop amounts, the centre reference point; the content stays where it is
 - `object.rename` (Rename): {id \| ids?, name}
-- `object.align` (Window › Object & Layout › Align › Align): {edge: left\|hcenter\|right\|top\|vcenter\|bottom, to?: selection\|keyObject\|margins\|page\|spread, ids?}
+- `object.align` (Window › Object & Layout › Align › Align): {edge: left\|hcenter\|right\|top\|vcenter\|bottom, to?: selection\|keyObject\|margins\|page\|spread (default: keyObject while a key object is set), ids?}
 - `object.distribute` (Window › Object & Layout › Align › Distribute): {axis: horizontal\|vertical, by?: centers\|spacing, spacing?: points, ids?}
 - `object.clippingPath` (Object › Clipping Path › Clipping Path…): {type?: alpha\|edges (default alpha), threshold?: 0–255 (alpha: opaque above; edges: darker than 255 − threshold counts; default 25), tolerance?: px (2), ids?} — traces the placed graphic and makes the outline the frame (Convert Clipping Path to Frame)
 - `object.clippingPathOptions` (Object › Clipping Path › Clipping Path Options…): {type?: none, invert?: bool, includeInsideEdges?: bool, ids?} — without type, invert or includeInsideEdges, reports each selected graphic's clipping path ({items: [{id, type: none\|detectEdges\|alphaChannel\|photoshopPath\|userModifiedPath, anchors, invert, includeInsideEdges, threshold, tolerance, inset, sourceName}]}); type none removes it, invert shows the graphic outside it instead of inside
@@ -404,10 +424,10 @@ Grep this file rather than reading it whole.
 - `object.gradientFeather` (Object › Effects › Gradient Feather): {on?: true, radial?, angle?, start?: opacity 0–100 (100), end?: (0), from?: [x,y], to?: [x,y] (spread coords: the Gradient Feather tool's drag), ids?}
 - `object.caption` (Object › Captions › Generate Static Caption): {text?: template (default "{name}"; variables {name} {path} {altText} {label} {ppi} {dimensions} {format}), position?: below\|above\|left\|right, offset? (pt, 0), height? (pt, 24), style?: paragraph style, live?: bool (kept current as the source changes), ids?} → {ids}
 - `object.pdfLayers` (Object Layers): {id?} → [{name, visible, default}] — the layers of the selected placed PDF
-- `object.layerOptions` (Object › Object Layer Options…): {ids?, hidden: [layer name]} — layers of placed PDFs to hide ([] = the file's own settings)
+- `object.layerOptions` (Object › Object Layer Options…): {ids?, hidden: [layer name], useDefaults?: bool} — hide layers; useDefaults:false makes [] explicitly all on; legacy [] restores file defaults
 - `object.qrCode` (Object › Generate QR Code…): {type?: url\|text\|sms\|email\|vcard (default url), content (url/text), number?, message?, to?, subject?, body?, name?, phone?, email?, org?, url?, color? (swatch, [Black]), rect? (new object; else into the selected frame, or re-encode a selected code), spread?} → {id, content}
 - `object.convertShape` (Object › Convert Shape › Convert Shape): {to: rectangle\|roundedRectangle\|beveledRectangle\|inverseRoundedRectangle\|ellipse\|triangle\|polygon\|line\|orthogonalLine\|openPath\|closedPath, ids?}
-- `object.gradient` (Gradient): {kind?: linear\|radial, stops?: [{location: 0–100, color: "#rrggbb"\|{c,m,y,k}(0..100)\|[r,g,b](0..255)\|{model: rgb\|cmyk\|gray, …}(0..1) \| swatch: name (its colour, as dropped on the Gradient panel), opacity?: 0–100, midpoint?: 13–87}], reverse?: bool, angle?: degrees, from?: [x,y], to?: [x,y] (spread coords: the Gradient Swatch tool's drag), target?: fill\|stroke, ids?} → {swatch, kind, stops} — edits the fill's (or the stroke's) gradient (an unnamed gradient unless it equals a gradient swatch)
+- `object.gradient` (Gradient): {kind?: linear\|radial, stops?: [{location: 0–100, color: "#rrggbb"\|{c,m,y,k}(0..100)\|[r,g,b](0..255)\|{model: rgb\|cmyk\|gray, …}(0..1) \| swatch: a color swatch's name (as dropped on the Gradient panel: its color on screen, its inks in print), opacity?: 0–100, midpoint?: 13–87}], reverse?: bool, angle?: degrees, from?: [x,y], to?: [x,y] (spread coords: the Gradient Swatch tool's drag), target?: fill\|stroke, ids?} → {swatch, kind, stops: [{location, color, swatch?, opacity, midpoint}]} — edits the fill's (or the stroke's) gradient (an unnamed gradient unless it equals a gradient swatch)
 - `object.color` (Apply Color): {color: "#rrggbb"\|{c,m,y,k}(0..100)\|[r,g,b](0..255)\|{model: rgb\|cmyk\|gray, r,g,b\|c,m,y,k\|k}(0..1), target?: fill\|stroke, text?: bool, ids?} — an unnamed colour (not in the Swatches panel until Add to Swatches) on the selection (with nothing selected, the colour of new shapes); `text`: on the selected text, or the text of the selected frames (Formatting Affects Text)
 
 ## page
@@ -422,13 +442,14 @@ Grep this file rather than reading it whole.
 - `path.setAnchor` (Set Anchor): {id, subpath?: index (default the last), anchor: index\|"first"\|"last", p?, in?, out? (spread coords)} — moves an anchor or its direction lines; with both lines given and collinear it becomes smooth
 - `path.reverse` (Object › Paths › Reverse Path): {ids?, subpath?: index (only that subpath of the first target)} — the anchors run the other way (the end point becomes the start)
 - `path.close` (Object › Paths › Close Path): {id, subpath?: index (default every subpath)}
-- `path.moveAnchors` (Move Anchors): {id, anchors: [[subpath, index]], dx, dy, handle?: in\|out}
+- `path.moveAnchors` (Move Anchors): {id, anchors: [[subpath, index]], dx, dy, handle?: in\|out} \| {points: [[id, subpath, index, dx?, dy?]], dx?, dy?} (anchors of several paths, as Direct Selection drags them: one step; a point's own dx, dy win over the shared ones) — spread space
 - `path.addAnchor` (Add Anchor Point): {id, at: [x,y] (spread coords; the nearest point on the path), tolerance?: pt (default 4)} → {subpath, anchor}
 - `path.deleteAnchor` (Delete Anchor Point): {id, subpath, anchor} — removes the point (and the object when no path is left)
 - `path.convertAnchor` (Convert Direction Point): {id, subpath, anchor, to?: [x,y] (spread coords: drag out symmetric handles to there), corner?: bool} — without `to`, a smooth point becomes a corner and a corner gets smooth handles
 - `path.erase` (Erase): {id, points: [[x,y], …] (spread coords: the Erase tool's drag), tolerance?: pt (default 4)} — removes the stretch of path the drag ran along
 - `path.smooth` (Smooth): {id, points: [[x,y], …] (spread coords), tolerance?: pt (default 4)} — re-fits the stretch the drag ran along with fewer, smoother anchors
 - `path.join` (Object › Paths › Join): {ids?} — one open path: closes it; two open paths: joins them where their ends are nearest (coincident ends become one point) into the first, and removes the second → {id}
+- `path.deletePoints` (Delete Points): {points?: [[id, subpath, index]]} — the Direct Selection tool's selected points by default, in one undo step (Properties › Quick Actions › Delete Point(s)); a subpath left with one point goes, and an object with none is removed → {deleted, removed: [id]}
 - `path.convertPoints` (Convert Point): {kind: plain\|corner\|smooth\|symmetrical, ids?} — the Direct Selection tool's selected points, or every point of the selected paths: plain (no direction handles), corner (independent handles), smooth (collinear handles), symmetrical (collinear, equal length) → {converted}
 - `path.split` (Split Path): {id, at: [x,y] (spread coords; the nearest point on the path)} — Scissors: an open path becomes two, a closed one opens there → {ids}
 
@@ -444,7 +465,7 @@ Grep this file rather than reading it whole.
 
 ## prefs
 
-- `prefs.set` (Preferences): {showHiddenCharacters?, typographersQuotes?, polygonSides?, starInset?, scaleStrokes?, dimensionsIncludeStroke?, transformationsAreTotals?, absolutePageNumbers?, highlightHj?, highlightKeeps?, highlightCustomTracking?, highlightSubstitutedFonts?, richBlackOutput?, favoriteFonts?: [family], recentFonts?: [family], showFontNamesInEnglish?, smartTextReflow?, autocorrect?, autocorrectList?: [[word, correction]], showAddedText?, showNoteAnchors?, cjkFeatures?: bool\|null (CJK-only menu items and dialogs shown; null follows the interface language), linkTextFiles? (Create Links When Placing Text Files), recoveryMinutes?, recentFilesMax?: 0–100} → all application preferences
+- `prefs.set` (Preferences): {showHiddenCharacters?, typographersQuotes?, polygonSides?, starInset?, scaleStrokes?, dimensionsIncludeStroke?, transformationsAreTotals?, absolutePageNumbers?, highlightHj?, highlightKeeps?, highlightCustomTracking?, highlightSubstitutedFonts?, richBlackOutput?, favoriteFonts?: [family], recentFonts?: [family], showFontNamesInEnglish?, smartTextReflow?, autocorrect?, autocorrectList?: [[word, correction]], showAddedText?, showNoteAnchors?, cjkFeatures?: bool\|null (CJK-only menu items and dialogs shown; null follows the interface language), linkTextFiles? (Create Links When Placing Text Files), recoveryMinutes?, recentFilesMax?: 0–100, defaultUnits?: {horizontalUnits?, verticalUnits?, rulerOrigin?, keyboardIncrement? (pt), kerningIncrement? (1/1000 em)} (Units & Increments of new documents)} → all application preferences
 
 ## script
 
@@ -463,8 +484,9 @@ Grep this file rather than reading it whole.
 
 ## selection
 
-- `selection.set` (Select): {ids: [id], add?: bool, content?: bool}
+- `selection.set` (Select): {ids: [id], add?: bool, content?: bool, anchors?: [[id, subpath, index]] (Direct Selection: the selected anchor points; their paths are selected too)}
 - `selection.toggle` (Toggle Selection): {id}
+- `selection.key` (Key Object): {id} — make a selected item the key object for Align; the current key object drops the key
 
 ## snippet
 
@@ -494,9 +516,10 @@ Grep this file rather than reading it whole.
 - `story.updateLink` (Update Link): {story? (default: every out-of-date linked story)} — the child takes the parent's current content (its own edits are replaced)
 - `story.unlink` (Unlink): {story}
 - `story.setDirection` (Type › Story Column Direction › Story Column Direction): {story?, frame?: a text frame of the story, direction: leftToRight\|rightToLeft} — column progression, independent of paragraph direction
+- `story.options` (Story Options): {story?, frame?: a text frame of the story (default: the stories of the text selection or the selected frames), opticalMargin?: bool — Optical Margin Alignment: punctuation and letter edges hang outside the frame in every paragraph of the story except those with ignoreOpticalMargin, opticalMarginSize?: pt (0.1–1296, default 12) — the type size the hang amounts are set for} → {stories}
 - `story.setText` (Set Story Text): {story, text} — replace a story's whole text
 - `story.replaceRange` (Edit Story): {story, start, end, text} — replace a byte range keeping surrounding formatting
-- `story.get` (Get Story): {story? \| frame?} → text, frames, paragraphs, vertical, overset
+- `story.get` (Get Story): {story? \| frame?} → text, frames, paragraphs, vertical, lines, overset (the UTF-8 byte offset into `text` where it stops fitting its frames, not a character index, null when it all fits) and oversetChars (how many characters that leaves, as preflight reports them)
 
 ## strokeStyle
 
@@ -509,13 +532,13 @@ Grep this file rather than reading it whole.
 - `style.breakLink` (Break Link to Style): {kind: paragraph\|character} — the selected text keeps its look as local formatting, with [No Paragraph Style] / [None]
 - `style.compositeFont.list` (List Composite Fonts): {} → composite font definitions
 - `style.compositeFont.set` (Set Composite Font): {name, entries: [{name?, characters?, family, style?, relativeSize?, horizontalScale?, verticalScale?, baselineShift?, scaleOption?}]} — replaces a composite font definition; empty characters selects the base entry
-- `style.exportTag` (Export Tagging): {style, character?: bool, tag?: p\|h1…h6\|blockquote\|pre\|li\|… (span\|em\|strong\|code\|sup\|sub… for characters; "" = automatic), class?} → the tagging
+- `style.exportTag` (Export Tagging): {style, character?: bool, tag?: p\|h1…h6\|blockquote\|pre\|li\|… (span\|em\|strong\|code\|sup\|sub… for characters; "" = automatic), class?, split?: bool (paragraphs: Split Document, EPUB only)} → the tagging
 - `style.paragraph.apply` (Apply Paragraph Style): {name, clearOverrides?: bool}
 - `style.character.apply` (Apply Character Style): {name}
 - `style.paragraph.redefine` (Redefine Paragraph Style): {name?} — incorporate the first selected paragraph/character's local formatting into its paragraph style; retain character styles; one undo step
 - `style.character.redefine` (Redefine Character Style): {name?} — incorporate the first selected character's local formatting into its character style without capturing paragraph attributes; one undo step
-- `style.paragraph.create` (New Paragraph Style…): {name, basedOn?, nextStyle?, para?: {paragraph attributes, as type.para names them: align, leftIndent, firstLineIndent, spaceBefore, spaceAfter, …; startAt?: null = continue numbering; grepStyles?: [{style, pattern}]: a pattern that can't compile is an error}, chars?: {character attributes, as type.char names them: fontFamily, fontStyle, size, leading, tracking, fill, …}, fromSelection?: bool}
-- `style.paragraph.edit` (Paragraph Style Options…): {name, rename?, basedOn?, nextStyle?, para?: {paragraph attributes, as type.para names them: align, leftIndent, spaceBefore, …; ruleAbove?/ruleBelow?: only the named rule fields change; startAt?: null = continue numbering; kinsoku?: set \| null (default rules); a grepStyles pattern that can't compile is an error}, chars?: {character attributes, as type.char names them: fontFamily, fontStyle, size, leading, tracking, fill, …}}
+- `style.paragraph.create` (New Paragraph Style…): {name, basedOn?, nextStyle?, para?: {paragraph attributes, as type.para names them: align, leftIndent, firstLineIndent, spaceBefore, spaceAfter, ignoreOpticalMargin, …; startAt?: null = continue numbering; grepStyles?: [{style, pattern}]: a pattern that can't compile is an error}, chars?: {character attributes, as type.char names them: fontFamily, fontStyle, size, leading, tracking, fill, …}, fromSelection?: bool}
+- `style.paragraph.edit` (Paragraph Style Options…): {name, rename?, basedOn?, nextStyle?: style \| null ([Same style]), resetToBase?: bool (Reset To Base: the style sets nothing of its own; `para`/`chars` then apply over its Based On), para?: {paragraph attributes, as type.para names them: align, leftIndent, spaceBefore, ignoreOpticalMargin, …; ruleAbove?/ruleBelow?: only the named rule fields change; startAt?: null = continue numbering; kinsoku?: set \| null (default rules); a grepStyles pattern that can't compile is an error}, chars?: {character attributes, as type.char names them: fontFamily, fontStyle, size, leading, tracking, fill, …}}
 - `style.paragraph.delete` (Delete Paragraph Style): {name, replaceWith?}
 - `style.character.create` (New Character Style…): {name, basedOn?: style \| "[None]", chars?: {character attributes, as type.char names them: fontFamily, fontStyle, size, leading, tracking, fill, …}, fromSelection?: bool (default false)} — if true, capture the first selected character's style/local overrides (caret: typing format), then overlay chars (null unsets); only explicit fill names are validated; paragraph formatting stays inherited; no text target: chars only → {name} (made unique)
 - `style.character.edit` (Character Style Options…): {name, rename?, basedOn?: style \| "[None]" \| null, chars?: {character attribute (as type.char names them: fontFamily, fontStyle, size, …): value \| null (no longer set)}} — renaming updates every use
@@ -528,7 +551,7 @@ Grep this file rather than reading it whole.
 - `style.group` (Move to Group): {kind: paragraph\|character, names: [style names], group: "Heads" \| "Heads/Display" \| "" (out of any group)} — styles are named Group/Name; every use is renamed → {renamed: {old: new}}
 - `style.load` (Load Styles…): {path \| base64, name?: the file's name (`.idml` reads IDML), paragraph?: [name], character?: [name], conflicts?: redefine\|useExisting\|autoRename} — paragraph and character styles of another document (.designcraft or .idml): all of a kind, or the named ones (`[]`: none). The styles, swatches and lists they name come along where this document has none. A style this document defines differently under the same name takes the loaded definition (redefine, the default), stays as it is (useExisting), or the loaded one gets a new name (autoRename) → {paragraph: {added, replaced, renamed: {name: new name}}, character: {…}, swatches: [name]}
 - `style.load.list` (List Styles in File): {path \| base64, name?} → {paragraph: [{name, conflict}], character: [{name, conflict}]} — the styles `style.load` would bring; `conflict`: this document defines a style of that name differently
-- `style.cell.create` (New Cell Style…): {name, fromSelection?: bool (the target cell's look), fill?, tint?, insets?: n\|[t,l,b,r], vj?: top\|center\|bottom\|justify, stroke?: {weight?, color?, tint?, type?, gapColor?, gapTint?} (all four edges; values as table.setCell's stroke), paragraphStyle?, basedOn?: cell style name, story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} → {name}
+- `style.cell.create` (New Cell Style…): {name, fromSelection?: bool (the target cell's look), fill?, tint?, insets?: n\|[t,l,b,r], vj?: top\|center\|bottom\|justify, firstBaseline?: ascent\|capHeight\|leading\|xHeight\|fixed\|emboxHeight, firstBaselineMin?: pt, stroke?: {weight?, color?, tint?, type?, gapColor?, gapTint?} (all four edges; values as table.setCell's stroke), paragraphStyle?, basedOn?: cell style name, story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} → {name}
 - `style.cell.apply` (Apply Cell Style): {name, story?, table?, rows?: [a,b] \| row?, cols?: [a,b] \| col?} — the target cells (the whole table when the cursor is in it)
 - `style.cell.edit` (Cell Style Options…): {name, …same as style.cell.create} — cells using the style follow
 - `style.table.create` (New Table Style…): {name, basedOn?: table style name, header?, body?, footer?, leftColumn?, rightColumn?: cell style names, border?: {weight?, color?, tint?, type?, gapColor?, gapTint?}, altRows?: {first, firstColor, next, nextColor}, spaceBefore?, spaceAfter?} → {name}
@@ -553,9 +576,9 @@ Grep this file rather than reading it whole.
 
 ## table
 
-- `table.insert` (Create Table, Cmd+Alt+Shift+T): {rows?: body rows (4), cols? \| columns? (4), headerRows? (0), footerRows? (0), width?} — at the text insertion point
-- `table.convertFromText` (Table › Convert Text to Table): {columnSeparator?: tab\|comma, width?: table width (default: the column)} — selected paragraphs become rows
-- `table.convertToText` (Table › Convert Table to Text): {story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} — cells separated by tabs, rows by paragraphs
+- `table.insert` (Create Table): {rows?: body rows (4, at most 500), cols? \| columns? (4, at most 200), headerRows? (0), footerRows? (0, each at most 100), tableStyle?: name, width?} — at the text insertion point, styled in the same step
+- `table.convertFromText` (Table › Convert Text to Table): {columnSeparator?: tab\|comma\|paragraph\|text (tab), rowSeparator?: paragraph\|tab\|comma\|text (paragraph), columns?: number of columns when both separators are the same (1, at most 200), tableStyle?: name, width?: table width (default: the column)} — the selected paragraphs become a table, as InDesign's Convert Text to Table; the words tab, comma and paragraph name those separators, any other text is the separator itself
+- `table.convertToText` (Table › Convert Table to Text): {columnSeparator?: tab\|comma\|paragraph\|text (tab), rowSeparator?: paragraph\|tab\|comma\|text (paragraph), story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} — the table becomes its cells' text, as InDesign's Convert Table to Text
 - `table.insertRow` (Insert Row): {where?: above\|below, count? (1), story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)}
 - `table.insertRowAbove` (Table › Insert › Insert Row Above): {count?, story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)}
 - `table.insertRowBelow` (Table › Insert › Insert Row Below): {count?, story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)}
@@ -567,15 +590,15 @@ Grep this file rather than reading it whole.
 - `table.delete` (Table › Delete › Delete Table): {story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)}
 - `table.merge` (Table › Merge Cells): {story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} — merge the target cell range
 - `table.dropCells` (Drag Rows or Columns): {frame, from: [x, y], to: [x, y]} — selected whole rows (or columns) dragged from `from` move to the row (column) at `to`; otherwise a text drag
-- `table.placeGraphic` (Table › Convert Cell Type › Convert Cell to Graphic Cell): {path? \| base64?, name?: with base64, fit?: proportional\|fill (default proportional), story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} — an image in the target cell (its text is kept but hidden)
-- `table.textCell` (Table › Convert Cell Type › Convert Cell to Text Cell): {story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} — drop the target cells' graphics
+- `table.placeGraphic` (Table › Convert Cell to Graphic Cell): {path? \| base64?, name?: with base64, fit?: proportional\|fill (default proportional), story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} — an image in the target cell (its text is kept but hidden)
+- `table.textCell` (Table › Convert Cell to Text Cell): {story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} — drop the target cells' graphics
 - `table.moveRow` (Move Row): {from?, to, story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} (0-based; from defaults to the target row) — like dragging a row
 - `table.moveColumn` (Move Column): {from?, to, story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} (0-based; from defaults to the target column)
 - `table.sortRows` (Table › Sort): {column?: 0-based (default: the target cell's), descending?: bool, story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} — body rows by that column's text (numbers numerically)
 - `table.unmerge` (Table › Unmerge Cells): {story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)}
 - `table.splitHorizontally` (Table › Split Cell Horizontally): {story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} — each target cell becomes two, one above the other
 - `table.splitVertically` (Table › Split Cell Vertically): {story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} — each target cell becomes two, side by side
-- `table.setCell` (Cell Options): {fill?: swatch, tint?: 0..1, insets?: n \| [t,l,b,r], vj? \| verticalJustification?: top\|center\|bottom\|justify, text?, stroke?: {weight?, color?: swatch, tint?: 0..1, type?: solid\|dashed\|dotted\|thickThin\|thinThick\|thinThin\|thickThick\|thinThickThin\|thickThinThick\|wavy\|hashed \| {kind:…}, gapColor?: swatch, gapTint?: 0..1, edges?: name \| [names] (all\|outer\|inner\|top\|left\|bottom\|right\|innerHorizontal\|innerVertical; default all)}, story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} — top/left/bottom/right are the target range's outer sides, innerHorizontal/innerVertical the lines between its rows/columns
+- `table.setCell` (Cell Options): {fill?: swatch, tint?: 0..1, insets?: n \| [t,l,b,r], vj? \| verticalJustification?: top\|center\|bottom\|justify, firstBaseline?: ascent\|capHeight\|leading\|xHeight\|fixed\|emboxHeight, firstBaselineMin?: pt, rotation?: 0\|90\|180\|270 (Cell Options › Text › Rotation; kept and written back to IDML, composed horizontally for now), text?, stroke?: {weight?, color?: swatch, tint?: 0..1, type?: solid\|dashed\|dotted\|thickThin\|thinThick\|thinThin\|thickThick\|thinThickThin\|thickThinThick\|wavy\|hashed \| {kind:…}, gapColor?: swatch, gapTint?: 0..1, edges?: name \| [names] (all\|outer\|inner\|top\|left\|bottom\|right\|innerHorizontal\|innerVertical; default all)}, story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)} — top/left/bottom/right are the target range's outer sides, innerHorizontal/innerVertical the lines between its rows/columns
 - `table.getCellStroke` (Get Cell Stroke): {story?, table?, rows?, cols?, edges?} → {weight, color, tint, type, gapColor, gapTint, fill, fillTint, edges: count} of the chosen edges of the target cells; a value that differs between them is null
 - `table.setRowHeight` (Row Height): {height, mode?: atLeast\|exactly, story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)}
 - `table.setColumnWidth` (Column Width): {width, story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)}
@@ -592,6 +615,7 @@ Grep this file rather than reading it whole.
 - `table.selectColumn` (Table › Select › Select Column): {story?, table?, rows?: [a, b] \| row?, cols?: [a, b] \| col? (the target cells; default: the selection)}
 - `table.nextCell` (Next Cell): {}
 - `table.prevCell` (Previous Cell): {}
+- `table.toggleSelection` (Toggle Text and Cell Selection): {} — Esc in a table, as InDesign: the insertion point or text in a cell selects that cell; selected cells select the text of the first one
 - `table.get` (Get Table): {story?, table?, rows?: [a,b] \| row?, cols?: [a,b] \| col?} → rows, columns, cells (text, spans, fill), options
 
 ## text
@@ -606,16 +630,17 @@ Grep this file rather than reading it whole.
 - `text.selectStory` (Select Story): {frame, point} — all the text of the story under the point, threaded frames included
 - `text.select` (Select Text): {story, anchor, focus} (UTF-8 byte offsets into the story text, as find.find reports them: á or — counts 2 or 3)
 - `text.insert` (Type): {text, raw?: bool (no typographer's quotes)} — replaces the selected text
+- `text.deleteSurrounding` (Delete Surrounding Text): {before?: int, after?: int, bytes?: bool, commit?: string} — removes the text around the selection (an input method's delete-surrounding), keeps the selection and its direction, and with `commit` types that text over it: one undo step
 - `text.delete` (Delete Text): {forward?: bool, word?: bool}
 - `text.move` (Move Caret): {dir: left\|right\|up\|down\|lineStart\|lineEnd\|storyStart\|storyEnd, extend?, word?}
 - `text.exitToFrame` (Select Frame): {}
-- `text.thread` (Thread Text Frames): {from?, to?, rect?: [x0,y0,x1,y1] (spread coords), spread?, autoflow?: bool} — threads frame `to` right after frame `from` (between `from` and the frame that followed it, if any). `to` is an empty frame or a text frame nothing threads into yet; its text joins the end of the story. Give `rect` in place of `from` or `to` to thread a new text frame made there on `spread`: `{from, rect}` adds it after `from`, `{rect, to}` in front of `to`. autoflow: then add pages with threaded frames until the story fits. Selects the frame that joined the thread. → {story, from, to, overset, pagesAdded}
+- `text.thread` (Thread Text Frames): {from?, to?, rect?: [x0,y0,x1,y1] (spread coords), spread?, autoflow?: bool} — threads frame `to` right after frame `from` (between `from` and the frame that followed it, if any). `to` is an empty frame or a text frame nothing threads into yet; its text joins the end of the story. Give `rect` in place of `from` or `to` to thread a new text frame made there on `spread`: `{from, rect}` adds it after `from`, `{rect, to}` in front of `to`. autoflow: then thread a frame per column on the pages that follow, adding pages at the end of the document until the story fits. Selects the frame that joined the thread. → {story, from, to, overset, pagesAdded}
 - `text.unthread` (Break Thread): {frame?, side?: after\|before} — breaks the thread after (or before) `frame` (default: the selected text frame). The frames from the break on stay threaded to each other but become empty; the text stays in the story, overset if the earlier frames can't hold it
 - `text.removeFromThread` (Remove Frame from Thread): {frame?} — takes `frame` (default: the selected text frame) out of its thread: the frames before and after it join up and keep the text, `frame` stays empty
 
 ## toc
 
-- `toc.generate` (Layout › Table of Contents…): {entries: [{style, level?: 1 (1-9), entryStyle?: paragraph style of its entries (default "TOC Level n"), pageNumber?: "after"\|"before"\|"none", separator?: text between entry and number (default a tab), pageNumberStyle?: character style of the page number, separatorStyle?: character style of the separator, sort?: bool (Sort Entries in Alphabetical Order: among their siblings, each with the entries under it)}] \| styles: [names] (levels 1, 2, …), title?: "Contents", titleStyle?: paragraph style of the title (default "TOC Title"), pageNumbers?: true, replace?: true (regenerate the existing table of contents in place; false makes a new frame), page?: 1-based page for a new frame (its margins), rect?: [x0,y0,x1,y1] (spread coords)} → {story, entries}
+- `toc.generate` (Layout › Table of Contents…): {entries: [{style, level?: 1 (1-9), entryStyle?: paragraph style of its entries (default "TOC Level n"), pageNumber?: "after"\|"before"\|"none", separator?: text between entry and number (default a tab), pageNumberStyle?: character style of the page number, separatorStyle?: character style of the separator, sort?: bool (Sort Entries in Alphabetical Order: among their siblings, each with the entries under it)}] \| styles: [names] (levels 1, 2, …), title?: "Contents", titleStyle?: paragraph style of the title (default "TOC Title"), pageNumbers?: true, createBookmarks?: bool (generate PDF bookmarks; keeps the existing setting when omitted, which is off for a new table), replace?: true (regenerate the existing table of contents in place; false makes a new frame), page?: 1-based page for a new frame (its margins), rect?: [x0,y0,x1,y1] (spread coords)} → {story, entries}
 - `toc.update` (Layout › Update Table of Contents): {} — regenerate the existing table of contents
 - `toc.entries` (Table of Contents Entries): {entries \| styles} → [{level, text, page}] without changing the document
 
@@ -645,9 +670,9 @@ Grep this file rather than reading it whole.
 - `type.pathOptions` (Type › Type on a Path › Type on a Path Options…): {id?, start?, end?: distance along the path or null (the path's end), flip?, align?: baseline\|ascender\|descender\|center, delete?: true (Delete Type from Path)} — start and end are the brackets: start ≤ end, both on the path
 - `type.pickUpFormat` (Apply Text Attributes (Eyedropper)): {frame, point} — the Eyedropper with text selected: the character and paragraph formatting (styles and overrides) of the text under the point go to the selected text
 - `type.fillWithPlaceholder` (Type › Fill with Placeholder Text): {frame?, story?}
-- `type.char` (Character Formatting): {attrs: {fontFamily?, fontStyle?, size?, leading?: {kind:auto}\|{kind:points,value}, tracking?, kerning?, hScale?, vScale?, baselineShift?, fill?, capitalization?, underline?, …}}
+- `type.char` (Character Formatting): {attrs: {fontFamily?, fontStyle?, size?, leading?: {kind:auto}\|{kind:points,value}, tracking?, kerning?, hScale?, vScale?, baselineShift?, fill?, capitalization?, underline?, …}} → null, or, after a fontFamily or fontStyle change, {warnings} naming each font the text now resolves to that isn't available (still applied; a substitute draws the text)
 - `type.kernPair` (Kerning): {kerning: {kind: metrics\|optical\|none}\|{kind: manual, value: 1/1000 em}\|null} — at a caret in text, the pair at the caret (the character before the caret takes it); at the start of a story or paragraph, the next typing; a selection or frames take it like `type.char`
-- `type.para` (Paragraph Formatting): {attrs: {align?, leftIndent?, firstLineIndent?, spaceBefore?, spaceAfter?, dropCapLines?, dropCapChars?, dropCapStyle?, dropCapAlignLeft?, dropCapScaleDescenders?, hyphenate?: bool (default true), composer?, tabs?, ruleAbove?/ruleBelow?: {on?, weight?, color?, tint?, columnWidth?, offset?, leftIndent?, rightIndent?} (only the named rule fields change), …}}
+- `type.para` (Paragraph Formatting): {attrs: {align?, leftIndent?, firstLineIndent?, spaceBefore?, spaceAfter?, dropCapLines?, dropCapChars?, dropCapStyle?, dropCapAlignLeft?, dropCapScaleDescenders?, hyphenate?: bool (default true), composer?, opticalMargin?: bool (hang at each character's own size; a story with story.options opticalMargin overrides it), ignoreOpticalMargin?: bool (no hang in the paragraph), tabs?, ruleAbove?/ruleBelow?: {on?, weight?, color?, tint?, columnWidth?, offset?, leftIndent?, rightIndent?} (only the named rule fields change), …}}
 - `type.align` (Align): {align: left\|center\|right\|leftJustified\|…}
 - `type.alignLeft` (Align Left, Cmd+Shift+L): {}
 - `type.alignCenter` (Align Center, Cmd+Shift+C): {}
@@ -673,7 +698,7 @@ Grep this file rather than reading it whole.
 - `type.sizeDown` (Decrease Point Size, Cmd+Shift+,): {}
 - `type.changeCase` (Type › Change Case): {case: upper\|lower\|title\|sentence} — the selected text, or the stories of selected frames (formatting kept)
 - `type.openType` (OpenType): {feature?: dlig\|frac\|ordn\|swsh\|titl\|calt\|zero\|ssNN\|any tag, on?: bool (default: toggle), figures?: tabularLining\|proportionalOldstyle\|proportionalLining\|tabularOldstyle\|default, stylisticSets?: [1–20]} → {features, figures}
-- `type.selectionAttrs` (Selection Attributes): {mixed?: bool} → resolved character/paragraph attributes at the text selection; with mixed, paraMixed lists the paragraph attributes that differ across the selected paragraphs; the selection's start as `selectedText` (one line, up to 60 characters)
+- `type.selectionAttrs` (Selection Attributes): {mixed?: bool} → resolved character/paragraph attributes at the text selection; `ownChars`: what the text has of its own over its paragraph (its character style's attributes and its overrides, what a character style made from the selection sets); with mixed, paraMixed lists the paragraph attributes that differ across the selected paragraphs; the selection's start as `selectedText` (one line, up to 60 characters); `storyOptions` {opticalMargin, opticalMarginSize} of the stories story.options would change (null where they differ)
 - `type.openTypeFeatures` (OpenType Features): {} → the OpenType features and stylistic sets the selected text's fonts offer, each with its applied and available state (none, some or all of the selection)
 - `type.feature` (Set OpenType Features): {features: {tag: true\|false, …}} — turns OpenType features on or off across the selected text, keeping each run's other features
 - `type.tabs.get` (Get Tabs): {style?} → {tabs, leftIndent, firstLineIndent, rightIndent, width, frame?, column?: [x0,y0,x1,y1] (frame inner space)} — the first selected paragraph's (or the style's) stops and indents, and the width of its text column
@@ -687,12 +712,15 @@ Grep this file rather than reading it whole.
 ## variables
 
 - `variables.list` (Text Variables): {} → [{index, name, type, …, value (page 1)}]
-- `variables.define` (Type › Text Variables › Define Text Variable…): {name, type: custom\|lastPageNumber\|chapterNumber\|fileName\|creationDate\|modificationDate\|outputDate\|runningHeader, text?, format?, style?, use?: firstOnPage\|lastOnPage, character?, section?, extension?, before?, after?} — creates or replaces by name
+- `variables.define` (Type › Text Variables › Define Text Variable…): {name, type: custom\|lastPageNumber\|chapterNumber\|fileName\|creationDate\|modificationDate\|outputDate\|runningHeader, text? (a string; a number or a boolean is shown as typed, anything else is refused), format?, style?, use?: firstOnPage\|lastOnPage, character?, section?, extension?, before?, after?} — creates or replaces by name
 - `variables.delete` (Delete Text Variable): {name} — instances become plain text of their current value
 - `variables.insert` (Type › Text Variables › Insert Variable): {name} — at the text insertion point
+- `variables.convertToText` (Type › Text Variables › Convert Variable to Text): {} — the variable instances in the selected text become plain text of the value each shows on its page; the variables stay defined
+- `variables.convertAllToText` (Convert to Text): {name} — every instance of the variable in the document becomes plain text of the value it shows on its page (Text Variables › Convert to Text); the variable stays defined
 
 ## view
 
+- `view.lockColumnGuides` (View › Grids & Guides › Lock Column Guides): {on?: bool (default: toggle)} → {locked} — locked column guides can't be dragged; saved with the document (IDML ColumnGuideLocked), on in new documents
 - `view.zeroPoint` (Ruler Zero Point): {at?: [x, y] (points right of and below the ruler origin — document.preferences rulerOrigin: spread\|page\|spine; kept on the pasteboard), reset?: bool} → {zeroPoint: [x, y], locked}; with neither, reports it. Not an undo step; refused while locked
 - `view.lockZeroPoint` (Lock Zero Point): {on?: bool (default: toggle)} → {locked} — a locked zero point can't be dragged, moved or reset
 

@@ -1,6 +1,6 @@
 # FigCraft layer properties (`node.set`)
 
-Generated from the live `node.set` docs and `frame.presets` (FigCraft 0.7.0, 95 keys). These keys go in
+Generated from the live `node.set` docs and `frame.presets` (FigCraft 0.15.0, 97 keys). These keys go in
 `set_properties {ids, props}`, in `create_node {props}` and in `node.create`/`frame.create` `props`. Unknown keys are an
 error that lists every known key. Grep this file rather than reading it whole.
 
@@ -36,7 +36,7 @@ fontSize, lineHeight, letterSpacing, textAlign, textAutoResize, styledRuns`), `b
 - `name`
 - `visible`
 - `locked`
-- `opacity` (0-1)
+- `opacity` (0-1 or "50%")
 - `blend`
 - `constrainProportions`
 - `description`
@@ -57,13 +57,14 @@ fontSize, lineHeight, letterSpacing, textAlign, textAutoResize, styledRuns`), `b
 - `arcStart`
 - `arcSweep`
 - `arcInner`
+- `path` (a vector's SVG path data: replaces its geometry, keeping the layer, its paints, styles and bindings; width/height in the same call scale it as node.create does; its own box goes at the layer's x/y, or with x/y given, at x + its left edge and y + its top as node.create places it)
 
 ## Fill, stroke, effects
 
 - `fills` (paints or colours; gradients as {type: linearGradient|radialGradient|angularGradient|diamondGradient, stops: ["#hex", ...], from?, to?} too)
-- `fill` (colour)
+- `fill` (colour, {$var: variable id or name}, or "none"/null: no fill)
 - `strokes`
-- `stroke` (colour)
+- `stroke` (colour, {$var: variable id or name}, or "none"/null: no stroke)
 - `strokeWeight`
 - `strokeAlign` (inside|center|outside)
 - `strokeSides` [t,r,b,l]
@@ -72,6 +73,7 @@ fontSize, lineHeight, letterSpacing, textAlign, textAutoResize, styledRuns`), `b
 - `strokeJoin`
 - `miterAngle` (degrees: sharper joins bevel; or miterLimit as a ratio)
 - `dashes` [..]
+- `dashCap` (none|round|square; null: dashes take startCap and endCap)
 - `widthProfile` (preset uniform|wedge|taper|eye|rounded|pinch, [[t, scale], ...] or null)
 - `brush` (preset id, {preset, spacing, sizeJitter, rotationJitter, scatter, seed} or null)
 - `effects`
@@ -149,7 +151,7 @@ fontSize, lineHeight, letterSpacing, textAlign, textAutoResize, styledRuns`), `b
 
 ## Frame presets (`frame.create {preset}`)
 
-- Phone: iPhone 16 393×852, iPhone 16 Pro 402×874, iPhone 16 Pro Max 440×956, iPhone 16 Plus 430×932, iPhone SE 320×568, Android Compact 412×917, Android Medium 700×840
+- Phone: iPhone 17 402×874, iPhone 17 Pro 402×874, iPhone 17 Pro Max 440×956, iPhone Air 420×912, iPhone 16 393×852, iPhone 16 Pro 402×874, iPhone 16 Pro Max 440×956, iPhone 16 Plus 430×932, iPhone SE 320×568, Android Compact 412×917, Android Medium 700×840
 - Tablet: iPad mini 8.3 744×1133, iPad Pro 11" 834×1194, iPad Pro 12.9" 1024×1366, Surface Pro 8 1440×960, Android Expanded 1280×800
 - Desktop: MacBook Air 1280×832, MacBook Pro 14" 1512×982, MacBook Pro 16" 1728×1117, Desktop 1440×1024, Wireframe 1440×1024, TV 1280×720
 - Presentation: Slide 16:9 1920×1080, Slide 4:3 1024×768
@@ -160,5 +162,5 @@ fontSize, lineHeight, letterSpacing, textAlign, textAutoResize, styledRuns`), `b
 
 ## Also accepted (not in the node.set doc string)
 
-- `devStatus` (none|readyForDev|completed): handoff status of a top-level frame or section (tested)
+- `devStatus` (none|readyForDev|completed): handoff status of a top-level frame or section (tested; `inspect.readyForDev` lists them)
 - `sectionContentsHidden`, `maskType` (alpha|vector|luminance): see upstream docs/mcp.md

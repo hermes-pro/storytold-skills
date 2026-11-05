@@ -1,7 +1,7 @@
 ---
 name: effectcraft
 description: "Motion graphics and compositing with EffectCraft (After Effects-style): animated titles, title cards, lower thirds, logo reveals, kinetic type, intros, overlays with alpha, keyframes, easing, expressions, effects (glow, blur, keying, tracking), and renders to MP4 / GIF / WebM / ProRes / PNG sequence / Lottie."
-version: 0.4.0
+version: 0.5.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,7 +16,7 @@ metadata:
 EffectCraft is a free, open-source clean-room take on Adobe After Effects (storytold Crafting Apps). An
 agent drives it through an MCP server (`effectcraft-cli mcp`), one-shot CLI commands, or After Effects-style
 JavaScript (`run_script` / `effectcraft-cli script`). Projects are `.ecproj` files; everything stays editable.
-This skill is written for EffectCraft 0.11.1.
+This skill is tested against EffectCraft 0.21.0.
 
 ## When to Use
 
@@ -48,6 +48,11 @@ on the CPU (`mcp --gpu` for the GPU). For the user to watch live, they run `effe
 server is started as `effectcraft-cli mcp --bridge 9877`; that adds `screenshot` and the `ui_*` tools.
 
 The headless project lives in memory: `save_project` after each milestone (a restart loses unsaved work).
+`mcp --autosave` writes a checkpoint after every edit to `<config dir>/EffectCraft Auto-Save/MCP/<session>/`;
+`get_project` shows it under `autosave.latestPath` (recover with `open_project {path}`).
+
+To confine the agent's files, start `mcp --automation-read-root DIR --automation-write-root DIR` (each repeatable).
+Then every path must be absolute and inside the roots, and scripts (`run_script`, `file.runScript`) are refused.
 
 ## Mental Model
 
@@ -62,7 +67,8 @@ The headless project lives in memory: `save_project` after each milestone (a res
   `contents/trim/end`, `masks/mask/feather`, `text/sourceText`. `get_layer {layer, flat: true}` lists them all.
 - **Layers are referenced** by id (returned on creation), `"#n"`, or **name**. Name layers when you create them
   (`name` param) and keep using them. An unknown name is an error; an all-digit string (`"4"`) falls back to an id.
-- **Every edit is an engine command** (731 of them) and undoable. The dedicated tools cover the common ones;
+- **Enum properties take an index.** `get_property` / `get_layer` list the choices (`options: [{label, value}]`).
+- **Every edit is an engine command** (743 of them) and undoable. The dedicated tools cover the common ones;
   everything else is `execute_command {command, params}`. Unknown param keys are rejected with the accepted list.
 - **Rendering is a render queue**: `renderQueue.add` then `renderQueue.render`. `render_frame` is for looking.
 
@@ -75,8 +81,8 @@ The headless project lives in memory: `save_project` after each milestone (a res
 | `get_property` / `set_property` | Read; set a static value, a key (`time`, `timeBase?`), or an `expression` (`""` removes it) |
 | `add_keyframe {layer, path, keys:[{time,value}], interpolation?, timeBase?}` | Animate. `linear`, `bezier`, `hold`, `easyEase`, `easyEaseIn`, `easyEaseOut` |
 | `add_effect {layer, effect, values?}` | Apply an effect by id or AE name and set params in one undo step; returns param paths |
-| `list_effects {filter?}` / `list_fonts {query?}` | Effect ids + param ids; usable font families and styles |
-| `execute_command {command, params}` / `list_commands {filter?, enabled_only?, schemas?}` / `describe_command` | Everything else (comps, layers, masks, render queue, export) |
+| `list_effects {filter?, compact?}` / `list_fonts {query?}` | Effect ids + param ids (`compact: true`: id, name, category only); font families and styles |
+| `execute_command {command, params}` / `list_commands {filter?, enabled_only?, schemas?, compact?}` / `describe_command` | Everything else (comps, layers, masks, render queue, export) |
 | `batch {steps, label?, atomic?}` | Several commands as ONE undo step; `"$1.layer"` = step 1's result; a failing step rolls all back |
 | `command_run {id, params}` / `command_list` / `command_batch {steps:[{id, params}], stop_on_error?}` | Same as `execute_command` / `list_commands`; `command_batch` gives per-step results and one undo step per edit |
 | `doc_inspect` / `render_preview {comp?, time?, max_side?, transparent?}` | Project + active comp in one call; a PNG without writing a file |
@@ -103,8 +109,10 @@ The headless project lives in memory: `save_project` after each milestone (a res
 - **SVG to shapes:** `edit.pasteSvg {svg: "<svg …>…</svg>", name}` → `{layer, skipped}` makes one editable shape
   layer, centred in the comp (anchor = the SVG's centre). Good for logos from `vectorcraft`.
 - **Solids / nulls / adjustment:** `layer.newSolid {name, color}`, `layer.newNull`, `layer.newAdjustment`.
-- **Footage:** `file.import {paths: [abs]}` → `{items}`; then `layer.addItem {item, time?, index?}` into the active
-  comp, or `project.select {items}` + `file.newCompFromSelection {}` for a comp matching the clip.
+- **Footage:** `file.import {paths: [abs]}` → `{items}`; then `layer.addItem {item, time?, index?, in?, out?}` into
+  the active comp, or `project.select {items}` + `file.newCompFromSelection {}` for a comp matching the clip
+  (`file.import {paths, newComp: true}` does both, though its reply's `comps` stays `[]`). Numbered stills import as
+  stills unless `sequence: true`.
   Moved files: `footage.missing {}` lists them; `footage.relink {item, path}` fixes the rest in that folder too.
   `file.importProject {path}` merges another `.ecproj` into a folder → `{comps, primaryComp}`.
 - **Grow from an edge:** scale grows around `transform/anchor`. For a bar that wipes in from the left, set
@@ -115,10 +123,14 @@ The headless project lives in memory: `save_project` after each milestone (a res
 - **Precompose:** `layer.precompose {layers, name}` → `{comp, layer}`.
 - **Ready-made animation:** `layer.applyTextPreset {layer, preset}` (`text.presets`: typewriter, fadeUpCharacters,
   bounceInWords, trackingIn, scramble, blurIn, jitter, dropInLines) and `anim.applyBuiltinPreset {preset, layers}`
-  (`anim.builtinPresets`: fadeIn/fadeOut, wipes, clock, blinds, card flip, pixel dissolve…). Both key from the
-  current time (see Pitfalls). Fades take 0.5 s, wipes 1 s, typewriter 2 s.
+  (`anim.builtinPresets {category: "Transitions"}`: fadeIn/fadeOut, wipeInFromLeft, wipeOutToRight, clockReveal…).
+  Both key from the current time (see Pitfalls). Fades take 0.5 s, wipes 1 s, typewriter 2 s.
+- **Idle loops:** 22 `anim.builtinPresets {category: "Behaviors"}` (wiggleSoft, shake, floatUpDown, sway, orbit,
+  pendulum, spinSlow, pulse, heartbeat, breathe, blink, flicker…) are expressions, so they run for the whole layer.
 - **Animated backgrounds:** `anim.applyBuiltinPreset` one of 23 `anim.builtinPresets {category: "Backgrounds"}`
   (auroraVeil, slowFog, emberHaze, magmaFlow, bokehDrift, blueprintGrid, dawnSky…) on a full-comp solid.
+- **Resize a comp:** `comp.scale {comp, factor: 2 | width | height}` scales the frame and every layer, key and camera.
+- **Mute keys:** `keys.select {keys: [{layer, path, time}]}` then `keys.setMuted {}` (`muted: false` brings them back).
 
 ## Procedure
 
@@ -247,6 +259,25 @@ renderQueue.add {comp:"shot", format:"webm", channels:"rgba", output:"/abs/cutou
 A point on the object (layer pixels) is enough; add `box: [x0, y0, x1, y1]` when it's ambiguous. Without `propagate`
 frames compute as they render; `objectMatte.freeze {layer, wait:true}` bakes them all; `objectMatte.status` shows progress.
 
+Roto Brush (`roto.stroke`, `roto.propagate`) uses the built-in `classical` model. The SAM 2.1 and MobileSAM trackers
+are optional downloads (`roto.models` lists them, `roto.model.download {id}` fetches 40–900 MB into the user's
+models folder, `roto.model.select {id}`); they were not tested here. Bridge mode and `mcp --gpu` were not tested either.
+
+### Recipe: one comp, two sizes, with an idle loop (tested)
+
+```text
+execute_command comp.new {name:"Main", width:640, height:360, frameRate:30, duration:2, background:"#203040"}
+execute_command layer.newShape {kind:"ellipse", name:"Dot", size:[80,80], fill:"#ffcc00", position:[320,180]}
+execute_command anim.applyBuiltinPreset {preset:"orbit", layers:["Dot"]}   → an expression on transform/position
+get_property {layer:"Dot", path:"transform/position", time:0.5}           → evaluated:[363.2, 247.3]
+add_keyframe {layer:"Dot", path:"transform/opacity", keys:[{time:0,value:0},{time:1,value:100}]}
+execute_command keys.select {keys:[{layer:"Dot", path:"transform/opacity", time:1}]} · keys.setMuted {}
+get_property {layer:"Dot", path:"transform/opacity", time:1.5}             → 0 (the muted key is skipped)
+execute_command comp.scale {comp:"Main", factor:2}                         → {width:1280, height:720}; Dot scale 200 %
+execute_command renderQueue.add {comp:"Main", format:"tga", output:"/abs/seq/f_[####].tga", timeSpan:"custom", start:0, end:0.2}
+renderQueue.render {wait:true}                                             → f_0000.tga … f_0005.tga
+```
+
 ## Rendering and formats
 
 - `renderQueue.add {comp, output: "/abs/file.ext", format?, timeSpan?: workArea|comp|custom, start?, end?,
@@ -255,8 +286,10 @@ frames compute as they render; `objectMatte.freeze {layer, wait:true}` bakes the
   folders are created; a failed item makes the reply `isError` with `failed > 0`. The default span is the work area
   (= the whole comp); `end` is exclusive (`start:0, end:0.5` at 30 fps = 15 frames).
 - Formats: `h264`, `hevc`, `av1`, `prores`, `uncompressed` (QuickTime raw RGB/ARGB, huge), `webm`, `gif`, image
-  sequences `png|jpeg|tiff|exr` (`output: "/abs/seq/name_[####].png"`), audio `wav|aiff`. Alpha: `webm`, `prores`
-  or `uncompressed` + `channels: "rgba"`, or PNG.
+  sequences `png|jpeg|tiff|exr|tga` (`output: "/abs/seq/name_[####].png"`), audio `wav|aiff`. Alpha: `webm`, `prores`
+  or `uncompressed` + `channels: "rgba"`, or PNG/TGA.
+- An output never replaces a file the project reads (footage, proxy, the project): `file.checkOutput {path}` says
+  whether it may be written. Two queued items writing one file refuse the whole `renderQueue.render`.
 - **Lottie:** `file.exportLottie {comp, path: "x.json"|"x.lottie"}` → `{bytes, warnings}`; warnings list what Lottie can't show.
 - **To an editor:** `file.exportTimeline {comp, path: "x.xml"|".fcpxml"|".otio"|".edl"}`, or a ProRes/WebM overlay.
   Import footage, PSD/AI/PDF/EPS with `file.import`, Lottie with `file.importLottie`, FCP XML/OTIO/EDL/AAF with `file.importTimeline`.
@@ -264,11 +297,12 @@ frames compute as they render; `objectMatte.freeze {layer, wait:true}` bakes the
 ## CLI (no MCP needed)
 
 ```bash
-effectcraft-cli render --project p.ecproj --comp Title --out /abs/t.mp4 [--start 0 --end 1] [--format gif] [--resolution half]
+effectcraft-cli render --project p.ecproj --comp Title --out /abs/t.mp4 [--start 0 --end 1] [--format gif] [--resolution half] [--progress]
 effectcraft-cli render-frame p.ecproj --comp Title --time 1 --max-side 640 --out /abs/f.png
 effectcraft-cli script build.jsx --save-as /abs/p.ecproj            # or: script --eval 'CODE' p.ecproj
 effectcraft-cli exec comp.new --params '{"name":"Main","width":1280,"height":720}' --empty --save-as /abs/m.ecproj
 effectcraft-cli run p.ecproj layer.newSolid '{"color":"#3366ff"}' time.set '{"time":1}' --save
+effectcraft-cli run p.ecproj --commands steps.jsonl --save           # {"command"|"id", "params"} per line, or - for stdin
 effectcraft-cli get Title Title transform/opacity --time 0.5 --project p.ecproj --json
 effectcraft-cli set Title '#1' transform/opacity 40 --project p.ecproj --save
 effectcraft-cli commands --filter keys                               # the command catalog
@@ -277,7 +311,8 @@ effectcraft-cli props Title Title --flat --project p.ecproj          # every pro
 
 Without `--project`/a positional `.ecproj`/`--empty`, the CLI opens the **demo project**. Edits are thrown away
 unless you pass `--save` or `--save-as`. A relative `render --out` is relative to the shell's working directory.
-There is no `help` subcommand: `effectcraft-cli` with no arguments prints the usage.
+There is no `help` subcommand (`unknown subcommand \`help\``): `effectcraft-cli` with no arguments prints the usage.
+`render` also takes `--channels rgba`, `--prores PROFILE`, `--fps N`, `--audio auto|on|off` and HEVC/AV1/WebM codec flags.
 
 ## Pitfalls
 
@@ -299,13 +334,18 @@ There is no `help` subcommand: `effectcraft-cli` with no arguments prints the us
 - **Presets start at the current time and own their property.** `anim.applyBuiltinPreset` / `layer.applyTextPreset`
   key from the CTI, so `time.set` first. A second preset that animates the same property (`fadeOut` after `fadeIn`)
   replaces its keys; add the second move with `add_keyframe` instead.
-- **Effects on shape and text layers cover the whole comp-sized layer region.** A wipe preset on a small logo sweeps
-  the full comp width, so the logo appears late in the move. Precompose it, or use a fade, for a tight reveal.
+- **Enum values are indexes:** `set_property {path: "effects/#1/dimensions", value: "Horizontal"}` fails with
+  `can't use "Horizontal" for a enum property`. Read `options` from `get_property` and pass the `value` (1).
+- **Confined mode** (`--automation-*-root`): `run_script` fails with `` `script.run` is not available while file access
+  is confined ``; a path outside fails with ``cannot write `/tmp/x.mp4`: it is outside the automation roots``;
+  `renderQueue.add` without `output` on an unsaved project fails (`the project has no file yet, so the default output
+  would go to the home folder`). Save into a write root first.
 - **Strict arguments:** an unknown tool argument is JSON-RPC `-32602` (`unknown argument "x" for set_property;
   expected: …`); an unknown command param lists the accepted ones (`unknown parameter(s) \`index\`; accepted: …`).
 - **Object Matte only covers its span:** `frame` ± `before`/`after` (30 frames each by default). Frames past it render
   fully transparent, with no error. Pass `after` (up to 600) to cover the whole shot; the reply's `span` shows it.
-- `layer.setText` and `layer.timing` return `null` on success. `easyEaseOut` leaves the incoming side linear.
+- `layer.timing` returns `null` on success; `layer.setText` on a non-text layer fails with `not a text layer`.
+  `easyEaseOut` leaves the incoming side linear.
 
 ## Verification
 
@@ -318,8 +358,8 @@ There is no `help` subcommand: `effectcraft-cli` with no arguments prints the us
 
 Grep these; don't read them whole (`grep -n 'essential\.' ${HERMES_SKILL_DIR}/references/commands.md`).
 
-- `${HERMES_SKILL_DIR}/references/commands.md`: all 731 commands with params, grouped by prefix (`layer`, `keys`,
+- `${HERMES_SKILL_DIR}/references/commands.md`: all 743 commands with params, grouped by prefix (`layer`, `keys`,
   `renderQueue`, `track`, `mask`, `text`, `essential`, `anim`, `objectMatte`, `footage`…).
-- `${HERMES_SKILL_DIR}/references/effects.md`: all 307 effects by category with param ids and defaults. Grep by name.
+- `${HERMES_SKILL_DIR}/references/effects.md`: all 308 effects by category with param ids and defaults. Grep by name.
 - Upstream docs: https://github.com/storytold/effectcraft/tree/main/docs (`agents.md`: tracking, roto, warp
-  stabilizer, Essential Graphics, timeline interchange; `control-protocol.md`).
+  stabilizer, Essential Graphics, timeline interchange, `--autosave`; `mcp.md`: confined mode; `control-protocol.md`).

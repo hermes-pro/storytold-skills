@@ -1,6 +1,6 @@
 # CADCraft command catalog
 
-Generated from `cadcraft-cli commands` (CADCraft 0.8.0, 426 commands), grouped by menu. Run any of them with
+Generated from `cadcraft-cli commands` (CADCraft 0.17.1, 457 commands), grouped by menu. Run any of them with
 `execute {command, params}` (MCP) or `cadcraft-cli run --cmd 'id {json}'`; type the id or an alias at `command_line`
 for the interactive version. `?` = optional, `a|b` = choices, `→ {...}` = what it returns, `hex` = an entity handle.
 Points are `[x, y]`. Angles are degrees unless noted. *(prompts)* marks commands that also run interactively.
@@ -8,18 +8,18 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 
 ## File
 
-- `new` (New Drawing...) — aliases: `qnew`: {metric?: bool, template?: path to a .dwt/.dxf template ("." for none; default QNEWTEMPLATE)}
+- `new` (New Drawing...) — aliases: `qnew`: {metric?: bool (default MEASUREINIT), template?: path to a .dwt/.dxf template ("." for none; default QNEWTEMPLATE)}
 - `open` (Open...): {path} \| {data: base64, name} → {index, entities?, warnings: what reading left out}
 - `close` (Close): {index?}
-- `closeall` (Close All): {}
+- `closeall` (Close All)
 - `qsave` (Save) — aliases: `save`: {path?}
-- `saveas` (Save As...): {path, version?: 2000\|2004\|2007\|2010\|2013\|2018, binary?: bool}
+- `saveas` (Save As...): {path, version?: 2000\|2004\|2007\|2010\|2013\|2018, binary?: bool, portableFonts?: bool (Windows fonts for Linux ones, in this file)}
 - `audit` (Audit) *(prompts)*: {fix?: bool} → {errors, fixed, issues: [{kind, location, handle?, message, fix}], message}
 - `recover` (Recover...) *(prompts)*: {path, copy?: bool (an unsaved copy without a file name), title?} \| {data: base64, name} → {index, uid, errors, fixed, issues, message}
 - `drawingrecovery` (Drawing Recovery Manager...): {action?: list\|open\|discard (default list), path? (one of the listed files)} → {files: [{path, drawing, modified, bytes}]} \| (open: as RECOVER)
 - `pagesetup` (Page Setup Manager...): {layout?: current, device?: plotter name (PLOTTERMANAGER) \| "None", paper?: the device's paper \| "A4"\|"A3"\|"Letter"\|"ANSI B"\|…, width?, height? (mm), landscape?, margins?: [l,b,r,t] mm, lineweights?, plotArea?, scale?, scaleToFit?, center?, plotStyleTable?: "monochrome.ctb"\|"grayscale.ctb"\|"default.ctb"\|"None"\|…, displayPlotStyles?: bool, plotTransparency?: bool}
-- `plot` (Print...) — aliases: `print`: {path? (else returns base64 `data`), layout?: current\|"Model", paper?, landscape?, fit?: bool, scale?: number \| "1:50", center?: bool (Model, default true), offset?: [x,y] mm (Model, when center is false; each within ±100000), lineweights?: bool, plotTransparency?: bool (default: the page setup's; PLOTTRANSPARENCYOVERRIDE 0/2 overrides it), plotArea?: extents\|display\|limits\|window (Model) \| layout, window?: [[x1,y1],[x2,y2]]} (typed or from the menu: the Plot dialog)
-- `exportpdf` (Export to PDF...): {path? (else returns base64 `data`), layout?, paper?, landscape?, fit?, scale?, center?: bool (Model, default true), offset?: [x,y] mm (Model, when center is false; each within ±100000), lineweights?, plotTransparency?, plotArea?, window?} (as PLOT)
+- `plot` (Print...) — aliases: `print`: {path? (else returns base64 `data`), layout?: current\|"Model", device?: "CADCraft PDF"\|"CADCraft PNG"\|"CADCraft SVG" \| a plotter from PLOTTERMANAGER \| "None" (default: a layout's page setup device; Model, or "None": no device, PDF; a device sets the output format and the papers), paper?: the device's paper (default: a layout keeps its page setup's; Model takes the device's default), landscape?, fit?: bool, scale?: number \| "1:50", center?: bool (Model, default true), offset?: [x,y] mm (Model, when center is false; each within ±100000), lineweights?: bool, plotTransparency?: bool (default: the page setup's; PLOTTRANSPARENCYOVERRIDE 0/2 overrides it), plotArea?: extents\|display\|limits\|window (Model) \| layout, window?: [[x1,y1],[x2,y2]]} (typed or from the menu: the Plot dialog)
+- `exportpdf` (Export to PDF...): {path? (else returns base64 `data`), layout?, device? (its papers; the output stays PDF), paper?, landscape?, fit?, scale?, center?: bool (Model, default true), offset?: [x,y] mm (Model, when center is false; each within ±100000), lineweights?, plotTransparency?, plotArea?, window?} (as PLOT)
 - `stylesmanager` (Plot Style Manager...): {action?: list (default)\|get\|new\|set\|delete\|load\|save, name?: table ("x.ctb"/"x.stb"), kind?: colorDependent\|named (new), from?: table to copy (new), description?, style?: {name, color?: "#rrggbb"\|null, grayscale?, screening?: 0-100, linetype?: name\|null, lineweight?: mm\|null, end?, join?, fill?, description?} (set), removeStyle?: name (set, named tables), path? (load/save; save without one returns `text`), text? (load)}
 - `plottermanager` (Plotter Manager...) *(prompts)*: {action?: list (default)\|get\|new\|set\|delete\|load\|save, name?: device, from?: device to copy (new), output?: pdf\|png\|svg, description?, resolution?: dpi, orientation?: portrait\|landscape, defaultPaper?, paper?: {name, width, height (mm), margins?: [l,b,r,t] mm} (set: add or replace), removePaper?: name (set), text? (load), path? (save: native only; without it returns `text`)} (typed: option prompts)
 - `import` (Import...) — aliases: `imp`: {path \| data: base64, name?: "x.dwg"} (DXF or DWG), at?: [x,y] (default 0,0), scale?: (default 1) → {imported, handles, layers, styles, blocks}
@@ -33,38 +33,43 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `u` (Undo): {}
 - `redo` (Redo): {count?: n}
 - `cutclip` (Cut) *(prompts)*: {handles?}
+- `cutbase` (Cut with Base Point) *(prompts)*: {handles?, base: [x,y]}
 - `copyclip` (Copy) *(prompts)*: {handles?}
 - `copybase` (Copy with Base Point) *(prompts)*: {handles?, base: [x,y]}
 - `pasteclip` (Paste) *(prompts)*: {at?: [x,y]} (where the base point lands; default: the original coordinates)
 - `pasteblock` (Paste as Block) *(prompts)*: {at?: [x,y]} (insertion point; default: the original coordinates)
 - `pasteorig` (Paste to Original Coordinates) *(prompts)*: {} (only into a drawing other than the one copied from)
 - `erase.selection` (Clear): {}
-- `selectall` (Select All) — aliases: `ai_selall`: {}
+- `selectall` (Select All) — aliases: `ai_selall`
 - `qselect` (Quick Select...) — aliases: `qs`: {type?: "Line"\|"Circle"\|..., property?, operator?: "="\|"!="\|">"\|"<"\|"*" (wildcard), value?, mode?: new\|append\|exclude, applyTo?: drawing\|selection, layer?, color?} → selected handles
-- `find` (Find...): {find, replace?, matchCase?: bool, wholeWord?: bool}
+- `find` (Find...): {find, replace?, matchCase?: bool, wholeWord?: bool, types?: ["Text", "MText", ...], handles?: [...]} → {matches: [{handle, type, count, snippet, hit, hitLen}], total, message}
 
 ## View
 
 - `zoom.realtime` (Zoom Realtime) *(prompts)*: {factor} (> 1 zooms in, about the view centre); interactive: drag up to zoom in, down to zoom out, Esc or Enter ends
 - `zoom.dynamic` (Zoom Dynamic) *(prompts)*: {center, height}; interactive: a view box over the drawing extents, a point places it, the next sizes it, Enter accepts
-- `zoom.previous` (Zoom Previous): {}
+- `zoom.previous` (Zoom Previous)
 - `zoom.window` (Zoom Window) *(prompts)*: {p1, p2}
-- `zoom.in` (Zoom In): {}
-- `zoom.out` (Zoom Out): {}
-- `zoom.all` (Zoom All): {}
-- `zoom.extents` (Zoom Extents): {}
+- `zoom.in` (Zoom In)
+- `zoom.out` (Zoom Out)
+- `zoom.all` (Zoom All)
+- `zoom.extents` (Zoom Extents)
 - `zoom.object` (Zoom Object) *(prompts)*: {handles?}
 - `pan` (Pan) *(prompts)* — aliases: `p`: {delta: [dx,dy]} \| {from, to} \| {center}
-- `pan.left` (Pan Left): {}
-- `pan.right` (Pan Right): {}
-- `pan.up` (Pan Up): {}
-- `pan.down` (Pan Down): {}
-- `regen` (Regen) — aliases: `re`: {}
-- `regenall` (Regen All) — aliases: `rea`: {}
-- `redraw` (Redraw) — aliases: `r`: {}
+- `pan.left` (Pan Left)
+- `pan.right` (Pan Right)
+- `pan.up` (Pan Up)
+- `pan.down` (Pan Down)
+- `regen` (Regen) — aliases: `re`
+- `regenall` (Regen All) — aliases: `rea`
+- `redraw` (Redraw) — aliases: `r`
 - `view` (Named Views...) *(prompts)* — aliases: `v`: {option: save\|window\|restore\|delete\|list\|settings, name? (save/window/restore), names?: "a,b*" \| [names] (delete/list; wildcards), p1?, p2? (window), layerSnapshot?: bool (save: default the Layer snapshot setting; settings: change it)} (typed VIEW / -VIEW: option prompts)
+- `vports.named` (Named Viewports...) *(prompts)*: {name?: a saved viewport configuration, delete?: bool, p1?, p2?, layout?} (no name: → {current, configurations: [{name, viewports}]}; the Model tab shows the configuration's tiles, a layout gets one viewport per tile over p1-p2 or the printable area; typed or from the menu: the Named Viewports dialog)
 - `annovisible.current` (Current Scale Only): {} (ANNOALLVISIBLE 0: annotative objects show only at scales they support)
 - `annovisible.all` (All Scales): {} (ANNOALLVISIBLE 1: every annotative object shows)
+- `attdisp.normal` (Normal): {} (ATTDISP Normal: ATTMODE 1) → {attmode}
+- `attdisp.on` (On): {} (ATTDISP ON: ATTMODE 2) → {attmode}
+- `attdisp.off` (Off): {} (ATTDISP OFF: ATTMODE 0) → {attmode}
 - `mview.polygonal` (Polygonal Viewport) *(prompts)*: {points: [[x,y]…] (at least three), bulges?, layout?}
 - `vports` (New Viewports...) *(prompts)*: {count?: 1-4, arrangement?, p1?, p2?, layout?} (typed in the Model tab: tiled viewports; their JSON form is -vports)
 - `vports.1` (1 Viewport) *(prompts)*: {p1?, p2?, layout?}
@@ -78,7 +83,7 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `pline` (Polyline) *(prompts)* — aliases: `pl`: {vertices: [[x,y] \| {p:[x,y], bulge, startWidth, endWidth}], closed?, width?}
 - `circle` (Circle) *(prompts)* — aliases: `c`: {center, radius} \| {center, diameter} \| {p1, p2} \| {p1, p2, p3}
 - `arc` (Arc) *(prompts)* — aliases: `a`: {p1, p2, p3} \| {center, radius, start, end (degrees)} \| {start, center, end}
-- `rectang` (Rectangle) *(prompts)* — aliases: `rec`, `rectangle`: {p1, p2 \| dimensions: [l, w] (p2 picks the quadrant) \| area + length\|breadth, rotation? (deg), fillet?, chamfer?: [d1, d2], width?, elevation?, thickness?}
+- `rectang` (Rectangle) *(prompts)* — aliases: `rec`, `rectangle`: {p1, p2 \| dimensions: [l, w] (p2 picks the quadrant) \| area + length\|breadth, rotation? (deg), fillet?, chamfer?: [d1, d2], width?, elevation?, thickness?, center?: bool (p1 is the centre, not a corner; the size spans it evenly)}
 - `polygon` (Polygon) *(prompts)* — aliases: `pol`: {sides, center, radius, inscribed?: bool, angle?: deg to a vertex (inscribed) or edge midpoint (default: bottom edge horizontal)} \| {sides, edge: [[x,y],[x,y]]}
 - `ellipse` (Ellipse) *(prompts)* — aliases: `el`: {center, major: [dx,dy], ratio, start?, end? (degrees)} \| {isocircle: {center, radius \| diameter, plane?}}
 - `point` (Point) *(prompts)* — aliases: `po`: {at: [x,y]} \| {points: [...]}
@@ -87,6 +92,7 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `ray` (Ray) *(prompts)*: {base, through}
 - `spline` (Spline) *(prompts)* — aliases: `spl`: {fit: [[x,y],...], closed?, knots?: chord\|sqrt\|uniform, startTangent?, endTangent? ([dx,dy]), tolerance?} \| {control: [...], degree?} \| {object: handle\|true, handles?} (polyline to spline)
 - `donut` (Donut) *(prompts)* — aliases: `do`, `doughnut`: {center, inside, outside}
+- `solid` (2D Solid) *(prompts)* — aliases: `so`: {points: [[x,y],...]} (three or four for the first solid, two more for each next one, chained on its last two corners)
 - `text` (Single Line Text) *(prompts)* — aliases: `dt`, `dtext`: {at, text, height?, rotation? (degrees), justify?: L\|C\|R\|M\|TL\|TC\|TR\|ML\|MC\|MR\|BL\|BC\|BR}
 - `mtext` (Multiline Text) *(prompts)* — aliases: `t`, `mt`: {at, text, height?, width?, attach?: 1..9 \| justify?: TL..BR, rotation?, style?, lineSpacing?, lineSpacingExact?, list?: bullet\|number\|lower\|upper, indent?, firstIndent?, rightIndent?, tabs?: [..], align?: left\|center\|right\|justify\|distributed, columns?: {type: static\|dynamic, count?, gutter?, height, heights?, reversed?}} (indents and tabs in text heights; width = one column)
 - `arc.sce` (Start, Center, End) *(prompts)*: {start, center, end}
@@ -104,7 +110,7 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `circle.3p` (3 Points) *(prompts)*: {p1, p2, p3}
 - `circle.ttr` (Tan, Tan, Radius) *(prompts)*: {h1, p1, h2, p2, radius} (lines, circles, arcs, polyline segments; nearest solution to the picks)
 - `circle.ttt` (Tan, Tan, Tan) *(prompts)*: {h1, p1, h2, p2, h3, p3}
-- `ellipse.axis` (Axis, End) *(prompts)*: {p1, p2, distance} \| {p1, p2, p3} (axis endpoints, then half the other axis)
+- `ellipse.axis` (Axis, End) *(prompts)*: {p1, p2, distance} \| {p1, p2, p3} (axis endpoints, then half the other axis: a distance, or a point that far from the center)
 - `ellipse.arc` (Elliptical Arc) *(prompts)*: {center, major: [dx,dy], ratio, start, end (degrees)} \| {p1, p2, distance, start, end}
 - `divide` (Divide) *(prompts)* — aliases: `div`: {handle, segments, block?, align?: bool}
 - `measure` (Measure) *(prompts)* — aliases: `me`: {handle, length, block?, align?: bool, from?: [x,y] (end to start at)}
@@ -118,11 +124,11 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `centermark` (Center Mark) *(prompts)*: {handle \| handles} (circles/arcs; lines on the CENTER linetype)
 - `centerline` (Center Line) *(prompts)*: {h1, h2} (two lines)
 - `mline` (Multiline) *(prompts)* — aliases: `ml`: {points, scale?, justification?: top\|zero\|bottom, style?, closed?} → {handle}
-- `hatch` (Hatch...) *(prompts)* — aliases: `h`, `bh`, `-hatch`: {points?: [[x,y]] (internal points) and/or handles?: [hex] (closed objects), pattern?: "ANSI31", scale?, angle? (degrees), associative? (HPASSOC), separate? (HPSEPARATE: a hatch per point/object), origin?: [x,y] (HPORIGIN) \| originMode?: "current"\|"bottomLeft"\|"bottomRight"\|"topLeft"\|"topRight"\|"center" (HPORIGINMODE), style?: "normal"\|"outer"\|"ignore" (HPISLANDDETECTION)} — gaps up to HPGAPTOL close
+- `hatch` (Hatch...) *(prompts)* — aliases: `h`, `bh`, `-hatch`: {points?: [[x,y]] (internal points) and/or handles?: [hex] (closed objects), pattern?: "ANSI31" (built in, or defined by patternFile \| patternText), patternFile?: path to a .pat file \| patternText?: its contents (loads the patterns it defines), scale?, angle? (degrees), associative? (HPASSOC), separate? (HPSEPARATE: a hatch per point/object), origin?: [x,y] (HPORIGIN) \| originMode?: "current"\|"bottomLeft"\|"bottomRight"\|"topLeft"\|"topRight"\|"center" (HPORIGINMODE), style?: "normal"\|"outer"\|"ignore" (HPISLANDDETECTION)} — gaps up to HPGAPTOL close
 - `gradient` (Gradient...) *(prompts)* — aliases: `gd`: {points? and/or handles?, name?: "LINEAR"\|"CYLINDER"\|"CURVED"\|"SPHERICAL"\|"HEMISPHERICAL" or INV… (colours swapped), color1?, color2?, angle? (degrees), centered? (default true)}
 - `boundary` (Boundary...) *(prompts)* — aliases: `bo`, `bpoly`: {points: [[x,y]]}
 - `region` (Region) — aliases: `reg`: {handles?}
-- `block` (Make...) *(prompts)* — aliases: `b`, `bmake`: {name, base: [x,y], handles?, keep?: "convert"\|"retain"\|"delete" (default "convert"), description?, annotative?}
+- `block` (Make...) *(prompts)* — aliases: `b`, `bmake`: {name, base: [x,y], handles?, keep?: "convert"\|"retain"\|"delete" (default "convert"), description? (up to 255 characters, one line), annotative?}
 - `attdef` (Define Attributes...) *(prompts)* — aliases: `att`, `-attdef`: {tag, prompt?, default?, at, height?, invisible?}
 - `base` (Base): {at: [x,y]}
 - `table` (Table...) *(prompts)* — aliases: `tb`: {at: [x,y], rows (data rows), cols, rowHeight?, colWidth?, cells?: [[text]], title?: text, header?: [text]}
@@ -138,18 +144,20 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `aiobjectscaleadd` (Add Current Scale) *(prompts)*: {handles?} (adds the current annotation scale to the annotative objects)
 - `aiobjectscaleremove` (Delete Current Scale) *(prompts)*: {handles?} (removes the current annotation scale from the annotative objects; an object keeps at least one)
 - `annoreset` (Synchronize Multiple-scale Positions) *(prompts)*: {handles?} (every scale of an annotative object shares one position)
-- `hatchedit` (Hatch Edit) *(prompts)* — aliases: `he`, `-hatchedit`: {handles?, pattern?, scale?, angle?, gradient?: {name?, color1?, color2?, angle? (degrees), centered?} (makes or changes a gradient fill; `pattern` turns it back), associative?: bool (false unlinks; true links each loop to a closed object of the same shape, or to `boundary` objects), boundary?: [hex], style?, origin? \| originMode?, separate?: true, recreate?: "polyline"\|"region", associate?: bool (link to the recreated boundary)}
+- `hatchedit` (Hatch Edit) *(prompts)* — aliases: `he`, `-hatchedit`: {handles?, pattern?, scale?, angle?, gradient?: {name?, color1?, color2?, angle? (degrees), centered?} (makes or changes a gradient fill; `pattern` turns it back), associative?: bool (false unlinks; true links each loop to a closed object of the same shape, or to `boundary` objects), boundary?: [hex], addPoints?: [[x,y]], addBoundary?: [hex], removeLoops?: [zero-based index] (geometry edits require one hatch), style?, origin? \| originMode?, separate?: true, recreate?: "polyline"\|"region", associate?: bool (link to the recreated boundary)}
 - `overkill` (Delete Duplicate Objects) *(prompts)* — aliases: `-overkill`: {handles? (default: the whole current space), tolerance? (0..1e6, default 1e-6), ignore?: [color\|layer\|linetype\|ltscale\|lineweight\|thickness\|transparency\|plotStyle], plines?: bool (default true), partialOverlap?: bool (default true), endToEnd?: bool (default false), associativity?: bool (keep associated objects, default true)} → {deleted, duplicates, overlapping, segments}
 - `attedit` (Single...) *(prompts)* — aliases: `ate`, `eattedit`: {handle, values: {TAG: value} (tags in any case)} → {changed, unknownTags?}
 - `-attedit` (Global) *(prompts)* — aliases: `-ate`, `atte`: {find, replace?, block?, tag?, value? (wildcard specifications, default *), handles? (default: every block reference in the current space)} → {changed}
 - `battman` (Block Attribute Manager...) *(prompts)*: {name, action?: "list" (default) \| "edit" \| "remove" \| "up" \| "down" \| "order" \| "sync", tag? (the definition to edit, remove or move; any case), newTag?, prompt?, default?, invisible?, constant?, height?, layer?, order?: [every tag, in the new order], sync?: bool (default true: existing references follow, as with ATTSYNC)} → {block, attributes: [{tag, prompt, default, invisible, constant, height, layer}], references, synced?}
 - `attsync` (Synchronize Attributes) *(prompts)*: {name} or {handle} (a reference of the block) → {block, references}
+- `blocks.description` (Block Description...) *(prompts)*: {name? (default the block the Block Editor is editing, else the one selected block reference's block), description (up to 255 characters, one line; "" clears it)} → {block, description}
 - `xbind` (Bind...) *(prompts)* — aliases: `-xbind`, `xb`, `-xb`: {type: block\|dimstyle\|layer\|linetype\|style, names: "XREF\|NAME,…" (wildcards) \| [names]} → {bound: [names]}
+- `xclip` (Clip Xref) *(prompts)* — aliases: `xc`: {handles? \| handle? (block or xref references, default the selection), option?: new\|on\|off\|delete\|polyline\|clipdepth\|query (default new with a boundary, else query), rectangle?: [[x,y],[x,y]] \| points?: [[x,y],…] (3 to 4096, drawing coordinates) \| polyline?: handle of a closed polyline, invert?: bool (hide what is inside)} → {handles, option} (query: {clips: [{handle, boundary, enabled, inverted}]}; polyline: {polylines})
 - `erase` (Erase) *(prompts)* — aliases: `e`, `delete`: {handles?: [hex]} (default: selection)
 - `move` (Move) *(prompts)* — aliases: `m`: {handles?, from?: [x,y], to?: [x,y] \| delta: [dx,dy]}
 - `copy` (Copy) *(prompts)* — aliases: `co`, `cp`: {handles?, delta: [dx,dy] \| from,to, count?: n}
 - `rotate` (Rotate) *(prompts)* — aliases: `ro`: {handles?, base: [x,y], angle (degrees), copy?: bool}
-- `scale` (Scale) *(prompts)* — aliases: `sc`: {handles?, base: [x,y], factor, copy?: bool}
+- `scale` (Scale) *(prompts)* — aliases: `sc`: {handles?, base: [x,y] or [x,y,z] (default Z: ELEVATION), factor, copy?: bool}
 - `mirror` (Mirror) *(prompts)* — aliases: `mi`: {handles?, p1, p2, erase?: bool}
 - `stretch` (Stretch) *(prompts)* — aliases: `s`: {window: [[x,y],[x,y]] \| polygon: [[x,y],...] \| fence: [[x,y],...], delta: [dx,dy]}
 - `offset` (Offset) *(prompts)* — aliases: `o`: {handle, distance, side: [x,y], erase?: bool, layer?: "source"\|"current"}
@@ -160,7 +168,7 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `explode` (Explode) *(prompts)* — aliases: `x`: {handles?}
 - `break` (Break) *(prompts)* — aliases: `br`: {handle, p1, p2}
 - `breakatpoint` (Break At Point): {handle, at}
-- `join` (Join) *(prompts)* — aliases: `j`: {handles?}
+- `join` (Join) *(prompts)* — aliases: `j`: {handles?, close?: bool (a single arc becomes its circle, an elliptical arc its full ellipse)}
 - `arrayrect` (Rectangular Array) *(prompts)*: {handles?, rows, cols, rowSpacing, colSpacing, levels? (1), levelSpacing?, rowElevation?, axisAngle? (degrees), base? ([x, y], default the objects' centre), associative?: bool (default ARRAYASSOCIATIVITY, on)} → {handle (the array, when associative), created (copies)}
 - `arraypolar` (Polar Array) *(prompts)*: {handles?, center, count, angle? (degrees, default 360), rotate?: bool, rows? (1), rowSpacing?, rowElevation?, levels? (1), levelSpacing?, base? ([x, y], default the first object's centre), associative?: bool (default ARRAYASSOCIATIVITY, on)} → {handle (the array, when associative), created (copies)}
 - `arrayedit` (Edit Array) *(prompts)*: {handle, cols?, rows?, colSpacing?, rowSpacing?, axisAngle? (degrees), rowElevation?, levels?, levelSpacing?, items?, angle? (fill, degrees), angleBetween?, rotate?: bool, center? ([x, y]), base? ([x, y], the new base point), reset?: bool, replace?: {handles, base? ([x, y], default the objects' centre), items: [[i, j, level]…] \| "source"}, source?: {item? ([i, j, level], default [0, 0, 0])} (places the source objects for editing; ARRAYCLOSE ends)}
@@ -228,12 +236,12 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `laymch` (Layer Match): {handles?, layer}
 - `laycur` (Change to Current Layer) *(prompts)*: {handles?}
 - `layiso` (Isolate Layer): {handles?}
-- `layuniso` (Unisolate Layer): {}
+- `layuniso` (Unisolate Layer)
 - `layfrz` (Freeze Layer) *(prompts)*: {handles?}
 - `layoff` (Layer Off) *(prompts)*: {handles?}
 - `laylck` (Lock Layer) *(prompts)*: {handles?}
 - `layulk` (Unlock Layer) *(prompts)*: {handles?}
-- `layerp` (Previous Layer): {}
+- `layerp` (Previous Layer)
 - `layerstate.save` (Save Layer State): {name}
 - `laymrg` (Layer Merge) *(prompts)*: {from: [names], to} (the from layers' objects move to `to`, then the from layers are deleted)
 - `laydel` (Layer Delete) *(prompts)*: {names: [...]} (deletes the layers and every object on them)
@@ -242,6 +250,7 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `linetype` (Linetype...) — aliases: `lt`, `ltype`: {current?: name, load?: name \| "*" (with a file: comma-separated names, wildcards), file?: path to a .lin file \| text?: its contents, reload?: bool}
 - `lweight` (Lineweight...) — aliases: `lw`, `lineweight`: {lineweight: mm \| ByLayer}
 - `units` (Units...) — aliases: `un`: {lunits?: 1..5, luprec?: 0..8, aunits?: 0..4, auprec?: 0..8, insunits?}
+- `thickness` (Thickness) *(prompts)*: {thickness} (THICKNESS: the 3D thickness given to new lines, arcs, circles, points and polylines; may be negative) → {thickness}
 - `limits` (Drawing Limits): {min: [x,y], max: [x,y]}
 - `style` (Text Style...) — aliases: `st`: {name, font?, bigFont?, height?, widthFactor?, oblique? (degrees), backwards?, upsideDown?, vertical?, annotative?, current?} → styles
 - `dimstyle` (Dimension Style...) — aliases: `d`, `dst`, `ddim`: {name, current?, <style fields or DIM* variables, e.g. arrowSize / DIMASZ, DIMTSZ, DIMBLK, DIMTAD, DIMLUNIT…>} → styles
@@ -253,15 +262,19 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 ## Tools
 
 - `script` (Run Script...) *(prompts)* — aliases: `scr`: {path: script (.scr) file} \| {data: base64} → {lines}
+- `aliasedit` (Command Aliases): {file?: path to a .pgp alias file \| text?: its contents, set?: {alias: command}, remove?: [alias], clear?: bool} → {aliases, file, loaded, warnings}
 - `isolateobjects` (Isolate Objects) *(prompts)*: {handles? (default the selection)} → hides every other object of the current space for this session: {hidden}
 - `hideobjects` (Hide Objects) *(prompts)*: {handles? (default the selection)} → hides these objects for this session: {hidden}
 - `unisolateobjects` (End Object Isolation): {} → shows every object ISOLATEOBJECTS or HIDEOBJECTS hid: {shown}
+- `breakline` (Break-line Symbol) *(prompts)*: {p1, p2, at?: [x,y] (symbol location; default the midpoint), size? (default 1, times DIMSCALE), extension? (past both points; default 0), block? (a block with two points on Defpoints; default the built-in symbol)} → {handle}
+- `burst` (Explode Attributes to Text) *(prompts)*: {handles?} (block references; other objects are left alone) → {handles}
+- `blockreplace` (Replace Block...) *(prompts)* — aliases: `-blockreplace`: {block (the block whose references are replaced), with (the replacement block), purge?: bool (default false: remove the replaced block's definition when nothing references it any more)} → {block, with, replaced, purged}
 - `dataextraction` (Data Extraction...) *(prompts)* — aliases: `dx`: {blocks?: "A*,B" (block names, wildcards, default *), tags?: attribute tags to include (wildcards, default *), handles? (default: the block references in model space and every layout), combine?: bool (default true: identical rows once, with a Count column; false: one row per reference with handle, layer, position and rotation), file?: path (.csv; .txt is tab-separated), at?: [x,y] (insert a table there), title?: table title} → {columns, rows, file?, table?}
 - `xopen` (Open Xref) *(prompts)*: {name} \| {handles: [xref reference]}
 - `refedit` (Edit Reference In-Place) *(prompts)*: {handle? \| handles? \| name? (a block reference, default the selection), objects?: [block object handles] (default all)} → {block, insert, working: [handles], faded}
 - `refset` (Working Set) *(prompts)*: {add?: [handles], remove?: [handles]} (or {handles, mode?: "add"\|"remove"}); with neither: lists the working set → {working: [handles], added, removed}
 - `refclose` (Save Reference Edits) *(prompts)*: {option?: "save"\|"discard" \| save?: bool (default true)} → {block, saved, objects}
-- `bedit` (Block Editor) *(prompts)* — aliases: `be`, `-bedit`: {name? ("<Current Drawing>": the drawing itself, a dynamic block's own drawing) \| handle? (a block reference: edits its block); default the one selected block reference, create?: bool (a name no block has yet starts a new block; BSAVE creates it)} → {block, new}
+- `bedit` (Block Editor) *(prompts)* — aliases: `be`, `-bedit`: {name? ("<Current Drawing>": the drawing itself, a dynamic block's own drawing) \| handle? (a block reference: edits its block); default the one selected block reference, create?: bool (a name no block has yet starts a new block; BSAVE creates it), save?: bool (in the Block Editor, switching to another block: save (true) or discard (false) the changes not saved yet; required when there are some), check?: bool (in the Block Editor: only check that the block can be switched to)} → {block, new, saved?}
 - `draworder.front` (Bring to Front) *(prompts)*: {handles?}
 - `draworder.back` (Send to Back) *(prompts)*: {handles?}
 - `draworder.above` (Bring Above Objects) *(prompts)*: {handles?, reference: [hex]}
@@ -271,6 +284,7 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `texttofront.leaders` (Leaders Only): {} → {moved}
 - `texttofront.all` (All Annotation Objects): {} → {moved}
 - `hatchtoback` (Send Hatches to Back): {} → {moved}
+- `mocoro` (Move/Copy/Rotate) *(prompts)*: {handles?, base: [x,y], ops: [{move: [x,y]} \| {copy: [x,y]} \| {rotate: degrees} \| {scale: factor} \| {base: [x,y]}]} → {handles (copies)}
 - `group` (Group) *(prompts)* — aliases: `g`: {name? (default: an unnamed group *A1, *A2…), description?, handles? (default the selection), selectable?: bool (default true)} → {name, members}
 - `ungroup` (Ungroup) *(prompts)*: {name?: "G1" \| "G1,G2" \| [names]} \| {handles?} (default the selection: every group holding one of the objects) → {ungrouped: [names]}
 - `compare` (Compare Drawings...) *(prompts)*: {path} \| {data: base64, name} \| {document: index or title} → {other, added: [{handle, type}], removed, changed: [{handle, other, type, what}], counts: {added, removed, changed, common}, regions, truncated, message}
@@ -278,16 +292,18 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `id` (ID Point) *(prompts)*: {at}
 - `list` (List) *(prompts)* — aliases: `li`, `ls`: {handles?}
 - `area` (Area) *(prompts)* — aliases: `aa`: {points: [[x,y],...]} \| {handle}
-- `time` (Time): {}
-- `status` (Status): {}
-- `count` (Count) *(prompts)*: {block?, object?: handle (count objects like this one), space?: current\|model\|all\|<layout> (default current), handles?: [...] (count in these objects), nested?: bool (default true), highlight?: bool} → {blocks: {name: n}, nested: {name: n}, spaces: {space: {name: n}}, total} \| {block, count, nested, handles}, plus `message`
-- `massprop` (Region/Mass Properties) *(prompts)*: {handles?} (regions) → properties of each
+- `time` (Time)
+- `status` (Status)
+- `count` (Count) *(prompts)*: {block?, object?: handle (count objects like this one), space?: current\|model\|all\|<layout> (default current), handles?: [...] (count in these objects), nested?: bool (default true), highlight?: bool} → {blocks: {name: n}, nested: {name: n}, spaces: {space: {name: n}}, total} \| {block, count, nested, handles}, plus `message` and `selfCheck` (found/analyzed/skipped counts with reasons, and the caps hit: work, handles, blockDepth)
+- `massprop` (Region/Mass Properties) *(prompts)*: {handles?} (regions) → properties of each, plus `selfCheck` (found/analyzed/skipped with reasons, caps, implausible values)
 - `dsettings` (Drafting Settings...) — aliases: `ds`, `se`: {snapunit?: [x,y], gridunit?: [x,y], polarang? (degrees), gridmajor?}
 - `setvar` (Set Variable) *(prompts)* — aliases: `set`: {name, value}
-- `options` (Options...) — aliases: `op`, `preferences`: {reset?: bool, OSMODE?, PICKBOX?, APERTURE?, GRIPSIZE?, CURSORSIZE?, PICKFIRST?, PICKADD?, …: any profile variable}
+- `options` (Options...) — aliases: `op`, `preferences`: {reset?: bool, OSMODE?, PICKBOX?, APERTURE?, GRIPSIZE?, CURSORSIZE?, PICKFIRST?, PICKADD?, PICKDRAG?: 0 (two clicks) \| 2 (clicks or drag), …: any profile variable}
 - `cal` (QuickCalc) *(prompts)* — aliases: `quickcalc`, `qc`: {expr: "(3+4)*2^2" \| "dist([0,0],[3,4])", vars?: {x: 1, p: [x, y]}} → {value} \| {point} \| {convert: {type?: length\|area\|volume\|angle, from, to, value}} → {value} \| {units: true} → unit lists \| {pick: point\|distance\|angle\|intersection, points}
-- `radius.measure` (Radius): {handle}
-- `angle.measure` (Angle): {vertex, p1, p2} \| {h1, h2}
+- `radius.measure` (Radius) *(prompts)*: {handle, point?}
+- `angle.measure` (Angle) *(prompts)*: {vertex, p1, p2} \| {h1, h2}
+- `volume.measure` (Volume) *(prompts)*: {points: [[x,y],...] (3 or more) \| handle (a closed 2D object), height} → {volume, area, height}
+- `txt2mtxt` (Convert Text to Mtext) *(prompts)*: {handles? (default the selection; TEXT, and MTEXT when combining), combine? (default true: one MTEXT; false: one per TEXT), sort?: "topdown" (default) \| "selection", wrap? (default false: one line per text)} → {handles}
 - `gccoincident` (Coincident) *(prompts)*: {h1, p1?, h2?, p2?, h3?, p3?} (h = handle; p = "start"/"end"/"mid"/"center"/"v<i>"/"seg<i>"/"object" or a pick point [x, y])
 - `gcperpendicular` (Perpendicular) *(prompts)*: {h1, p1?, h2?, p2?, h3?, p3?} (h = handle; p = "start"/"end"/"mid"/"center"/"v<i>"/"seg<i>"/"object" or a pick point [x, y])
 - `gcparallel` (Parallel) *(prompts)*: {h1, p1?, h2?, p2?, h3?, p3?} (h = handle; p = "start"/"end"/"mid"/"center"/"v<i>"/"seg<i>"/"object" or a pick point [x, y])
@@ -302,8 +318,8 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `gcfix` (Fix) *(prompts)*: {h1, p1?, h2?, p2?, h3?, p3?} (h = handle; p = "start"/"end"/"mid"/"center"/"v<i>"/"seg<i>"/"object" or a pick point [x, y])
 - `autoconstrain` (AutoConstrain) *(prompts)*: {handles?, tolerance?, angleTolerance? (degrees), types?: [names]}
 - `constraintbar` (Constraint Bars) *(prompts)*: {mode?: show\|hide\|showall\|hideall, handles?}
-- `constraintbar.showall` (Show All Constraint Bars): {}
-- `constraintbar.hideall` (Hide All Constraint Bars): {}
+- `constraintbar.showall` (Show All Constraint Bars)
+- `constraintbar.hideall` (Hide All Constraint Bars)
 - `dcaligned` (Aligned) *(prompts)*: {h1, p1?, h2?, p2?, expr? \| value?, name?}
 - `dchorizontal` (Horizontal) *(prompts)*: {h1, p1?, h2?, p2?, expr? \| value?, name?}
 - `dcvertical` (Vertical) *(prompts)*: {h1, p1?, h2?, p2?, expr? \| value?, name?}
@@ -311,12 +327,12 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `dcradius` (Radius) *(prompts)*: {h1, p1?, h2?, p2?, expr? \| value?, name?}
 - `dcdiameter` (Diameter) *(prompts)*: {h1, p1?, h2?, p2?, expr? \| value?, name?}
 - `dcdisplay` (Dynamic Dimensions) *(prompts)*: {mode?: show\|hide\|showall\|hideall, handles?}
-- `dcdisplay.showall` (Show All Dynamic Dimensions): {}
-- `dcdisplay.hideall` (Hide All Dynamic Dimensions): {}
+- `dcdisplay.showall` (Show All Dynamic Dimensions)
+- `dcdisplay.hideall` (Hide All Dynamic Dimensions)
 - `delconstraint` (Delete Constraints) *(prompts)*: {handles? \| ids?: [n]}
-- `parameters` (Parameters Manager) — aliases: `par`, `parametersclose`: {} lists; {name, expr \| value, description?} sets (new name = user parameter) and re-solves; {delete: name}
+- `parameters` (Parameters Manager) — aliases: `par`, `parametersclose`: {} lists; {name, expr \| value, description?} sets (new name = user parameter) and re-solves; {delete: name}; {name, rename: newName} renames it in every expression
 - `constraintsettings` (Constraint Settings) — aliases: `csettings`: {infer?, distanceTolerance?, angleTolerance?, autoTypes?: [names], barsVisible?, barTransparency?, dimsVisible?}
-- `appload` (Load Application...) *(prompts)* — aliases: `ap`: {path: .lsp file} \| {name, data: base64 \| text} → {value?, error?}
+- `appload` (Load Application...) *(prompts)* — aliases: `ap`: {path: .lsp file} \| {name, data: base64 \| text} → {value?, commands: [commands the file defined], error?}
 
 ## Window
 
@@ -325,8 +341,7 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 ## No menu (command line and JSON only)
 
 - `document.switch` (Switch Drawing): {index}
-- `document.bytes` (Drawing as bytes): {format?: dxf, version?: 2000…2018, binary?: bool} → {data: base64}
-- `aliasedit` (Command Aliases): {file?: path to a .pgp alias file \| text?: its contents, set?: {alias: command}, remove?: [alias], clear?: bool} → {aliases, file, loaded, warnings}
+- `document.bytes` (Drawing as bytes): {format?: dxf, version?: 2000…2018, binary?: bool, portableFonts?: bool} → {data: base64}
 - `reinit` (Reinitialize): {file? \| text?} (default: the alias file loaded last)
 - `undo` (Undo) *(prompts)*: {count?: n} \| {mode: mark\|begin\|end} \| {mode: back, confirm?: bool (no mark: undo everything; default true)} \| {mode: auto, on: bool} \| {mode: control, control: all\|none\|one\|combine\|layer, on?: bool (combine/layer)}
 - `mredo` (Redo) *(prompts)*: {count?: n} \| {all: true}
@@ -335,12 +350,13 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `qselect.info` (Quick Select Properties): {applyTo?: drawing\|selection, type?} → object types with counts and the properties available for `type`
 - `selectsimilar` (Select Similar) *(prompts)*: {handles? (default the selection), mode?: SELECTSIMILARMODE bits (1 colour, 2 layer, 4 linetype, 8 linetype scale, 16 lineweight, 32 plot style, 64 object style, 128 name; default the variable, 130)} → selects every visible object in the current space of the same type with those properties: {selected, handles}
 - `zoom` (Zoom) *(prompts)* — aliases: `z`: {mode: extents\|all\|window\|previous\|in\|out\|center\|dynamic\|scale\|realtime\|object, p1?, p2?, center?, height?, factor?, xp?: bool (scale relative to paper space: in a viewport, `factor` paper units per model unit), limits?: bool (scale relative to the limits)} (center/dynamic: `center` + `height`, or `factor` with `xp`/`limits`; realtime: `factor` about the view centre; typed: Enter at the first prompt starts Realtime)
-- `view.set` (Set View): {center: [x,y], height}
-- `view.get` (Get View): {}
+- `dview` (DView) *(prompts)* — aliases: `dv`: {twist: degrees counterclockwise} (DVIEW TWist: the Model tab's view twist, or the active layout viewport's, an undoable edit; not in Paper space)
+- `view.set` (Set View): {center: [x,y], height, twist?: degrees (default: keep the current twist; in a layout viewport it is the viewport's twist, an undoable edit; not in Paper space)}
+- `view.get` (Get View)
 - `layout.set` (Switch Layout): {name: "Model" \| layout name}
 - `-vports` (Viewports) *(prompts)*: {option: single\|2\|3\|4\|join\|save\|restore\|delete\|list, arrangement?: horizontal\|vertical (2) \| horizontal\|vertical\|above\|below\|left\|right (3; default right), applyTo?: current\|display (default current: split the current tile), name? (save/restore), names? (delete/list; wildcards), dominant?, join? (tile numbers from 1; dominant defaults to the current tile)} (model space; in a layout: MVIEW)
 - `vports.activate` (Set Current Viewport): {index: tile number from 1}
-- `leader` (Leader) — aliases: `lead`: {points: [[x,y]...], text?}
+- `leader` (Leader) *(prompts)* — aliases: `lead`: {points: [[x,y]...], text?}
 - `dimdisassociate` (Disassociate Dimensions) *(prompts)* — aliases: `dda`: {handles?}
 - `dimtedit` (Dimension Text Edit) *(prompts)* — aliases: `dimted`: {handles?, at?: [x,y], mode?: home\|angle\|left\|center\|right, angle?}
 - `dimedit` (Dimension Edit) *(prompts)* — aliases: `ded`, `dimed`: {handles?, mode?: home\|new\|rotate\|oblique (default home), text? (new: "" or "<>" = the measurement), angle?: degrees (rotate: text angle; oblique: extension line angle, absent = none)}
@@ -348,24 +364,29 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `annoupdate` (Annotative Update) *(prompts)*: {handles?} (makes text, dimensions, multileaders and block references annotative or not as their style or block is)
 - `annovisible.toggle` (Annotation Visibility): {} (toggles ANNOALLVISIBLE)
 - `hatchpick` (Hatch Pick) *(prompts)*: {points?: [[x,y]] (internal points), handles?: [hex] (closed objects)} (typed: Points, Objects, oRigin or Hatch, then the picks): the Hatch and Gradient dialog's picks, kept in the session; changes nothing
-- `-block` (Create Block) *(prompts)* — aliases: `-b`: {name, base: [x,y], handles?, keep?: "delete"\|"retain"\|"convert" (default "delete"), description?}
+- `-block` (Create Block) *(prompts)* — aliases: `-b`: {name, base: [x,y], handles?, keep?: "delete"\|"retain"\|"convert" (default "delete"), description? (up to 255 characters, one line)}
+- `minsert` (Multiple Insert) *(prompts)*: {name, file?: DXF/DWG path (as INSERT), at: [x,y], scale?: number \| [x, y], rotation? (degrees), basePoint?: [x,y], attribs?: {TAG: value}, rows?: 1..32767 (default 1), columns?: 1..32767 (default 1), rowSpacing?, columnSpacing? (along the reference's own axes, not scaled with it)}
 - `wblock` (Write Block) — aliases: `w`: {path, name? \| handles?, base?}
+- `-wblock` (Write Block) *(prompts)*: {path, name? \| handles?, base?} (the objects written are erased)
 - `blocks.dynamic` (Dynamic Block Data): {name (a block, or "*Model_Space" for a drawing that is a dynamic block's own)} → {parameters, actions, other} \| null (not a dynamic block)
 - `blocks.reference` (Dynamic Block Reference): {handle (a block reference)} → {definition, values (by parameter graph id), properties: [{name, value, choices}]} \| null (not a dynamic block reference)
 - `blocks.reference.set` (Set Dynamic Property): {handle (a dynamic block reference), name (a custom property as Properties names it: a visibility state, a lookup, a distance or "Position1 X"), value (lengths in drawing units)} → {properties}
 - `blocks.reference.grips` (Dynamic Block Grips): {handle} → [{node, part: base\|end\|at, shape: linear\|point\|list, at: [x,y], dir: [x,y], property, choices?}] (empty: not a dynamic block reference)
 - `blocks.reference.grip` (Drag Dynamic Grip): {handle, node (the parameter's graph id), part: base\|end\|at, to: [x,y] (drawing coordinates)} → {properties}: a distance's arrow changes the distance (snapped to its values), a position's square moves it
 - `purge` (Purge) *(prompts)* — aliases: `pu`, `-purge`: {type?: all\|blocks\|dimstyles\|groups\|layers\|linetypes\|mleaderstyles\|tablestyles\|textstyles\|zerolength\|emptytext (default all: every named type), names?: "A*,B" (default *)} → purged
-- `blocks.list` (List Blocks): {}
+- `blocks.list` (List Blocks)
 - `attdisp` (Attribute Display) *(prompts)*: {mode: "normal" \| "on" \| "off"} (sets ATTMODE to 1 / 2 / 0) → {attmode}
 - `eattext` (Data Extraction...) *(prompts)*: {blocks?: "A*,B" (block names, wildcards, default *), tags?: attribute tags to include (wildcards, default *), handles? (default: the block references in model space and every layout), combine?: bool (default true: identical rows once, with a Count column; false: one row per reference with handle, layer, position and rotation), file?: path (.csv; .txt is tab-separated), at?: [x,y] (insert a table there), title?: table title} → {columns, rows, file?, table?}
 - `-xref` (External References) *(prompts)* — aliases: `-xr`: {option: "?"\|bind\|detach\|path\|unload\|reload\|overlay\|attach\|type, names?: "A,B*" (default *), path? (path, attach, overlay), insert?: bool (bind: Insert type), overlay?: bool (type), at?, scale?, rotation? (attach)}
+- `xclipframe` (Xref Clip Frame) *(prompts)*: {value?: 0 (frames hidden) \| 1 (shown and plotted) \| 2 (shown, not plotted; the default)} → {XCLIPFRAME}
 - `bsave` (Save Block): {} → {block}
 - `bsaveas` (Save Block As) *(prompts)*: {name, replace?: bool (redefine an existing block of that name)} → {block}
 - `bclose` (Close Block Editor) *(prompts)*: {save?: bool (default true; false discards the changes not saved into the block)} → {block, saved}
+- `oops` (Oops): {} (brings back what the last ERASE, BLOCK or -WBLOCK removed)
 - `draworder` (Draw Order) *(prompts)* — aliases: `dr`: {handles?, order?: "front"\|"back"\|"above"\|"under" (default back), reference?: [hex] (above/under)} → {moved}
 - `texttofront` (Bring Annotations to Front) *(prompts)*: {objects?: "text"\|"dimensions"\|"leaders"\|"all" (default all)} → {moved}
 - `array` (Array) *(prompts)* — aliases: `ar`: {type?: "rectangular" (default) \| "polar" \| "path", ...the parameters of arrayrect, arraypolar or arraypath}
+- `-array` (Array) *(prompts)*: {handles?, type?: "rectangular" (default) \| "polar", rows? (1), cols? (1), rowSpacing?, colSpacing?, center, count, angle? (degrees, default 360), rotate?: bool (default true), base? ([x, y], default the DXF group 10 point of the last object)} → {created}: separate copies, as the classic -ARRAY makes them
 - `arrayclose` (Close Array Editing) *(prompts)*: {save?: bool (default true)}
 - `reverse` (Reverse) *(prompts)*: {handles?} (lines, polylines, 3D polylines, splines)
 - `groupedit` (Group Edit) *(prompts)*: {name, add?: [handles], remove?: [handles], rename?: new name} → {name, members}. Removing every member deletes the group.
@@ -382,35 +403,42 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `compare.next` (Next Change): → {region, of}: zoom to the next area with changes
 - `compare.previous` (Previous Change): → {region, of}
 - `compareclose` (Close Comparison): {}: end the comparison and its overlay
+- `compareexport` (Export Comparison): {} → {index, title, current, compared: group names, counts: {current, compared}, truncated, message}: the comparison as a new drawing, opened untitled
 - `layer.new` (New Layer): {name, color?, linetype?, lineweight? (mm), current?: bool}
 - `layer.set` (Set Layer Properties): {name, on?, frozen?, locked?, plot?, color?, linetype?, lineweight?, transparency?, description?, newVpFreeze?, plotStyle? (named plot style), newName?}
 - `layer.delete` (Delete Layer): {name}
 - `laymcur` (Make Object's Layer Current): {handles?}
-- `layon` (Turn All Layers On): {}
-- `laythw` (Thaw All Layers): {}
+- `layon` (Turn All Layers On)
+- `laythw` (Thaw All Layers)
 - `layerstate.restore` (Restore Layer State): {name}
 - `layerstate.list` (List Layer States): {} → states
 - `layerstate.delete` (Delete Layer State): {name}
 - `layerstate.rename` (Rename Layer State): {from, to}
-- `layout` (Layout) *(prompts)* — aliases: `lo`: {option: new\|copy\|delete\|rename\|set\|list, name?, to?} (typed LAYOUT / -LAYOUT: option prompts)
+- `layout` (Layout) *(prompts)* — aliases: `lo`: {option: new\|copy\|delete\|rename\|saveas\|set\|list, name?, to?, path? (saveas)} (typed LAYOUT / -LAYOUT: option prompts)
 - `layout.delete` (Delete Layout): {name}
 - `layout.rename` (Rename Layout): {from?: current layout, to}
 - `layout.copy` (Copy Layout): {from, to?}
 - `layout.list` (List Layouts): → [{name, tabOrder, page, viewports}]
+- `layout.saveas` (Save Layout as Template): {name?: layout (default: the current layout, else the first tab), path: .dwt (or .dwg, .dxf; no extension adds .dwt)} → {name, path, bytes, notSaved?}
 - `mview` (Viewports) *(prompts)* — aliases: `mv`: {option?: fit\|polygonal\|object\|on\|off\|lock\|restore, p1?, p2? (default: printable area), count?: 1-4, arrangement?: vertical\|horizontal\|left\|right\|above\|below, points?: [[x,y]…] + bulges? (polygonal), object? (closed object to clip by), handles? + locked? (on/off/lock), name? (restore: a model space viewport configuration, default *Active; its viewports fill p1-p2 or the printable area), layout?}
 - `viewport.set` (Viewport Properties): {handle? (default: selected viewports), scale?: paper units per model unit \| "1:50", viewHeight?, center?: [x,y], locked?, freeze?: [layer], thaw?: [layer], colors?: {layer: color \| null}}
 - `vplayer` (Viewport Layer Freeze) *(prompts)*: {handle?, freeze?: [layer], thaw?: [layer], colors?: {layer: color ("red" \| 1..255 \| "r,g,b") \| null to clear}} (typed: option prompts)
 - `mspace` (Model Space (in viewport)) — aliases: `ms`: {handle?: viewport, at?: [x,y] paper point inside a viewport} (default: the last active or first viewport)
-- `pspace` (Paper Space) — aliases: `ps`: {}
+- `pspace` (Paper Space) — aliases: `ps`
 - `plotwindow` (Plot Window) *(prompts)*: {p1: [x,y], p2: [x,y]} (typed: two corners): the window the Plot dialog's "Window <" plots, kept in the session
 - `-plottermanager` (Plotter Manager) *(prompts)*: as PLOTTERMANAGER (typed: option prompts)
-- `attach` (Attach): not available yet
+- `attach` (Attach): {path: image file, …} as IMAGEATTACH; other file types are not available yet
 - `share` (Share): not available yet
 - `3dorbit` (Orbit) — aliases: `3do`, `orbit`: not available yet
-- `properties.set` (Set Properties): {handles?, layer?, color?, linetype?, lineweight?, ltscale?, transparency?: "ByLayer" \| "ByBlock" \| 0..90, visible?, <geometry fields: radius, center, start, end, text, height, rotation…>}
+- `imageattach` (Raster Image Reference...) — aliases: `iat`: {path: PNG/JPEG/BMP/TIFF file (saved as given; a relative path is relative to this drawing's folder), data?: base64 file contents (instead of reading `path`), at?: [x,y] lower-left corner (default 0,0), scale?: number (default 1: the image is one drawing unit wide), width?: width in drawing units (instead of `scale`), rotation? (degrees), name? (default: the file name)} → {name, handle, path, pixels: [w, h], size: [w, h]}
+- `image` (Raster Images) — aliases: `im`: {} → {images: [{name, path, foundAt, status: Loaded\|Not Found\|Not loaded, references, pixels?: [w, h]}]}
+- `properties.set` (Set Properties): {handles?, layer?, color?, linetype?, lineweight?, ltscale?, thickness?, transparency?: "ByLayer" \| "ByBlock" \| 0..90, visible?, <geometry fields: radius, center, start, end, text, height, rotation…>; dimensions: textOverride, dimStyle, textHeight, arrowSize, dimScale, precision (per-dimension overrides)}
+- `chprop` (Change Properties) *(prompts)*: as properties.set, leaving out objects on locked layers → {changed, locked} (the command line asks Color, LAyer, LType, ltScale, LWeight, Thickness and TRansparency in turn)
+- `change` (Change) *(prompts)* — aliases: `-ch`: {handles?, point?: [x, y], elevation?} → {changed, ignored, differingZ, detachedHatches, locked}: the point moves the nearer end of each line to it (level or plumb with the other end under ORTHOMODE) and, when it is the one object, passes a circle through it or places a text, attribute definition or block reference at it (`ignored` otherwise); `elevation` sets the z of objects whose points share one (`differingZ` otherwise); objects on locked layers are left out (the command line asks Specify change point or [Properties], then about each circle, text, attribute definition and block reference in turn)
 - `hatch.patterns` (Hatch Patterns): {file?: path to a .pat file \| text?: its contents, clear?: bool} → {standard, user, added, warnings} (HATCH also takes patternFile \| patternText)
 - `-linetype` (Linetype) *(prompts)*: {current?, load?, file? \| text?, reload?} (as LINETYPE)
-- `ltscale` (Linetype Scale) — aliases: `lts`: {scale}
+- `ltscale` (Linetype Scale) *(prompts)* — aliases: `lts`: {scale}
+- `-units` (Units) *(prompts)* — aliases: `-un`: (as UNITS)
 - `style.list` (List Text Styles): {} → text styles
 - `style.rename` (Rename Text Style): {from, to}
 - `style.delete` (Delete Text Style): {name} (not Standard, the current style or one in use)
@@ -421,7 +449,10 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `dimstyle.current` (Set Current Dimension Style): {name}
 - `dimstyle.override` (Dimension Style Override): {handles?, <style fields or DIM* variables: values>, clear?: bool} (per-dimension overrides)
 - `drawing.inspect` (Inspect Drawing): {entities?: bool, limit?: n}
-- `entities` (Query Entities): {type?, layer?, window?: [[x,y],[x,y]], crossing?: bool (default true; false = entirely inside), limit?, offset?} → {count (all matches), returned, offset, entities}
+- `entities` (Query Entities): {type?, layer?, selected?: bool (default false; true = current selection in active space), window?: [[x,y],[x,y]], crossing?: bool (default true; false = entirely inside), limit?, offset?} → {count (all matches), returned, offset, entities}
+- `shapes` (Analyze Shapes): {type?, layer?, window?: [[x,y],[x,y]], crossing?: bool (default true; false = entirely inside), limit? (default 200), offset?, tolerance?: positive number (default 1e-9 × the extents diagonal; near-duplicate vertices and a first vertex equal to the last)} → {schema: 1, count (all closed shapes), returned, offset, truncated, shapes: [{handle, type, layer, perimeter, area (≥ 0), winding: ccw\|cw, centroid: [x,y] \| null (zero area), selfIntersection: [x,y] \| null (the first crossing of two non-adjacent edges; null past 4000 edges), duplicateVertices: [{index, distance} (vertices index and index+1, wrapping)]}], skipped: {<type>: {count, reason}} (the other matches), selfCheck: {schema, found, analyzed, skipped: {<type>: {count, reason}}, caps: {<name>: <value>}, implausible: [{handle, type, field, value, bound, reason}]} (what the analysis covered, the caps it hit, and values that point at a bug)}: closed polylines, circles, full ellipses and closed splines, arcs and bulges exact
+- `usage` (Analyze Usage): {type?: layers\|blocks\|textstyles\|linetypes\|all (default all), limit? (default 200), offset?} → {schema: 1, count (all items of the type), returned, offset, truncated, incomplete (true when the drawing has more objects than one scan reads, so every count, status and summary is partial), incompleteReason? (why), items: [{type: layer\|block\|textStyle\|linetype, name, entities (objects in model space and layouts that use it), blockEntities (objects in block definitions that use it), references (named objects that use it: a layer's linetype, a text style's dimension and multileader styles), used (for a block: reachable from model space, a layout or a dimension), insideBlocksOnly (used, but by block definitions only), empty (nothing refers to it), unused (PURGE would offer it), current? (the current layer, text style or linetype)}], summary: {<kind>: {total, used, insideBlocksOnly, empty, unused}}, unused: {<kind>: {count, returned, truncated, names}} (PURGE's scan, in table order)}
+- `loops` (Implied Loops): {tolerance?: positive number (default 1e-9 × the extents diagonal), maxPairs? (endpoint pairs compared, default 1000000, at most 100000000), limit? (default 200), offset?} → {schema: 1, tolerance, pairTests, pairTestsNeeded, pairLimit, capped, count (all closed loops), returned, offset, truncated, loops: [{members: [handle], perimeter, area, winding: ccw\|cw}], openChains: {count, truncated, chains: [{members, gap, at: [x, y], ends: [[x, y], [x, y]], length}]}, junctions: {count, truncated, junctions: [{at: [x, y], ends, members}]}, skipped: {<type>: {count, reason}}}: chains LINE and ARC endpoints that meet within the tolerance; junctions (three or more ends meeting) are reported, not resolved
 - `texts` (Query Texts): {contains?: text (any case), layer?, window?: [[x,y],[x,y]] (by insertion point), limit? (default 200), offset?} → {count (all matches), returned, offset, texts: [{handle, type, layer, text, at, height, rotation (degrees), style, tag? (attributes)}]}: the readable text of TEXT, MTEXT (formatting removed), block attributes and multileaders
 - `countlist` (Count List): {space?: all (default)\|current\|model\|<layout>, nested?: bool} → per-block counts, as COUNT
 - `counttable` (Count Table) *(prompts)*: {at: [x,y], space?: current (default)\|model\|all\|<layout>, nested?: bool} → {handle}: a table of the block counts
@@ -439,9 +470,9 @@ Grep it rather than reading it whole, e.g. `grep -n '^- `dim' commands.md` or `g
 - `selectioncycling` (Selection Cycling): {on?: bool}
 - `osnap` (Object Snap) — aliases: `os`, `ddosnap`: {on?: bool, modes?: ["end","mid",...] \| osmode?: n}
 - `getvar` (Get Variable): {name}
-- `sysvars` (List System Variables): {}
+- `sysvars` (List System Variables)
 - `quickcalc.pick` (QuickCalc Pick) *(prompts)*: {mode: point\|distance\|angle\|intersection, points: [[x,y],...]} → {value} \| {point}
-- `measuregeom` (Measure Geometry): {mode: distance\|radius\|angle\|area, ...}
+- `measuregeom` (Measure Geometry) *(prompts)*: {mode: distance\|radius\|angle\|area\|volume, ...}
 - `table.set` (Set Table Cell): {handle, row, col, text? (text starting with = is a formula), formula?: "=Sum(A2:A5)"}
 - `table.insertrow` (Insert Row): {handle, row? (insert before; default: append), height?}
 - `table.deleterow` (Delete Row): {handle, row}

@@ -1,7 +1,7 @@
 ---
 name: filmcraft
-description: "Video editing with FilmCraft (Premiere Pro-style): cut clips into a sequence, trim, razor, ripple, transitions (cross dissolve, dip to black), titles and lower thirds, music and audio levels/fades, color (Lumetri), speed changes, captions/subtitles (SRT/VTT, burn-in), transcript-based editing, text-to-speech narration, and export to MP4 / ProRes / GIF / WAV / FLAC or FCP XML / EDL / OTIO / AAF."
-version: 0.4.0
+description: "Video editing with FilmCraft (Premiere Pro-style): cut clips into a sequence, trim, razor, ripple, transitions (cross dissolve, dip to black), titles and lower thirds, animated graphics, music and audio levels/fades, color (Lumetri), speed changes, captions/subtitles (SRT/VTT, burn-in), transcript-based editing, text-to-speech narration, vertical 9:16 cuts for TikTok / Reels / Shorts, and export to MP4 / HEVC / ProRes / DNxHR / GIF / WAV / FLAC or FCP XML / EDL / OTIO / AAF."
+version: 0.5.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,6 +16,7 @@ metadata:
 FilmCraft is a free, open-source clean-room take on Adobe Premiere Pro (storytold Crafting Apps), with its own
 H.264/ProRes/AAC codecs (no FFmpeg). An agent drives it through an MCP server (`filmcraft-cli mcp`) or one-shot CLI
 commands. Projects are `.fcproj` files; every edit is an undoable engine command.
+This skill is tested against FilmCraft 0.17.0.
 
 ## When to Use
 
@@ -27,7 +28,8 @@ Use it for **editing footage on a timeline**:
 - colour correction with Lumetri, effects such as blur, crop, drop shadow
 - captions/subtitles: build from a transcript, import/export SRT/VTT/SCC, burn into the export
 - a quick scratch voice-over: text-to-speech narration clips (built-in robotic voices)
-- exporting deliverables (MP4, ProRes, DNxHR, GIF, PNG/EXR sequence, WAV, FLAC, AAC) and timelines for other NLEs
+- vertical 9:16 cuts with the TikTok / Instagram Reels / YouTube Shorts export presets
+- exporting deliverables (MP4, HEVC, ProRes, DNxHR, GIF, PNG/EXR sequence, WAV, FLAC, AAC) and timelines for other NLEs
 
 Pick a different Crafting App when:
 
@@ -44,9 +46,10 @@ Pick a different Crafting App when:
    run its `setup filmcraft`. Then ask the user to start a new session or run `/reload-mcp`.
 3. Until the MCP tools appear, use the CLI (see **CLI**).
 
-`filmcraft-cli mcp` is **headless** and starts with an **empty project** (`--project p.fcproj` or `--demo` to start
-with content). For the user to watch live, they run `filmcraft --control 9876` and the server is started as
-`filmcraft-cli mcp --bridge 127.0.0.1:9876`; then the `ui_*` tools work.
+`filmcraft-cli mcp` is **headless** and starts with an **empty project** (`mcp --project p.fcproj` or `mcp --demo` to
+start with content). For the user to watch live, they run `filmcraft --control 9876` and the server is started as
+`filmcraft-cli mcp --bridge 127.0.0.1:9876`; then the `ui_*` tools work (bridge mode not tested here). There are no
+`--autosave` or `--automation-*-root` flags (`unknown mcp option`): save with `file.save` yourself.
 
 ## Mental Model
 
@@ -56,7 +59,7 @@ with content). For the user to watch live, they run `filmcraft --control 9876` a
   with sound; they are linked). Ids are plain integers; read them from replies or `doc_inspect`.
 - **Time is ticks: 254016000000 per second.** Most commands also accept `seconds`, `frame` or `timecode`.
   Ticks must be **integers**. Clip `start`/`end` are sequence time; `sourceIn`/`sourceOut` are media time.
-- **Every edit is a command** (701). Discover with `command_list {filter}`, run with `command_run {id, params}`, or
+- **Every edit is a command** (716). Discover with `command_list {filter}`, run with `command_run {id, params}`, or
   several with `command_batch`. Unknown ids/tracks are errors, never a different target.
 - **Linked selection is on:** an edit to a video clip also hits its linked audio (razor cuts both, gain sets both).
   To act on one side only, select it with `timeline.select {clips: [v], linked: false}`, then run the edit with no
@@ -73,7 +76,7 @@ with content). For the user to watch live, they run `filmcraft --control 9876` a
 | `command_run {id, params}` | Run any command |
 | `command_batch {steps:[{id, params}], stop_on_error?}` | Several commands in order → `{completed, failed, results}` (each its own undo step) |
 | `command_list {filter?, enabled_only?}` | Find command ids and their params docs |
-| `render_frame {seconds?, max_side?}` / `render_preview` | PNG of the Program frame (`max_side` default 960, 0 = full size). **Look at it** |
+| `render_frame {seconds?, max_side?}` / `render_preview` | PNG of the Program frame (`max_side` default 960, 0 = full size); leaves playhead and selection alone. **Look at it** |
 | *(bridge only)* `ui_inspect`, `ui_elements`, `ui_click`, `ui_drag`, `ui_key`, `ui_type`, `ui_screenshot`, `ui_control` | The live window |
 
 Resources: `filmcraft://document` (as `doc_inspect`) and `filmcraft://commands` (as `command_list`). The tools reject
@@ -84,13 +87,16 @@ unknown arguments (`unknown argument "text" for media_import; expected: bin, ima
 - **Sequence:** `file.newSequence {name, width, height, fps}` → `{sequence}`. Defaults are 1920×1080, **23.976 fps**,
   3 video + 3 audio tracks. `sequence.open {item}` makes a sequence active after `file.open`.
 - **Place:** `timeline.place {item, track: "V1"|"A2"|"new", seconds | time | frame, insert?: bool, sourceIn?, duration?,
-  video?: bool, audio?: bool}`. Overwrite by default; `insert: true` ripples later clips. An audio track as `track` places
-  sound only; `audio: false` places picture only. `items: [8, 9]` lays several back to back in one undo step
+  video?: bool, audio?: bool, matchSequence?}`. Overwrite by default; `insert: true` ripples later clips. `sourceIn` and
+  `duration` take ticks or `{seconds}` / `{frame}` / `{timecode}` (`duration: {seconds: 4}`); `matchSequence: true` makes
+  an empty sequence take the clip's size and rate. An audio track as `track` places sound only; `audio: false` places
+  picture only. `items: [8, 9]` lays several back to back in one undo step
   → `{clips, placed: [[v, a], …]}`.
 - **Cut and trim:** `timeline.razor {seconds, track?}` (all unlocked tracks), `timeline.trim {clip, edge: in|out,
   mode: regular|ripple, delta: ticks | deltaFrames}`, `edit.rippleDelete {clips}`, `edit.clear {clips}`,
-  `sequence.closeGap {track, time}`, `timeline.move {moves:[{clip, track, time}]}`. `edit.rippleDeleteHead {clips}`
-  cuts a clip from its in point to the playhead (`playhead.set {seconds}`) and closes the gap; a playhead at or
+  `sequence.closeGap {track, time}`, `timeline.move {moves:[{clip, track, time}]}`, `timeline.delete {clips, ripple?}`
+  (no selection needed). `timeline.trim` / `timeline.rateStretch` take `linked: false` to trim one side of a linked
+  pair. `edit.rippleDeleteHead {clips}` cuts a clip from its in point to the playhead (`playhead.set {seconds}`) and closes the gap; a playhead at or
   before the in point is refused (`the playhead is at or before the clip's in point`).
 - **Speed:** `clip.speedDuration {clips, speed: 200, ripple: true, reverse?}`.
 - **Transitions:** `sequence.applyVideoTransition {clip, edge: "out", effect: "Cross Dissolve", frames: 20}` on the
@@ -100,20 +106,25 @@ unknown arguments (`unknown argument "text" for media_import; expected: bin, ima
 - **Titles / graphics:** `graphics.newText {text, position: [x, y], size, seconds, track, time}` → `{clip, layer}`.
   `position` is the alignment point on the first baseline and text is **left-aligned** by default. Style it with
   `graphics.set {clip, layer?, props: {align: "center", font: "Inter", font_style: "Bold", fill_color: "#ffcc00",
-  shadow: true, background: true, stroke: true, size, tracking, opacity}}`. Add shapes to the same graphic with
-  `graphics.newRectangle {clip, position, size}` (lower-third bars), or give a shape its own clip with
-  `{position, size, seconds, track, time}` and no `clip`. `graphics.list {clip}` shows layers and bounds.
+  shadow: true, background: true, stroke: true, size, tracking, opacity}}`. To animate a title, pass `keyframe: true` and
+  `time` (ticks, sequence time): every prop in `props` gets a key there → `{keyframes: {opacity: 2, scale: 2}}`.
+  `graphics.setCharStyle {clip, start, end, style: {bold, color, strikethrough…}}` styles a character range. Add
+  shapes to the same graphic with `graphics.newRectangle {clip, position, size}` (lower-third bars), or give a shape its
+  own clip with `{position, size, seconds, track, time}` and no `clip`. `graphics.list {clip}` shows layers and bounds.
 - **Audio:** `clip.audioGain {clips, mode: "set"|"adjust", db}`, `timeline.setTrack {track, volumeDb?, muted?, syncLock?}`,
   `essentialSound.generateDucking`, export `loudnessLufs: -14`.
-- **Effects & keyframes:** `effects.apply {clips, effect}` (id or name), then `effects.setParam {clip, effect: id|index,
+- **Effects & keyframes:** `effects.apply {clips, effect}` (id or name) → `{applied: [{clip, effect, index}]}` (it goes
+  at the end of the stack, so existing indices stay valid), then `effects.setParam {clip, effect: id|index,
   param, value}`; a choice param takes its index or its option name (`blend: "Multiply"`). To animate, pass
   `keyframe: true` with `seconds` or `time` (sequence time) on each key, or call `effects.toggleAnimation {clip, effect,
   param}` once first. The reply counts the param's keyframes (`{keyframes: 2}`). `effects.resetParam` resets one.
+  Values outside a param's range are refused (`` `opacity` must be between 0 and 100, got 250 ``).
   Built-ins on every clip: `motion` (position, scale, rotation, anchor), `opacity` (opacity, blend), `volume` (level, dB).
   Grep `references/effects.md` for ids and params.
 - **Color:** `effects.apply {clips, effect: "Lumetri Color"}`, then `effects.setParam {clip, effect: "lumetri",
   param: "saturation"|"exposure"|"contrast"|"temperature"…, value}`.
-- **Markers:** `markers.add {time, name, color, comment}`; `markers.exportCsv {path}` writes them all.
+- **Markers:** `markers.add {time, name, color, comment}` (`color` a label or `#hex`); `markers.delete {markers: [id]}`;
+  `markers.exportCsv {path}` writes them all. Work area: `sequence.setWorkArea`, export `range: "workArea"`.
 - **Narration (text-to-speech):** `tts.create {text, voice?, pitch?, pace?, track: "A1", seconds | time, dir}` writes a
   WAV, imports it and places it → `{clip, item, path, duration}`. `[pause 1s]` in the text inserts a pause.
 
@@ -155,9 +166,12 @@ command_run file.save {path:"/abs/edit.fcproj"}
 command_run file.exportMedia {path:"/abs/edit.mp4", format:"h264", wait:true}        → H.264 + AAC, 255 frames, 8.5 s
 ```
 
+The ids above are what a fresh 0.17.0 session gives (re-run unchanged). Clips keep their own size: a 640×360 clip
+sits small in a 1280×720 sequence until you set `motion` `scale` (or place it with `matchSequence: true` first).
+
 ### Recipe: transcript cleanup and burned-in captions (tested)
 
-The 0.9.0 release still has **no speech-to-text** (`transcript.generate`: "command `transcript.generate` is not
+The 0.17.0 release still has **no speech-to-text** (`transcript.generate`: "command `transcript.generate` is not
 available right now: speech-to-text is not available in this build (built without the `whisper` feature); import a
 transcript with transcript.set instead"). Bring word timings from elsewhere:
 
@@ -166,26 +180,30 @@ command_run transcript.set {item:8, transcript:{language:"en", speakers:[{name:"
             words:[{text:"Hello", start:50803200000, end:152409600000, speaker:0}, …]}}   # ticks, media time
 command_run transcript.inspect {}                    → words with sequence times, paragraphs
 command_run transcript.search {query:"welcome to"}   → {matches:[{from, to, start, end}]}
-command_run transcript.removeFillers {}              → {removed:1, seconds:0.17}  ripple-deletes um/uh/… on all tracks
-command_run transcript.removePauses {minSeconds:0.8, keepSeconds:0.2}  → {removed:1, seconds:0.93}
-command_run transcript.createCaptions {maxChars:32, lines:1}         → {captions:3, track:20}
-command_run captions.export {path:"/abs/talk.srt"}
+command_run transcript.removeFillers {}              → {removed:1, seconds:0.2, ticks}  ripple-deletes um/uh/… on all tracks
+command_run transcript.removePauses {minSeconds:0.8, keepSeconds:0.2}  → {removed:1, seconds:0.8, ticks}
+command_run transcript.createCaptions {maxChars:32, lines:1}         → {captions:3, track:24}
+command_run captions.setStyle {track:"C1", fontStyle:"Bold", size:80, color:"#ffcc00"}
+command_run captions.export {path:"/abs/talk.srt"}                   → {captions:3, format:"SubRip (SRT)"}
 command_run file.exportMedia {path:"/abs/talk.mp4", format:"h264", burnCaptions:true, wait:true}
 ```
 
 `captions.import {path: "x.srt"}` brings existing subtitles in; `transcript.extract {from, to}` cuts words out by index.
-`captions.setStyle {track: "C1", font, size, color, anchor, margin}` styles the burned-in look.
+`captions.setStyle {track: "C1", font, fontStyle, size, color, background, anchor, margin}` styles the burned-in look
+(default style SemiBold, white on a dark box). `size` scales with the frame: 80 on a 360-line frame is about 25 px tall
+text, so a 1080p export needs less. `captions.duplicate {captions, delta}` copies captions along the timeline.
 
 ### Recipe: scratch narration (tested)
 
-Built-in voices only: `basic-female` (default) and `basic-male`, robotic. The natural `kokoro-*` voices that
-`tts.voices` lists fail with "natural voices are not available in this build (built without the `kokoro` feature)".
+Built-in voices only: `basic-female` (default) and `basic-male`, robotic. The natural voices that `tts.voices` lists
+(`kokoro-heart`, `kokoro-bella`, `kokoro-michael`…) fail with "natural voices are not available in this build (built
+without the `kokoro` feature)".
 
 ```text
 command_run tts.voices {}                                        → voices, pitches, pace 0.5–2, "[pause 1s]" marker
 command_run tts.create {text:"Hello and welcome. [pause 1s] Let's begin.", voice:"basic-male", track:"A1",
             seconds:0, dir:"/abs/narration"}                    → {clip:9, item:8, path:".../Narration 1.wav", duration}
-command_run tts.edit {clip:9, text:"A longer new line.", pitch:"low", pace:1.2}  → {clip:9, item:12, duration, fileDuration}
+command_run tts.edit {clip:9, text:"A longer new line.", pitch:"low", pace:1.2}  → {clip:9, item:10, duration, fileDuration}
 command_run timeline.trim {clip:9, edge:"out", mode:"ripple", delta:<fileDuration - duration>}  # see Pitfalls
 command_run tts.inspect {clip:9}                                 → text, voice, pitch, pace
 command_run tts.preview {text:"Try this", path:"/abs/try.wav"}   # renders a WAV without touching the timeline
@@ -193,24 +211,46 @@ command_run tts.preview {text:"Try this", path:"/abs/try.wav"}   # renders a WAV
 
 Place the picture with `timeline.place {item, track:"V1", audio:false}` so its own sound doesn't fight the voice.
 
+### Recipe: vertical 9:16 clip with an animated title (tested)
+
+```text
+command_run file.newSequence {name:"Vertical", width:1080, height:1920, fps:30}
+media_import {paths:["/abs/a.mp4"]}                                                 → {items:[8]}
+command_run timeline.place {item:8, track:"V1", seconds:0, duration:{seconds:4}}     → {clips:[10,11]}
+command_run effects.setParam {clip:10, effect:"motion", param:"scale", value:540}    # 640×360 source fills 1920 tall
+command_run graphics.newText {text:"NEW VIDEO", position:[540,700], size:140, seconds:4, track:1, time:0}  → {clip:13}
+command_run graphics.set {clip:13, props:{align:"center", font_style:"Bold", fill_color:"#ffffff", stroke:true, stroke_width:8}}
+command_run graphics.set {clip:13, time:0, keyframe:true, props:{opacity:0, scale:60}}             → {keyframes:{opacity:1, scale:1}}
+command_run graphics.set {clip:13, time:152409600000, keyframe:true, props:{opacity:100, scale:100}} # 0.6 s
+render_frame {seconds:0.3, max_side:640} · render_frame {seconds:1.5, max_side:640}  → fading/growing in, then full
+command_run file.exportMedia {path:"/abs/vertical.mp4", preset:"TikTok 1080×1920", range:"custom",
+            startSeconds:0, endSeconds:3, wait:true}                                → H.264 1080×1920, 30 fps, 90 frames
+```
+
+`Instagram Reels 1080×1920` and `YouTube Shorts 1080×1920` are the other vertical presets (`export --list-presets`).
+
 ## Export and formats
 
 - `file.exportMedia {path, format, wait: true, preset?, width?, height?, fps?, quality?, bitrateKbps?,
   bitrateMode?: cbr|vbr1Pass|vbr2Pass|crf, crf?: 0..51, audio?, audioCodec?: aac|pcm|flac, range?: entire|inOut|workArea|custom,
   startSeconds?, endSeconds?, burnCaptions?, captionSidecar?: srt|vtt, loudnessLufs?, proresProfile?, alpha?}`.
-  **Pass `format`** (`h264`, `prores`, `dnxhr`, `gif`, `png`, `exr`, `wav`, `flac`, `aac`, …): through MCP the extension
-  is not used, and `x.wav` without `format` becomes an H.264 `x.wav.mp4`. A `preset` sets the format too. Without
-  `wait` it returns `{job}` at once; poll `jobs.list`. Image sequences write `name000.png`, `name001.png`, ….
-- Tested on 0.9.0: `h264` (+ `crf`), `prores` (.mov, HQ + PCM), `gif`, `png` sequence, `wav`, `flac`, `aac` (.m4a),
-  `loudnessLufs: -14` (measured -14.0 LUFS), preset "YouTube 1080p Full HD". `file.exportFrame {path, format: "jpeg",
-  time}` writes one still.
+  **Pass `format`** (`h264`, `hevc`, `prores`, `dnxhr`, `mxf-op1a`, `gif`, `png`, `exr`, `wav`, `flac`, `aac`, …): through
+  MCP the extension is not used, and `x.wav` without `format` becomes an H.264 `x.wav.mp4`. A `preset` sets the format
+  too. Without `wait` it returns `{job}` at once; poll `jobs.list`, stop with `jobs.cancel`. Image sequences write
+  `name000.png`, `name001.png`, …. MP4s are written fast-start (`moov` first) for upload.
+- Tested on 0.17.0: `h264` (+ `crf`), `hevc` (macOS, VideoToolbox), `prores` (.mov, HQ + PCM), `dnxhr` (a QuickTime
+  `.mov`: `x.mxf` becomes `x.mxf.mov`; use `mxf-op1a` for MXF), `gif`, `png` sequence, `wav`, `flac`, `aac` (.m4a),
+  `loudnessLufs: -14` (measured -14.0 LUFS), presets "YouTube 1080p Full HD" and "TikTok 1080×1920".
+  `file.exportFrame {path, format: "jpeg", time}` writes one still.
 - **32-bit audio:** `settings: {audio: {bits: 32, float: true}}` writes 32-bit float PCM (tested: WAV → `pcm_f32le`);
   `bits` takes 16, 24 or 32. WAV, AIFF and QuickTime PCM take float; FLAC and MXF refuse it ("unsupported: FLAC audio
   has no 32 bit float samples: choose 16, 24 or 32 bit").
-- Presets: `filmcraft-cli export --list-presets youtube` (e.g. "YouTube 1080p Full HD"). The query matches the name or
-  the format id (`--list-presets prores` lists the 8 ProRes presets).
+- Presets (42): `filmcraft-cli export --list-presets youtube` (e.g. "YouTube 1080p Full HD", "YouTube Shorts 1080×1920").
+  The query matches the name or the format id (`--list-presets prores` lists the ProRes presets).
 - Encode: H.264, ProRes, DNxHR, APV, MJPEG, MXF, PNG/TIFF/BMP/JPEG/TGA/DPX/EXR sequences, GIF, WAV/AIFF/FLAC/AAC.
-  HEVC export needs a hardware encoder (NVENC, VA-API). Decode adds HEVC, VP9, AV1, MP3/Ogg, MPEG-2, animated GIF/APNG.
+  HEVC export needs a hardware encoder (VideoToolbox on macOS, NVENC, VA-API). Decode adds HEVC, VP9, AV1, MP3/Ogg,
+  MPEG-2, animated GIF/APNG/WebP; PSD files import as their flattened image (WebP and PSD per the release notes, not
+  tested).
 - Interchange (tested): `file.exportInterchange {format: xml|fcpxml|otio|edl|aaf|omf, path}` → `{bytes, report}`;
   the `report` lists what the format can't carry (graphics become clips without media or gaps, FCPXML keeps
   transitions on V1 only, an EDL holds one video track). Import an FCP XML/OTIO/EDL with
@@ -225,14 +265,16 @@ filmcraft-cli --project p.fcproj render --seconds 1 --out /abs/f.png --scale 0.5
 filmcraft-cli --project p.fcproj --save exec timeline.razor seconds=2 track=V1
 filmcraft-cli --project p.fcproj --save import a.mov b.wav
 filmcraft-cli --project p.fcproj inspect sequence            # or: inspect project
-filmcraft-cli --project p.fcproj --save run edits.jsonl      # one {"id","params"} per line
+filmcraft-cli --project p.fcproj --save run edits.jsonl      # one {"id","params"} per line; --keep-going skips failures
 filmcraft-cli commands razor · filmcraft-cli describe timeline.trim · filmcraft-cli probe /abs/clip.mov
 ```
 
 `key=value` values parse as JSON when they can; `--compact` prints one-line JSON. Edits are discarded unless you pass
-`--save` / `--save-as`. `export` and `render` exit 1 when a clip's media is offline (placeholder frames) unless
-`--allow-offline`. The extension picks the format for `.mp4`, `.mov`, `.wav`, `.aiff`, `.m4a`, `.aac`, `.gif`, but not
-`.flac` ("give --preset or --format (unknown extension)"): pass `--format flac`. `--end` needs `--start` too.
+`--save` / `--save-as` (several `--save` runs on one project take turns). In `run`, each `file.exportMedia` line waits
+for its file unless its params say `"wait": false`. `export` and `render` exit 1 when a clip's media is offline
+(placeholder frames) unless `--allow-offline`. The extension picks the format for `.mp4`, `.mov`, `.wav`, `.aiff`, `.m4a`, `.aac`, `.gif`, but not
+`.flac` ("give --preset or --format (unknown extension)"): pass `--format flac`. `--end` needs `--start` too ("custom
+range: need start (startTime / startSeconds / startFrame / startTimecode)").
 A `--preset` sets the format: `out.mov` with an H.264 preset becomes `out.mov.mp4`.
 
 ## Pitfalls
@@ -242,8 +284,8 @@ A `--preset` sets the format: `out.mov` with an H.264 preset becomes `out.mov.mp
   `path` shows it). Always pass `format` (or a `preset`). The CLI `export` does go by the extension (except `.flac`).
 - **Ripple edits and sync lock:** with music already on A2, `timeline.trim … mode:"ripple"` fails with `edit failed: this
   edit would break sync: A2 is sync-locked and has a clip in the way (turn off its sync lock, or lock the track, to
-  make this edit)`. `edit.rippleDeleteHead` and title tracks (V2) block the same way. Place music and titles last, or
-  `timeline.setTrack {track:"A2", syncLock:false}`.
+  make this edit)`. `edit.rippleDeleteHead`, `timeline.delete {ripple: true}` and title tracks (V2) block the same way.
+  Place music and titles last, or `timeline.setTrack {track:"A2", syncLock:false}`.
 - **Ticks must be integers.** `delta: -889056000000.0` (a float) is silently ignored (`{"delta": 0}`). Use integer
   ticks, `deltaFrames`, or `seconds`.
 - **Keyframes need the stopwatch:** `effects.setParam` with `seconds` on a non-animated param just sets the static
@@ -263,7 +305,7 @@ A `--preset` sets the format: `out.mov` with an H.264 preset becomes `out.mov.mp
   the `.fcproj`.
 - `sequence_inspect` dumps every clip's effects; extract `start/end/sourceIn/sourceOut` per track instead of reading it all.
 - Many edit commands return `null` on success; that's normal. `render_frame` returns the image plus "rendered frame".
-- Release builds (0.9.0 too) have no speech models: `transcript.generate` (no `whisper` feature),
+- Release builds (0.17.0 too) have no speech models: `transcript.generate` (no `whisper` feature),
   `transcript.downloadModel` ("model downloads are not available in this build (built without the `speech-download`
   feature)"), `tts.downloadVoices` (no `neural-voices` feature) and the `kokoro-*` voices (no `kokoro` feature). `transcript.models` reports `available: false`. Use `transcript.set` or
   `captions.import`, and the `basic-*` voices.
@@ -277,9 +319,9 @@ A `--preset` sets the format: `out.mov` with an H.264 preset becomes `out.mov.mp
 
 ## References
 
-- `references/commands.md`: all 701 commands with params, grouped by prefix (`timeline`, `clip`, `sequence`,
+- `references/commands.md`: all 716 commands with params, grouped by prefix (`timeline`, `clip`, `sequence`,
   `graphics`, `captions`, `transcript`, `tts`, `export`…). Grep it rather than reading it whole.
-- `references/effects.md`: 130 video effects, 112 video transitions, 58 audio effects, 3 audio transitions with param
+- `references/effects.md`: 131 video effects, 112 video transitions, 58 audio effects, 3 audio transitions with param
   ids and defaults. Grep it too.
 - Upstream docs: https://github.com/storytold/filmcraft/tree/main/docs (`agents.md`, `transcripts.md`, `captions.md`,
   `graphics.md`, `control-protocol.md`).

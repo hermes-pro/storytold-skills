@@ -1,6 +1,6 @@
 # EffectCraft command catalog
 
-Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of these with `execute_command {command, params}` (or several in one undo step with `batch`); read one live with `describe_command {command}`. `?` = optional, `a|b` = choices, `→ {...}` = what it returns. Commands with no params doc take `{}`.
+Generated from `list_commands` (EffectCraft 0.21.0, 743 commands). Run any of these with `execute_command {command, params}` (or several in one undo step with `batch`); read one live with `describe_command {command}`. `?` = optional, `a|b` = choices, `→ {...}` = what it returns. Commands with no params doc take `{}`.
 
 ## anim
 
@@ -41,6 +41,7 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `camera.createFromSolve` Create from Camera Solve: {kind: text\|solid\|null\|shadowCatcher\|camera, points?: [id] (default: selected), target?: {center, normal, size?} (comp world), multiple?, layer?, effect?}
 - `camera.deletePoints` Delete Selected Points: {points?: [id] (default: selected), layer?, effect?, wait?}
 - `camera.dolly` Dolly Camera: {amount (px, + = forward), layer?, merge?}
+- `camera.exportBlender` Export Scene to Blender...: {path: .py, comp?, layer?, effect?, sensorWidth?: mm (default 36), unitScale?: Blender units per comp pixel (default 0.01), startFrame?: positive integer (default 1), includePoints?: true}
 - `camera.fromModel` Create Cameras from 3D Model (Layer › Camera): {comp?, layers?: 3D model layers (default selected)}
 - `camera.fromView` Create Camera from 3D View (Layer › Camera): {comp?}
 - `camera.linkFocusToLayer` Link Focus Distance to Layer (Layer › Camera): {comp?, camera?, layer?}
@@ -68,6 +69,7 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `comp.copyFrame` Copy Frame to Clipboard (Composition): {comp?, time?, scale?}
 - `comp.cropToLayerBounds` Crop Comp to Selected Layer(s) Bounds (Composition): {layers?}
 - `comp.cropToRegionOfInterest` Crop Comp to Region of Interest (Composition): {comp?}
+- `comp.deleteAllMarkers` Delete All Markers: {comp?}
 - `comp.deletePreset` Delete Composition Preset: {name}
 - `comp.flowchart` Composition Flowchart (Composition) [Cmd+Shift+F11]
 - `comp.info` Composition Info: {comp?}
@@ -79,10 +81,11 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `comp.renderer` Renderer: {renderer?: advanced3d\|classic3d (omit to read), value?}
 - `comp.responsiveTime` Responsive Design — Time: {op: intro\|outro\|workArea}
 - `comp.revealInProject` Reveal Composition in Project (Layer › Reveal): {comp?}
-- `comp.saveFrameAs` File... (Composition › Save Frame As) [Cmd+Alt+S]: {path (.png; with queue: an output path or template), time?, scale?, queue?: bool (add a Render Queue item from the Frame Default templates instead of writing now)}
+- `comp.saveFrameAs` File... (Composition › Save Frame As) [Cmd+Alt+S]: {path (.png; with queue: an output path or template), time?, scale?, queue?: bool (add a Render Queue item from the Frame Default templates instead of writing now), transparent?: bool (default true)}
 - `comp.saveFrameAsExr` ProEXR... (Composition › Save Frame As): {path (.exr), comp?, time?, scale?} → a multi-layer OpenEXR: composite R,G,B,A + `<layer>.R/G/B/A` per layer (linear, premultiplied)
 - `comp.saveFrameAsPsd` Photoshop Layers... (Composition › Save Frame As): {path (.psd), comp?, time?, scale?} → a layered PSD: one layer per visible comp layer (blend mode, opacity) + the merged frame
 - `comp.savePreset` Save Composition Preset: {name, width, height, pixelAspect, frameRate} (replaces a saved preset with the same name)
+- `comp.scale` Scale Composition: {comp?, factor? (2 = twice the size) \| width? \| height? (the other side keeps the aspect ratio)}
 - `comp.setPosterTime` Set Poster Time (Composition)
 - `comp.setSwitch` Composition Switch: {switch: hideShy\|motionBlur\|frameBlending\|draft3d, value?}
 - `comp.settings` Composition Settings... (Composition) [Cmd+K]: {comp?, name?, width?, height?, anchor? 0-8 (resize anchor, 4 = center), frameRate?, duration?, startTime? (s) \| startTimecode?, background?, shutterAngle?, shutterPhase?, motionBlurSamples?, adaptiveSampleLimit? (16–256), preserveFrameRate?: bool (nested or in the render queue it shows only its own frames), preserveResolution?: bool (nested, it renders at full size), pixelAspect?, renderer?: classic3D\|advanced3D}
@@ -108,7 +111,7 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `edit.copyWithRelativePropertyLinks` Copy with Relative Property Links (Edit): {layers?} (like Copy with Property Links, using thisComp)
 - `edit.cut` Cut (Edit) [Cmd+X]: {layers?} (keyframes, effects or shape items when they are selected)
 - `edit.deselectAll` Deselect All (Edit) [Cmd+Shift+A]
-- `edit.duplicate` Duplicate (Edit) [Cmd+D]: {layers?} (effects or shape items when they are selected)
+- `edit.duplicate` Duplicate (Edit) [Cmd+D]: {layers?} (without layers: during a text edit the edited layer, else the selected effects, shape items or text animators, else the selected layers)
 - `edit.editOriginal` Edit Original... (Edit) [Cmd+E]
 - `edit.extractWorkArea` Extract Work Area (Edit): {layers?}
 - `edit.history` History: {steps?: n (undo n steps), redo?: n}
@@ -138,12 +141,14 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `effect.apply` Apply Effect: {effect: id\|name (e.g. Gaussian Blur), layers?}
 - `effect.applyLast` Last Effect (Effect) [Cmd+Alt+Shift+E]: {layers?}
 - `effect.copy` Copy Effects: {layer?, effect? \| effects?: [uid\|name\|index]} (default: the selected effects)
+- `effect.cryptomatteAt` Cryptomatte At: {layer?, effect?: index\|uid\|name, x, y (effect space), scale?, time?, probeOnly?: bool (don't build the probe)} → {name, hash, layer, selected} \| {pending} \| null — the Cryptomatte ID under the point
 - `effect.duplicate` Duplicate Effect: {layer?, effect}
 - `effect.editDropdown` Edit Dropdown Menu: {layer, path?\|prop?, items: [string]}
 - `effect.list` List Effects: {filter?} → [{params: [{id, name, type, default, options?, min?, max?, sliderMin?, sliderMax?, decimals?}]}]; popup indices are zero-based (JSX uses one-based values)
 - `effect.manage` Manage Effects... (Effect)
 - `effect.paste` Paste Effects: {layers?} — adds the copied effects to the layers
 - `effect.pickColor` Pick Effect Colour: {layer?, effect?: index\|uid\|name, param: id (e.g. screenColour) \| prop: uid, x, y (effect space), average?: bool (5×5), time?} — the colour of the effect's input there
+- `effect.pickCryptomatte` Pick Cryptomatte: {layer?, effect?: index\|uid\|name, x, y (effect space), mode?: replace\|add\|remove (default replace), scale? (preview resolution, default 1), time?, probeOnly?} → {name, hash, layer, selection, changed, selected} \| {pending} — edits the Cryptomatte effect's Selection with the ID under the point
 - `effect.plugins.list` List Effect Plug-ins: {} → {api, wasm, plugins: [{id, name, category, version, author, source, params}]}
 - `effect.plugins.load` Load Effect Plug-in...: {path (.wasm / .wat plug-in, API v1) \| folder (loads every .wasm in it)}
 - `effect.remove` Remove Effect: {layer?, effect: index\|uid\|name}
@@ -203,8 +208,9 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 
 ## file
 
-- `file.applyInterpretation` Apply Interpretation (File › Interpret Footage) [Cmd+Alt+V]: {items?}
+- `file.applyInterpretation` Apply Interpretation (File › Interpret Footage) [Cmd+Alt+V]: {items?\|item?}
 - `file.autoSave` Auto-Save Now
+- `file.checkOutput` Check Output File: {path} → {path, blocked, source?: footage\|proxy\|project, reason?}: whether an export may be written to path (it may not replace a file the project reads)
 - `file.clearRecent` Clear Recent Projects (File › Open Recent)
 - `file.clearRecentFootage` Clear Recent Footage (File › Import Recent Footage)
 - `file.close` Close (File) [Cmd+W]: {comp?}
@@ -215,9 +221,9 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `file.cycleBitDepth` Cycle Project Bit Depth
 - `file.executeFile` Execute File: {path, confirmed?}
 - `file.exportLottie` Lottie JSON... (File › Export): {comp?, path (.json or .lottie), includeExpressions?: bool, textAsShapes?: bool}
-- `file.exportTimeline` Adobe Premiere Pro Project... (File › Export): {comp?, path (Final Cut Pro XML .xml for Premiere Pro or .fcpxml .otio .edl .aaf .omf), format?: xml\|fcpxml\|otio\|edl\|aaf\|omf, prerender?: none\|unsupported\|all, precomps?: nest\|prerender}
+- `file.exportTimeline` Adobe Premiere Pro Project... (File › Export): {comp?, path (Final Cut Pro XML .xml for Premiere Pro or .fcpxml .otio .edl .aaf .omf), format?: xml\|fcpxml\|otio\|edl\|aaf\|omf, prerender?: none\|unsupported\|all, precomps?: nest\|prerender, background?: bool (pre-render and write as a job, jobs.list / jobs.wait; returns {job})}
 - `file.findMissing` Find Missing: {what: footage\|effects\|fonts}
-- `file.import` File... (File › Import) [Cmd+I]: {paths: [string] (files or folders), sequence?: bool (the Sequence checkbox: true imports numbered stills of one run as one image sequence, one picked file bringing its whole run and several picked files that range; default: a numbered still brings its run, except dropped files (drag), which import as stills as in After Effects; folders' runs import as sequences; false imports stills and a folder's files individually), alphabetical?: bool (Force Alphabetical Order: every image of that type in the folder, by name), frameRate?: fps (image sequences; default Settings ▸ Import ▸ Sequence Footage), importAs?: footage\|composition\|compositionLayerSizes (Photoshop, PDF, Illustrator and EPS files), layer?: name\|index (footage of one Photoshop layer), page?: number from 1 (PDF / Illustrator page), drag?: bool (dropped files: Settings ▸ Import ▸ Default Drag Import As; files import as stills unless sequence), addToComp?: bool (also add them to the active comp, at time?, index?, position? as in layer.addItem), background?: bool (probe the files in a background job, jobs.list / jobs.wait; returns {job})}
+- `file.import` File... (File › Import) [Cmd+I]: {paths: [string] (files or folders), sequence?: bool (the Sequence checkbox: true imports numbered stills of one run as one image sequence, one picked file bringing its whole run and several picked files that range; default false: picked or dropped files import as stills, as in After Effects; folders' runs import as sequences; false imports stills and a folder's files individually), alphabetical?: bool (Force Alphabetical Order: every image of that type in the folder, by name), frameRate?: fps (image sequences; default Settings ▸ Import ▸ Sequence Footage), importAs?: footage\|composition\|compositionLayerSizes (Photoshop, PDF, Illustrator and EPS files), layer?: name\|index (footage of one Photoshop layer), page?: number from 1 (PDF / Illustrator page), drag?: bool (dropped files: Settings ▸ Import ▸ Default Drag Import As; files import as stills unless sequence), addToComp?: bool (also add them to the active comp, at time?, index?, position? as in layer.addItem), newComp?: bool (make one new composition of the footage and solids imported, as file.newCompFromSelection with single; a layered file imported as a composition is that composition and gets no other; takes precedence over addToComp), background?: bool (probe the files in a background job, jobs.list / jobs.wait; returns {job})}
 - `file.importLottie` Lottie... (File › Import): {path (.json or .lottie)}
 - `file.importMultiple` Multiple Files... (File › Import) [Cmd+Alt+I]: {paths: [string]}
 - `file.importPlaceholder` Placeholder... (File › Import): {name?, width?, height?, frameRate?, duration? (s)}
@@ -229,38 +235,40 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `file.incrementAndSave` Increment and Save (File) [Cmd+Alt+Shift+S]
 - `file.installScript` Install Script File... (File › Scripts): {path (.jsx / .js)} → copies it to the Scripts folder; it appears in File ▸ Scripts
 - `file.installScriptUIPanel` Install ScriptUI Panel... (File › Scripts): {path (.jsx / .js)} → copies it to the ScriptUI Panels folder; it appears in the Window menu
-- `file.interpretFootage` Main... (File › Interpret Footage) [Cmd+Alt+G]: {items?, frameRate?: fps\|"file", alpha?: straight\|premultiplied\|ignore\|guess, guessAlpha?, matteColor?, invertAlpha?, loop?, pixelAspect?, fields?: off\|upper\|lower, colorProfile?: srgb\|rec709\|rec2020\|p3\|auto, linearLight?, preserveRgb? (the file's values unconverted), overrideStart?: bool (false: Use Source File Timecode), startTimecode?: timecode\|frame (Override Start)}
-- `file.interpretProxy` Proxy... (File › Interpret Footage): {items?\|item?, alpha?, matteColor?, invertAlpha?, frameRate?, loop?, pixelAspect?, fields?, colorProfile?, linearLight?}
+- `file.interpretFootage` Main... (File › Interpret Footage) [Cmd+Alt+G]: {items?\|item?, frameRate?: fps\|"file", alpha?: straight\|premultiplied\|ignore\|guess, guessAlpha?, matteColor?\|premulColor?, invertAlpha?, loop?, pixelAspect?, fields?: off\|upper\|lower, colorProfile?: srgb\|rec709\|rec2020\|p3\|auto, linearLight?, preserveRgb? (the file's values unconverted), overrideStart?: bool (false: Use Source File Timecode), startTimecode?: timecode\|frame (Override Start), logConversion? (Cineon Settings of DPX and Cineon files), cineonUnits?: 10bit\|8bit\|float, convertedBlack?, convertedWhite?, pointUnits?: 10bit\|8bit\|float (the units of convertedBlack and convertedWhite; default cineonUnits, else the footage's Units), tenBitBlack?, tenBitWhite? (0..1023), currentGamma? (0.1..10), highlightRolloff? (0..100)}
+- `file.interpretProxy` Proxy... (File › Interpret Footage): {items?\|item?, alpha?, guessAlpha?, matteColor?\|premulColor?, invertAlpha?, frameRate?, loop?, pixelAspect?, fields?, colorProfile?, linearLight?, preserveRgb?, overrideStart?, startTimecode? (as file.interpretFootage), logConversion?, cineonUnits?, convertedBlack?, convertedWhite?, pointUnits?, tenBitBlack?, tenBitWhite?, currentGamma?, highlightRolloff? (Cineon Settings of DPX and Cineon proxies)}
 - `file.newCompFromSelection` New Comp from Selection... (File) [Cmd+Alt+\]: {duration? (s, for stills), single?: bool (one comp for all), dimensionsFrom?: index, sequence?: bool, overlap?: bool, overlapDuration? (s), transition?: off\|dissolveFront\|crossDissolve, addToRenderQueue?: bool} → {comps}
 - `file.newFromTemplate` New Project from Template... (File › New): {} → the Home screen's Templates tab
 - `file.newProject` New Project (File › New) [Cmd+Alt+N]
 - `file.open` Open Project... (File) [Cmd+O]: {path}
 - `file.openDemoProject` Open Demo Project (Help)
 - `file.openRecent` Open Recent [Cmd+Alt+Shift+P]: {index? \| path?}
-- `file.projectSettings` Project Settings... (File) [Cmd+Alt+Shift+K]: {bitDepth?: 8\|16\|32, colorEngine?: adobe\|ocio, workingSpace?: none\|srgb\|rec709\|rec2020\|p3\|acescg\|aces2065, workingGamma?: 2.2\|2.4 (with no working space), linearize?, blendLinear?, hdr?: clip\|compand\|toneMap, outputSpace?: srgb\|rec709\|rec2020\|p3\|rec2100pq\|rec2100hlg, renderer?: gpu\|software, timeDisplay?: timecode\|frames\|feet35\|feet16}
+- `file.projectSettings` Project Settings... (File) [Cmd+Alt+Shift+K]: {bitDepth?: 8\|16\|32, colorEngine?: adobe\|ocio, workingSpace?: none\|srgb\|rec709\|rec2020\|p3\|acescg\|aces2065, workingGamma?: 2.2\|2.4 (with no working space), linearize?, blendLinear?, hdr?: clip\|compand\|toneMap, outputSpace?: srgb\|rec709\|rec2020\|p3\|rec2100pq\|rec2100hlg, renderer?: gpu\|software, timeDisplay?: timecode\|frames\|feet35\|feet16, frameStart?: 0\|1 (Frame Count: Start at 0 / Start at 1)}
 - `file.recoveryInfo` Auto-Save Status
 - `file.reduceProject` Reduce Project (File › Dependencies): {} (keeps the selected comps and what they use)
 - `file.relinkFootage` Relink Missing Footage... (File › Dependencies): {folder: string (recursive desktop search, no symlinks; max 100000 entries), dryRun?: bool (report only), wait?: bool (return results inline; otherwise jobs.list/jobs.wait)} — relinks only unique exact filenames with compatible metadata; preserves interpretation and sequence ranges. Reports high/low confidence and ambiguous, incompatible, unsupported or notFound items.
-- `file.reloadFootage` Reload Footage (File) [Cmd+Alt+L]: {items?}
+- `file.reloadFootage` Reload Footage (File) [Cmd+Alt+L]: {items?\|item?}
 - `file.rememberInterpretation` Remember Interpretation (File › Interpret Footage): {item?}
 - `file.removeUnusedFootage` Remove Unused Footage (File › Dependencies)
-- `file.replaceFootage` File... (File › Replace Footage) [Cmd+H]: {path, item?, sequence?: bool (default true: a numbered still brings its image sequence), alphabetical?: bool}
+- `file.replaceFootage` File... (File › Replace Footage) [Cmd+H]: {path, item?, sequence?: bool (a numbered still brings its image sequence; default: the item keeps its kind, so a still stays a still and a sequence stays a sequence), alphabetical?: bool}
 - `file.replaceWithLayeredComp` With Layered Comp (File › Replace Footage): {item?}
 - `file.replaceWithPlaceholder` Placeholder... (File › Replace Footage): {item?, width?, height?, frameRate?, duration?}
 - `file.replaceWithPrecomp` Replace with Precomposition: {item?}
 - `file.replaceWithSolid` Solid... (File › Replace Footage): {item?, color?, width?, height?}
 - `file.revealInFinder` Reveal in Finder (File): {item?}
 - `file.revert` Revert (File)
-- `file.runScript` Run Script File... (File › Scripts): {path (.jsx/.js JavaScript, or a .jsonl/.json command script) \| name (an installed or sample script, see file.scripts.list) \| steps: [{command, params}]}
+- `file.runScript` Run Script File... (File › Scripts): {path (.jsx/.js JavaScript, or a .jsonl/.json command script) \| name (an installed or sample script, see file.scripts.list) \| recent: index (File ▸ Scripts ▸ Recent Script Files, 0 = the most recent) \| steps: [{command, params}]}
+- `file.runShutdownScripts` Run Shutdown Scripts: {} → closes the project, then runs the scripts in Scripts/Shutdown in alphabetical order (frontends call it as the app quits; their modal dialogs close as if canceled) → {ran: [name], waiting: [name], failed: [{name, error}]}
+- `file.runStartupScripts` Run Startup Scripts: {} → runs the scripts in Scripts/Startup in alphabetical order (frontends call it at launch) → {ran: [name], waiting: [name] (in a modal dialog), failed: [{name, error}]}
 - `file.save` Save (File) [Cmd+S]: {path?}
 - `file.saveAs` Save As... (File › Save As) [Cmd+Shift+S]: {path}
 - `file.saveCopy` Save a Copy... (File › Save As): {path}
 - `file.saveCopyAsXml` Save a Copy As XML... (File › Save As): {path: .ecprojx}
-- `file.scripts.list` List Scripts: {} → [{name, panel, source: installed\|sample\|extension}]
+- `file.scripts.list` List Scripts: {} → [{name (`Folder/File.jsx` in a subfolder), panel, source: installed\|sample\|extension}]
 - `file.setProxy` File... (File › Set Proxy) [Cmd+Alt+P]: {path, items?\|item?}
 - `file.setProxyNone` None (File › Set Proxy): {items?\|item?}
 - `file.timelineFormats` Timeline Interchange Formats
-- `file.uninstallScript` Uninstall Script: {name}
+- `file.uninstallScript` Uninstall Script: {name (a script at the top of a Scripts folder, not `Folder/File.jsx`)}
 - `file.useProxy` Use Proxy: {items?\|item?, on?}
 - `file.watchFolder` Watch Folder... (File): {folder, stop?: bool} → watches the folder for .ecproj files with queued renders, renders them and writes `<project>.status.json`
 - `file.watchFolder.poll` Poll Watch Folder: {folder? (default: the watched one)} → renders new projects now: {watching, rendered: [{project, state: done\|failed, items: [{comp, status, output}]}]}
@@ -336,6 +344,7 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `keys.set` Edit Keyframe: {layer?, path\|prop, time (layer s by default), newTime? (same base), timeBase?: layer\|comp, value?, merge?}
 - `keys.setEase` Set Keyframe Ease: {layer?, path\|prop, time (layer s), side: in\|out, dim?, speed?, influence? %, merge?}
 - `keys.setLabel` Keyframe Label: {label: name\|none\|0–16}
+- `keys.setMuted` Mute Keyframes (Animation): {muted?: bool (default true)}
 - `keys.setSpatialTangents` Edit Spatial Tangents: {layer?, path\|prop, time (layer s), in?: [dx,dy,dz?], out?, break?, merge?}
 - `keys.smooth` Smoother: {tolerance? (property units, 1)}
 - `keys.timeReverse` Time-Reverse Keyframes (Animation › Keyframe Assistant)
@@ -347,10 +356,10 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 
 ## layer
 
-- `layer.addItem` Add Footage to Comp (File) [Cmd+/]: {item: id\|name, time? (s, the In point), index? (1-based stack position; default above the selected layer), position? ([x, y] comp px; default the centre), duration? (s, for a still)}
+- `layer.addItem` Add Footage to Comp (File) [Cmd+/]: {item: id\|name, time? (s, where the layer starts), index? (1-based stack position; default above the selected layer), position? ([x, y] comp px; default the centre), duration? (s, for a still), in? (s, the In point in comp time; default the start), out? (s, the Out point; default the end of the footage or the comp; in must be before out), anchor? ([x, y] layer px; default the centre)}
 - `layer.addMarker` Add Marker (Layer › Markers): {layers?, time?, comment?}
 - `layer.addMask` New Mask (Layer › Mask) [Cmd+Shift+N]: {layer?, shape?: rect\|ellipse\|rounded\|polygon\|star, rect? [x,y,w,h] (layer space; a polygon or star fits its width), mode?}
-- `layer.addShapeItem` Add (Shape): {layer?, kind: group\|rect\|ellipse\|star\|polygon\|path\|fill\|stroke\|gfill\|gstroke\|trim\|repeater\|round\|offset\|pucker\|twist\|zigzag\|wiggle\|merge\|frontColor\|bevelColor\|sideColor\|backColor, group?: uid\|path} → {uid, path} (frontColor…backColor: the group's Front / Bevel / Side / Back item, which colours that surface of every extruded paint in the group in Advanced 3D)
+- `layer.addShapeItem` Add (Shape): {layer?, kind: group\|rect\|ellipse\|star\|polygon\|path\|fill\|stroke\|gfill\|gstroke\|trim\|repeater\|round\|offset\|pucker\|twist\|zigzag\|wiggle\|wiggler\|merge\|frontColor\|bevelColor\|sideColor\|backColor, group?: uid\|path} → {uid, path} (frontColor…backColor: the group's Front / Bevel / Side / Back item, which colours that surface of every extruded paint in the group in Advanced 3D)
 - `layer.addTextAnimator` Animate Text: {layer?, properties: [anchor\|position\|scale\|skew\|rotation\|opacity\|transformAll\|lineAnchor\|lineSpacing\|characterOffset\|characterValue\|blur\|fillColor\|fillHue\|fillSaturation\|fillBrightness\|fillOpacity\|strokeColor\|strokeHue\|strokeSaturation\|strokeBrightness\|strokeOpacity\|strokeWidth\|tracking\|frontColor\|bevelColor\|sideColor\|backColor\|perChar3d], name?}
 - `layer.addTextAnimatorProperty` Add Property: {layer?, animator?: uid\|index, property: (see layer.addTextAnimator)}
 - `layer.addTextSelector` Add Text Selector: {layer?, animator?: uid\|index, kind: range\|wiggly\|expression}
@@ -364,7 +373,7 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `layer.castsShadows` Casts Shadows [Alt+Shift+C]: {layers?, value?}
 - `layer.centerAnchor` Center Anchor Point in Layer Content (Layer › Transform) [Cmd+Alt+Home]: {layers?}
 - `layer.channels` Layer Channels: {layer?} → {channels: [name], layers: [{name, rgba: [r, g, b, a channel]}]} — a multi-layer OpenEXR layer's channels (EXtractoR's red / green / blue / alpha take these names)
-- `layer.create` Create: {op: editableText\|shapesFromText\|masksFromText\|shapesFromVector, layers?}
+- `layer.create` Create: {op: editableText\|shapesFromText\|masksFromText\|shapesFromVector\|instance3d, layers?}
 - `layer.deleteAllMarkers` Delete All Markers (Layer › Markers): {layers?}
 - `layer.distribute` Distribute Layers: {mode: left\|hcenter\|right\|top\|vcenter\|bottom (edges or centres), layers?}
 - `layer.enablePerChar3D` Enable Per-character 3D: {layer?, enabled?: bool, toggle?: bool}
@@ -377,7 +386,7 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `layer.freezeFrame` Freeze Frame (Layer › Time): {layers?}
 - `layer.freezeOnLastFrame` Freeze On Last Frame (Layer › Time): {layers?}
 - `layer.hideOtherVideo` Hide Other Video (Layer › Switches) [Cmd+Alt+Shift+V]: {layers?}
-- `layer.lightSettings` Light Settings...: {layer?, name?, kind?: Parallel\|Spot\|Point\|Ambient\|Environment, color?, intensity?, coneAngle?, coneFeather?, falloff?, radius?, falloffDistance?, castsShadows?, shadowDarkness?, shadowDiffusion?, position?, poi?}
+- `layer.lightSettings` Light Settings...: {layer?, name?, kind?: Parallel\|Spot\|Point\|Ambient\|Environment (changing to Environment switches a Classic 3D comp to Advanced 3D), color?, intensity?, coneAngle?, coneFeather?, falloff?, radius?, falloffDistance?, castsShadows?, shadowDarkness?, shadowDiffusion?, position?, poi?}
 - `layer.markersLock` Lock Markers (Layer › Markers): {layers?, value?}
 - `layer.mask.featherFalloff` Feather Falloff: {layer?, mask?, mode: smooth\|linear}
 - `layer.mask.hideLocked` Hide Locked Masks (Layer › Mask): {value?}
@@ -404,13 +413,13 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `layer.newAdjustment` Adjustment Layer (Layer › New) [Cmd+Alt+Y]: {name?}
 - `layer.newCamera` Camera... (Layer › New) [Cmd+Alt+Shift+C]: {name?, type?: oneNode\|twoNode (default twoNode), preset?: 15mm\|20mm\|24mm\|28mm\|35mm\|50mm\|80mm\|135mm\|200mm, zoom?, focalLength? mm, angleOfView? deg, dof?, focusDistance?, aperture?, fStop?, blurLevel?, lockToZoom?, position? [x,y,z], poi? [x,y,z]}
 - `layer.newContentAwareFill` Content-Aware Fill Layer... (Layer › New): {layer?, method?: object\|surface\|edgeBlend, range?: workArea\|entire, alphaExpansion? (px), lightingCorrection?: none\|subtle\|moderate\|strong, referenceLayer?, referenceTime? (s), outputDir?, wait?: bool}
-- `layer.newLight` Light... (Layer › New) [Cmd+Alt+Shift+L]: {kind?: Parallel\|Spot\|Point\|Ambient\|Environment (default Spot; Environment lights and reflects from an equirectangular image layer: prop.set its lightOptions/source to that layer's id, or leave it empty for the comp's Environment Layer, see layer.environment), name?, color?, intensity?, coneAngle?, coneFeather?, falloff?: None\|Smooth\|Inverse Square Clamped, radius?, falloffDistance?, castsShadows?, shadowDarkness?, shadowDiffusion?, position? [x,y,z], poi? [x,y,z]}
+- `layer.newLight` Light... (Layer › New) [Cmd+Alt+Shift+L]: {kind?: Parallel\|Spot\|Point\|Ambient\|Environment (default Spot; Environment lights and reflects from an equirectangular image layer: prop.set its lightOptions/source to that layer's id, or leave it empty for the comp's Environment Layer or a flat default environment of its colour and intensity, see layer.environment; an Environment light switches a Classic 3D comp to Advanced 3D), name?, color?, intensity?, coneAngle?, coneFeather?, falloff?: None\|Smooth\|Inverse Square Clamped, radius?, falloffDistance?, castsShadows?, shadowDarkness?, shadowDiffusion?, position? [x,y,z], poi? [x,y,z]}
 - `layer.newModel` 3D Model Layer: {item?: id or name of a 3D model footage item, path?: a .gltf, .glb, .obj, .stl or .fbx file to import, name?, time? (s), index? (1-based stack position), position? ([x, y] comp px)}; switches a Classic 3D comp to Advanced 3D
 - `layer.newNull` Null Object (Layer › New) [Cmd+Alt+Shift+Y]: {name?}
 - `layer.newPrimitive` New 3D Primitive: {kind: cube\|sphere\|plane\|torus\|cone\|cylinder, name?, width?, height?, depth?, radius?, tubeRadius?, segments?, rings?, position? [x,y,z], baseColor?, metallic?, roughness?, emissive?, castsShadows?, acceptsShadows?, acceptsLights?}; switches a Classic 3D comp to Advanced 3D
 - `layer.newShape` Shape Layer (Layer › New): {kind?: rect\|rounded\|ellipse\|star\|polygon\|none, name?, size?, fill?, fillType?, fillBlend?, fillOpacity?, stroke?, strokeType?, strokeBlend?, strokeOpacity?, strokeWidth?, position?}
 - `layer.newSolid` Solid... (Layer › New) [Cmd+Y]: {name?, color? #hex\|[r,g,b], width?, height?, pixelAspect?}
-- `layer.newText` Text (Layer › New) [Cmd+Alt+Shift+T]: {text?, name? (layer name; default the text), position? [x,y], box? [x,y,w,h] (paragraph text, comp space), vertical?, edit? (start editing), font?, style?, size?, fill?, stroke?, applyFill?, applyStroke?, strokeWidth?, tracking?, leading?, baselineShift?, hScale?, vScale?, tsume?, fauxBold?, fauxItalic?, allCaps?, smallCaps?, baseline?, superscript?, subscript?, kerning?, ligatures?, justify?, indentLeft?, indentRight?, indentFirst?, spaceBefore?, spaceAfter?, direction?, composer?, hangingPunctuation?, strokeOverFill?} (attributes as layer.setText)
+- `layer.newText` Text (Layer › New) [Cmd+Alt+Shift+T]: {text?, name? (layer name; default the text), position? [x,y], box? [x,y,w,h] (paragraph text, comp space), vertical?, edit? (start editing), font?, style?, size?, fill?, stroke?, applyFill?, applyStroke?, strokeWidth?, tracking?, leading?, baselineShift?, hScale?, vScale?, tsume?, fauxBold?, fauxItalic?, allCaps?, smallCaps?, baseline?, superscript?, subscript?, kerning?, ligatures?, justify?, indentLeft?, indentRight?, indentFirst?, spaceBefore?, spaceAfter?, direction?, composer?, hangingPunctuation?, strokeOverFill?, lineJoin?} (attributes as layer.setText)
 - `layer.nudge` Nudge Layers: {x?, y? (comp pixels), layers?, merge?}
 - `layer.openLayer` Open Layer (Layer): {layer?}
 - `layer.openSource` Open Layer Source (Layer): {layer?}
@@ -418,9 +427,10 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `layer.quality` Quality: {layers?, quality: best\|draft\|wireframe}
 - `layer.quickOffset` Quick Offset: {delta (comp s: the last layer's move), layers? (in order; default the selection), merge?, fromStart?: bool (with merge: delta is the whole drag)}
 - `layer.rename` Rename [Enter]: {layer?, name}
+- `layer.replaceSource` Replace Layer Source [Cmd+Alt+/]: {comp?, layers?, layer?, item?: id\|name (default the Project panel selection), fixExpressions?: bool (accepted for After Effects compatibility)} → {layers, item}
 - `layer.revealExpressionErrors` Reveal Expression Errors (Layer › Reveal): {comp?}
 - `layer.revealInFinder` Reveal in Finder (Layer): {layer?}
-- `layer.revealSource` Reveal Layer Source in Project (Layer › Reveal): {layer?}
+- `layer.revealSource` Reveal Layer Source in Project (Layer › Reveal): {layers?}
 - `layer.sampling` Sampling: {layers?, sampling: bilinear\|bicubic, toggle?}
 - `layer.sceneEditDetection` Scene Edit Detection... (Layer): {layer?, mode?: markers\|split\|splitPrecompose, threshold? (0…1, 0.25), wait?: bool}
 - `layer.select` Select Layers: {layers: [id\|name\|#n], add?, toggle?}
@@ -432,17 +442,17 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `layer.setMask` Mask Mode: {layer?, mask: index\|uid\|name, mode?, inverted?}
 - `layer.setParent` Parent: {layers?, parent: layer\|null, compensate?: bool}
 - `layer.setSwitch` Layer Switch: {layers?, switch: video\|audio\|solo\|lock\|shy\|collapse\|quality\|fx\|frameBlend\|motionBlur\|adjustment\|threeD\|guide\|preserveTransparency, value?, merge?, others? (the named layers alone: the other layers get the opposite state, or come back)}
-- `layer.setText` Edit Text: {layer?, range?: [start, end] (characters; default all), text?, font?, style?, size?, fill?, stroke?, applyFill?, applyStroke?, strokeWidth?, tracking?, leading?: px\|"auto", baselineShift? px, hScale? %, vScale? %, tsume? %, fauxBold?, fauxItalic?, allCaps?, smallCaps?, baseline?: normal\|superscript\|subscript, superscript?, subscript?, kerning?: metrics\|optical\|number, ligatures?, discretionaryLigatures? (OpenType), contextualAlternates?, stylisticAlternates?, stylisticSets?: [1–20], ss01?, ss02?, ss03?, ss04?, ss05?, ss06?, ss07?, ss08?, ss09?, ss10?, ss11?, ss12?, ss13?, ss14?, ss15?, ss16?, ss17?, ss18?, ss19?, ss20?, swash?, titling?, ordinals?, fractions?, allSmallCaps?, figureStyle?: default\|lining\|oldStyle, figureWidth?: default\|proportional\|tabular, figures?, variations?: {tag: value} (variable font axes; null resets), justify?: left\|center\|right\|justifyLeft\|justifyCenter\|justifyRight\|justifyAll, indentLeft?, indentRight?, indentFirst?, spaceBefore?, spaceAfter?, direction?: ltr\|rtl, composer?: everyLine\|singleLine, hangingPunctuation?, strokeOverFill?, box?: [x,y,w,h]\|null (layer space), vertical?}
-- `layer.setTrackMatte` Track Matte: {layer?, matte: layer\|null, kind?: alpha\|alphaInverted\|luma\|lumaInverted}
+- `layer.setText` Edit Text: {layer?, range?: [start, end] (characters; default all), text?, font?, style?, size?, fill?, stroke?, applyFill?, applyStroke?, strokeWidth?, tracking?, leading?: px\|"auto", baselineShift? px, hScale? %, vScale? %, tsume? %, fauxBold?, fauxItalic?, allCaps?, smallCaps?, baseline?: normal\|superscript\|subscript, superscript?, subscript?, kerning?: metrics\|optical\|number, ligatures?, discretionaryLigatures? (OpenType), contextualAlternates?, stylisticAlternates?, stylisticSets?: [1–20], ss01?, ss02?, ss03?, ss04?, ss05?, ss06?, ss07?, ss08?, ss09?, ss10?, ss11?, ss12?, ss13?, ss14?, ss15?, ss16?, ss17?, ss18?, ss19?, ss20?, swash?, titling?, ordinals?, fractions?, allSmallCaps?, figureStyle?: default\|lining\|oldStyle, figureWidth?: default\|proportional\|tabular, figures?, variations?: {tag: value} (variable font axes; null resets), justify?: left\|center\|right\|justifyLeft\|justifyCenter\|justifyRight\|justifyAll, indentLeft?, indentRight?, indentFirst?, spaceBefore?, spaceAfter?, direction?: ltr\|rtl, composer?: everyLine\|singleLine, hangingPunctuation?, strokeOverFill?, lineJoin?: miter\|round\|bevel, box?: [x,y,w,h]\|null (layer space), vertical?}
+- `layer.setTrackMatte` Track Matte: {layers? \| layer?, matte: layer\|null, kind?: alpha\|alphaInverted\|luma\|lumaInverted\|preserve}
 - `layer.setTransform` Transform Value: {layers?, prop: anchor\|position\|scale\|orientation\|rotation\|opacity, value}
 - `layer.settings` Layer Settings... (Layer) [Cmd+Shift+Y]: {layer?, name?, color?, width?, height?, pixelAspect?, affectAll?: bool (default true; false gives this layer its own copy of a solid other layers use)} → {layer, solid?}
 - `layer.showAllVideo` Show All Video (Layer › Switches): {comp?}
-- `layer.slip` Slip Edit: {layers?, delta? (seconds) \| frames?, merge?}
+- `layer.slip` Slip Edit: {layers?, delta? (seconds) \| frames?, merge?} → {requested, slipped: [{layer, delta, clamped}]}
 - `layer.slipBack` Slip Edit 1 Frame Earlier: {layers?}
 - `layer.slipForward` Slip Edit 1 Frame Later: {layers?}
 - `layer.stretchInToTime` Stretch Layer In Point to Current Time [Cmd+Shift+,]: {layers?}
 - `layer.stretchOutToTime` Stretch Layer Out Point to Current Time [Cmd+Alt+,]: {layers?}
-- `layer.style.add` Add Layer Style: {style: dropShadow\|innerShadow\|outerGlow\|innerGlow\|bevelEmboss\|satin\|colorOverlay\|gradientOverlay\|stroke (or display name), layers?}
+- `layer.style.add` Add Layer Style: {style: dropShadow\|innerShadow\|outerGlow\|innerGlow\|bevelEmboss\|satin\|colorOverlay\|gradientOverlay\|stroke (or display name), or blendingOptions (the Layer Styles group with Blending Options only), layers?, merge?}
 - `layer.style.bevelEmboss` Bevel and Emboss (Layer › Layer Styles): {layers?}
 - `layer.style.colorOverlay` Color Overlay (Layer › Layer Styles): {layers?}
 - `layer.style.convertToEditable` Convert to Editable Styles (Layer › Layer Styles): {layers?}
@@ -557,7 +567,7 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 ## path
 
 - `path.convertToBezier` Convert To Bezier Path (Layer › Mask and Shape Path): {layer?, mask?}
-- `path.freeTransform` Free Transform Points (Layer › Mask and Shape Path): {layer?, mask?, scale?: % \| [x%, y%], rotation?: deg, offset?: [dx, dy], anchor?: [x, y]}
+- `path.freeTransform` Free Transform Points (Layer › Mask and Shape Path): {layer?, mask?, scale?: % \| [x%, y%], rotation?: deg, offset?: [dx, dy], anchor?: [x, y], merge?: string}
 - `path.groupShapes` Group Shapes (Layer) [Cmd+G]: {layer?, items?: [uid]}
 - `path.rotoBezier` RotoBezier (Layer › Mask and Shape Path): {layer?, mask?, value?}
 - `path.setFirstVertex` Set First Vertex (Layer › Mask and Shape Path): {layer?, mask?: uid, index?}
@@ -611,13 +621,13 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `prop.editGradient` Edit Gradient...: {layer?, path\|prop, comp?} — a gradient property; opens the Gradient Editor at the current time
 - `prop.get` Get Property: {layer?, path\|prop, time? (comp s)}
 - `prop.moveGroup` Reorder Property Group: {layer?, prop: uid, index (1-based among its siblings)}
-- `prop.pickWhip` Pick Whip (Link Property): {layer?, path\|prop, target: {layer, path\|prop, dimension?}, expression?, range?: [start, end]} → sets an AE reference expression (`dimension`: one of the target's values, `position[0]`; with `expression`: inserts it there, replacing the characters in `range`, default the end)
+- `prop.pickWhip` Pick Whip (Link Property): {layer?, path\|prop, target: {layer, path\|prop, dimension?}, expression?, range?: [start, end], byIndex?: bool} → sets an AE reference expression (`dimension`: one of the target's values, `position[0]`; with `expression`: inserts it there, replacing the characters in `range`, default the end; `byIndex`: an effect's properties by their index, `effect("Color Control")(1)`, as an Alt pick whip does)
 - `prop.removeGroup` Delete Property Group: {layer?, prop: uid}
 - `prop.renameGroup` Rename Property Group: {layer?, prop: uid, name}
 - `prop.reset` Reset Property: {layer?, path\|prop, default?} → removes the expression; the value becomes `default`, else the property's own (an effect parameter's, a Transform property's), as a keyframe at the current time when the property is animated
 - `prop.select` Select Property: {layer?, path\|prop, add?, selectKeys?}
 - `prop.separateDimensions` Separate Dimensions (Animation): {layer?, value?}
-- `prop.set` Set Property Value: {layer?, path\|prop, value, time? (layer s by default), timeBase?: layer\|comp, merge?, selected? (also the other selected layers), offset? (them by the same change), proportional? (with offset: Proportional Scrubbing, each layer by its share in selection order, the first none, the last all)}
+- `prop.set` Set Property Value: {layer?, path\|prop, value, time? (layer s by default), timeBase?: layer\|comp, merge?, selected? (also the other selected layers), offset? (them by the same change), proportional? (with offset: Proportional Scrubbing, each layer by its share in selection order, the first none, the last all), dims? (with selected, a typed value: the components edited, e.g. [2] for Z; the other layers keep the rest of their own value), follow? (with dims: components that move on each other layer by the change its first typed component takes)}
 - `prop.setExpression` Add Expression (Animation) [Alt+Shift+=]: {layer?, path\|prop?, expression?, enabled?} (no path/prop: the selected properties)
 - `prop.setGroupEnabled` Enable Property Group: {layer?, prop: uid, value?}
 - `prop.toggleAnimation` Toggle Stopwatch: {layer?, path\|prop, value?, merge?, selected?}
@@ -645,7 +655,7 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 
 ## renderQueue
 
-- `renderQueue.add` Add to Render Queue (Composition) [Cmd+M]: {comp?: id\|name, template?: Render Settings template, format?: h264\|hevc\|av1\|prores\|uncompressed\|webm\|png\|jpeg\|tiff\|exr\|gif\|wav\|aiff, output?: path\|template, log?: errorsOnly\|plusSettings\|plusPerFrameInfo, quality?: best\|draft\|1-100 (jpeg, webm), resolution?: full\|half\|third\|quarter\|scale, proxyUse?, effects?, solo?, guideLayers?, colorDepth?, frameBlending?, fieldRender?, pulldown?, motionBlur?, timeSpan?: workArea\|comp\|custom, start?: s, end?: s, duration?: s, frameRate?: fps\|null, skipExisting?: bool, storageOverflow?: bool, channels?: rgb\|rgba\|alpha, color?, bitrate?: kbps, webmBitrate?, keyframeInterval?, proresProfile?, profile?, level?, rateControl?, webmCodec?, audioBitrate?, opusApplication?, crop?, resize?, includeProjectLink?, audio?: auto\|on\|off, sampleRate?, audioChannels?, audioFormat?, loop?: bool (values as in setRenderSettings / setOutputModule)}
+- `renderQueue.add` Add to Render Queue (Composition) [Cmd+M]: {comp?: id\|name, template?: Render Settings template, format?: h264\|hevc\|av1\|prores\|uncompressed\|webm\|png\|jpeg\|tiff\|exr\|tga\|gif\|wav\|aiff, output?: path\|template, log?: errorsOnly\|plusSettings\|plusPerFrameInfo, quality?: best\|draft\|1-100 (jpeg, webm), resolution?: full\|half\|third\|quarter\|scale, proxyUse?, effects?, solo?, guideLayers?, colorDepth?, frameBlending?, fieldRender?, pulldown?, motionBlur?, timeSpan?: workArea\|comp\|custom, start?: s, end?: s, duration?: s, frameRate?: fps\|null, skipExisting?: bool, storageOverflow?: bool, channels?: rgb\|rgba\|alpha, color?, bitrate?: kbps, webmBitrate?, keyframeInterval?, proresProfile?, profile?, level?, rateControl?, webmCodec?, audioBitrate?, opusApplication?, crop?, resize?, includeProjectLink?, audio?: auto\|on\|off, sampleRate?, audioChannels?, audioFormat?, loop?: bool (values as in setRenderSettings / setOutputModule)}
 - `renderQueue.applyTemplate` Apply Template: {item?\|index?, renderSettings?: template name, outputModule?: template name, module?: n}
 - `renderQueue.deleteTemplate` Delete Template: {kind: renderSettings\|outputModule, name}
 - `renderQueue.duplicate` Duplicate Render Item: {item?\|index?}
@@ -658,7 +668,7 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `renderQueue.setLog` Render Queue: Log: {item?\|index?, log: errorsOnly\|plusSettings\|plusPerFrameInfo}
 - `renderQueue.setNotify` Notify When Done: {notify?: bool (toggles)}
 - `renderQueue.setOutput` Output To...: {item?\|index?, module?: n, path: file path or template like [compName].[fileExtension]}
-- `renderQueue.setOutputModule` Output Module Settings...: {item?\|index?, module?: n (1 = first), template?: name, format?: h264\|hevc\|av1\|prores\|uncompressed\|webm\|png\|jpeg\|tiff\|exr\|gif\|wav\|aiff, channels?: rgb\|rgba\|alpha, color?: straight\|premultiplied, quality?: 1-100, bitrate?: kbps, webmBitrate?: bool, keyframeInterval?: frames (0 = auto), proresProfile?: proxy\|lt\|standard\|hq\|4444\|4444xq, profile?: main\|main10 (HEVC/AV1), level?: auto\|4.1, rateControl?: bitrate\|quality, webmCodec?: vp9\|av1, audioBitrate?: Opus kbps, opusApplication?: audio\|voice, crop?: bool\|{useRoi?, roi?, top?, left?, bottom?, right?}, cropTop?, cropLeft?, cropBottom?, cropRight?, resize?: bool\|{preset?, width?, height?, lockAspect?, quality?: low\|high}, resizeWidth?, resizeHeight?, postRenderAction?: none\|import\|importAndReplace\|setProxy, includeProjectLink?: bool, audio?: auto\|on\|off, sampleRate?, audioChannels?: mono\|stereo, audioFormat?: 16\|24\|32, loop?: bool, output?}
+- `renderQueue.setOutputModule` Output Module Settings...: {item?\|index?, module?: n (1 = first), template?: name, format?: h264\|hevc\|av1\|prores\|uncompressed\|webm\|png\|jpeg\|tiff\|exr\|tga\|gif\|wav\|aiff, channels?: rgb\|rgba\|alpha, color?: straight\|premultiplied, quality?: 1-100, bitrate?: kbps, webmBitrate?: bool, keyframeInterval?: frames (0 = auto), proresProfile?: proxy\|lt\|standard\|hq\|4444\|4444xq, profile?: main\|main10 (HEVC/AV1), level?: auto\|4.1, rateControl?: bitrate\|quality, webmCodec?: vp9\|av1, audioBitrate?: Opus kbps, opusApplication?: audio\|voice, crop?: bool\|{useRoi?, roi?, top?, left?, bottom?, right?}, cropTop?, cropLeft?, cropBottom?, cropRight?, resize?: bool\|{preset?, width?, height?, lockAspect?, quality?: low\|high}, resizeWidth?, resizeHeight?, postRenderAction?: none\|import\|importAndReplace\|setProxy, includeProjectLink?: bool, audio?: auto\|on\|off, sampleRate?, audioChannels?: mono\|stereo, audioFormat?: 16\|24\|32, loop?: bool, output?}
 - `renderQueue.setOverflowFolders` Storage Overflow Folders: {folders: [path, …] (used in order when the output volume is full)}
 - `renderQueue.setRender` Render Queue: Render Checkbox: {item?\|index?, render?: bool (toggles)}
 - `renderQueue.setRenderSettings` Render Settings...: {item?\|index?, template?: name, quality?: best\|draft, resolution?: full\|half\|third\|quarter\|scale, proxyUse?: current\|all\|comp\|none, effects?: current\|allOn\|allOff, solo?: current\|allOff, guideLayers?: current\|allOff, colorDepth?: current\|8\|16\|32, frameBlending?: current\|onForChecked\|offForAll, fieldRender?: off\|upper\|lower, pulldown?: off\|WSSWW\|SSWWW\|SWWWS\|WWWSS\|WWSSW, motionBlur?: bool\|current\|onForChecked\|offForAll, timeSpan?: workArea\|comp\|custom, start?: s, end?: s, duration?: s, frameRate?: fps\|null, skipExisting?: bool, storageOverflow?: bool}
@@ -669,18 +679,18 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 ## roto
 
 - `roto.cancel` Stop Roto Brush
-- `roto.clearStrokes` Remove Roto Brush Strokes: {layer?, effect?, frame? (only this layer frame), kind?}
+- `roto.clearStrokes` Remove Roto Brush Strokes: {layer?, effect?, frame? (only this layer frame), kind?, object? (only this object's strokes)}
 - `roto.freeze` Freeze: {layer?, effect?, wait?}
 - `roto.model.download` Download Roto Brush Model: {id, wait?} — the official weights, verified (desktop; uses the system curl)
 - `roto.model.install` Install Roto Brush Model: {path: weights file, id?, wait?} — verified against the registry's SHA-256
 - `roto.model.remove` Remove Roto Brush Model: {id}
-- `roto.model.select` Use Roto Brush Model: {id: classical\|mobilesam, wait?} (Roto Brush 2.0 / 3.0 use it; wait: loaded before returning)
+- `roto.model.select` Use Roto Brush Model: {id: classical\|mobilesam\|sam2.1-hiera-tiny\|sam2.1-hiera-small\|sam2.1-hiera-base-plus\|sam2.1-hiera-large, wait?} (Roto Brush 2.0 / 3.0 use it; wait: loaded before returning)
 - `roto.models` Roto Brush Models
-- `roto.options` Roto Brush Options: {diameter?, refineDiameter?, view?: alphaBoundary\|alpha\|alphaOverlay\|none, overlayColor?: [r,g,b], overlayOpacity?, boundaryColor?: [r,g,b], autoPropagate?}
+- `roto.options` Roto Brush Options: {diameter?, refineDiameter?, view?: alphaBoundary\|alpha\|alphaOverlay\|none, overlayColor?: [r,g,b], overlayOpacity?, boundaryColor?: [r,g,b], autoPropagate?, object? (the object new strokes belong to, 0–31)}
 - `roto.propagate` Propagate Roto Brush: {layer?, effect?, direction?: forward\|backward\|both, to? (layer frame: extend the span), wait?: block until done}
 - `roto.span` Set Segmentation Span: {layer?, effect?, start?, end? (layer frames)}
 - `roto.status` Roto Brush Status: {layer?, effect?, frame? (layer frame: also report its matte), matte?: include the matte (RLE, base64), compute?: compute the frame if needed, compareTo?: RLE matte to report the IoU against}
-- `roto.stroke` Roto Brush Stroke: {layer?, kind?: fg\|bg\|refine\|refineErase, points: [[x, y], …] (layer pixels), frame? (layer frame; default current), radius? (layer px; default the tool's diameter / 2), effect?}
+- `roto.stroke` Roto Brush Stroke: {layer?, kind?: fg\|bg\|refine\|refineErase, points: [[x, y], …] (layer pixels), frame? (layer frame; default current), radius? (layer px; default the tool's diameter / 2), effect?, object? (0–31; default the current object: with a tracker each object is followed on its own and the mattes are united)}
 - `roto.unfreeze` Unfreeze: {layer?, effect?}
 
 ## scopes
@@ -700,7 +710,8 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `scriptui.close` Close Script Window: {window?, result? (a dialog's show() returns it; default 2 = Cancel)}
 - `scriptui.get` Script Window Controls: {window?: id \| title} → {id, title, kind, root: {id, type, name, text, value, checked, items, selection, bounds, enabled, draw (onDraw paint list), children…}}
 - `scriptui.list` List Script Windows: {} → [{window, title, kind: dialog\|palette\|window\|panel, script, modal, size}]
-- `scriptui.mouse` Mouse Event on Script Window Control: {window?, widget, type: mousedown \| mouseup \| mousemove \| mouseover \| mouseout \| click (default), x?, y? (relative to the control; default its centre), button? (0 left, 1 middle, 2 right), detail? (click count), screenX?, screenY?, altKey?, ctrlKey?, metaKey?, shiftKey?} → the script's addEventListener listeners on the control and its containers receive a MouseEvent
+- `scriptui.mouse` Mouse Event on Script Window Control: {window?, widget, type: mousedown \| mouseup \| mousemove \| mouseover \| mouseout \| click (default), x?, y? (relative to the control; default its centre), button? (0 left, 1 middle, 2 right), buttons? (held: 1 left, 2 right, 4 middle), detail? (click count), screenX?, screenY?, altKey?, ctrlKey?, metaKey?, shiftKey?} → the script's addEventListener listeners on the control and its containers receive a MouseEvent
+- `scriptui.resize` Resize Script Window: {window?, size: [width, height] (pixels)} → the window takes the size, lays itself out again and its onResizing / onResize run (a docked ScriptUI panel gets its dock's size)
 - `scriptui.set` Set Script Window Control: {window?, widget, value: text \| number \| bool \| item index \| item text, changing?: bool (a live update: each keystroke / slider step; fires onChanging only)} (edit text, sliders, checkboxes, lists) → fires onChanging / onChange
 
 ## shape
@@ -744,6 +755,7 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `text.animatorFontAxes` Variable Font Axes (Animation › Animate Text): {layer?, axis?: tag\|name (omit to list the font's axes), animator?: uid\|index}
 - `text.animatorProperties` Text Animator Properties
 - `text.delete` Delete Text: {layer?, direction?: backward\|forward, word?, range?: [start, end], merge?}
+- `text.deleteSurrounding` Delete Text Around Selection: {layer?, before?, after?, bytes?, merge?} (input-method replacement: the characters before and after the selection are deleted, the selection stays; bytes counts UTF-8 bytes)
 - `text.edit` Edit Text: {layer?, select?: [anchor, caret]\|"none", caret?, created?} → {layer, anchor, caret}
 - `text.endEdit` Exit Text Editing
 - `text.fontFeatures` OpenType Features: {layer?, font?, style?} → {family, style, features: [tags], options: {smallCaps, superscript, stylisticSets: [n], fractions, …}} (what the font sets with its own glyphs)
@@ -840,7 +852,7 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `view.fastPreviews.fastDraft` Fast Previews: Fast Draft [Cmd+Alt+4]
 - `view.fastPreviews.off` Fast Previews: Off (Final Quality) [Cmd+Alt+1]
 - `view.fastPreviews.wireframe` Fast Previews: Wireframe [Cmd+Alt+5]
-- `view.fullScreen` Enter Full Screen (View)
+- `view.fullScreen` Enter Full Screen (View) [Ctrl+Cmd+F]
 - `view.get3D` 3D View State: {comp?} → current 3D view, view camera, active camera layer, lights
 - `view.grid` Show Grid (View) [Cmd+']: {value?}
 - `view.guides` Show Guides (View) [Cmd+;]: {value?}
@@ -895,5 +907,5 @@ Generated from `list_commands` (EffectCraft 0.11.1, 731 commands). Run any of th
 - `window.restoreScriptPanels` Restore ScriptUI Panels: {} → reopens the ScriptUI panels open when EffectCraft last quit (frontends call it at launch) → {opened: [name], failed: [{name, error}]}
 - `window.saveWorkspace` Save Changes to this Workspace (Window › Workspace)
 - `window.saveWorkspaceAs` Save as New Workspace... (Window › Workspace): {name}
-- `window.scriptPanel` ScriptUI Panel: {name (a script in the ScriptUI Panels folder, e.g. `Layer Tools.jsx`)} → opens it as a dockable panel
+- `window.scriptPanel` ScriptUI Panel: {name (a script in the ScriptUI Panels folder, e.g. `Layer Tools.jsx`, or `Folder/Panel.jsx` in a subfolder)} → opens it as a dockable panel
 - `window.workspace` Workspace: {name: Default\|Standard\|Small Screen\|Animation\|Effects\|Motion Tracking\|Paint\|Text\|Minimal\|All Panels}

@@ -1,6 +1,6 @@
 # LightCraft develop controls
 
-Generated from `lightcraft-cli controls --json` (LightCraft 0.9.1, 122 sliders). Set them with
+Generated from `lightcraft-cli controls --json` (LightCraft 0.18.1, 122 sliders). Set them with
 `set_develop {values: {"<id>": number}}` (or `command_run develop.set`). Format: `id` Label: min..max (default).
 
 ## profile

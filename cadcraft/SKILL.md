@@ -1,7 +1,7 @@
 ---
 name: cadcraft
 description: "Technical drawing and drafting with CADCraft (AutoCAD-style): floor plans, site plans, mechanical part drawings, brackets, layouts with title blocks, dimensioned 2D drawings to scale. Draw lines, polylines, circles and arcs at exact coordinates, offset / trim / fillet, layers, dimensions, hatches, blocks, tables, then save DXF / DWG or export PDF, SVG, PNG."
-version: 0.4.0
+version: 0.5.0
 author: storytold
 license: MIT
 platforms: [windows, linux, macos]
@@ -16,7 +16,7 @@ metadata:
 CADCraft is a free, open-source clean-room take on AutoCAD (storytold Crafting Apps). An agent drives it
 through an MCP server (`cadcraft-cli mcp`) or one-shot CLI commands. It reads DXF (R12–2018), DWG (R13–2018)
 and SVG, writes DXF / DWG (versions 2000–2018, DXF also binary), and plots PDF; SVG and PNG are exports.
-This skill is tested against CADCraft 0.8.0.
+This skill is tested against CADCraft 0.17.1.
 
 ## When to Use
 
@@ -26,6 +26,7 @@ Use it for **drawings where exact dimensions and scale matter**:
 - mechanical part drawings: plates, brackets, flanges, hole patterns, section hatches, GD&T frames
 - dimensioned sketches for fabrication, laser/CNC outlines (DXF), title-blocked sheets (PDF)
 - opening, inspecting, measuring, comparing or converting DXF / DWG files
+- checking cut outlines: closed shapes with area and self-intersections, loose line/arc chains that should close
 
 Pick a different Crafting App when:
 
@@ -35,6 +36,7 @@ Pick a different Crafting App when:
 | Marking up or editing pages of an existing PDF | `pdfcraft` |
 | A bill of materials or cost sheet | `gridcraft` |
 | Photo editing | `photocraft` |
+| 3D solid parts | `solidcraft` |
 
 ## Setup
 
@@ -46,12 +48,15 @@ Pick a different Crafting App when:
 Without a running desktop app the server is **headless** (in-process session with a CPU renderer). For the
 user to watch live, they run `cadcraft --control 7979` and the server is
 `cadcraft-cli mcp --connect 127.0.0.1:7979`. Plain `--connect` exits at startup if the app isn't answering
-(`cannot connect to 127.0.0.1:7979: connection timed out`); add `--lazy` to start anyway: each call then fails with
-`CADCraft is not answering at 127.0.0.1:7979 … Open CADCraft with its control port …` until the app is up.
+(`cannot connect to 127.0.0.1:7979: Connection refused (os error 61)` on macOS); add `--lazy` to start anyway:
+each call then fails with `CADCraft is not answering at 127.0.0.1:7979 (…). Open CADCraft with its control port
+(\`--control PORT\` or CADCRAFT_CONTROL_PORT), then try again` until the app is up.
 `--launch` (implies lazy) also opens the app, on macOS only; elsewhere calls fail with
 `CADCraft is not running; start it with \`cadcraft --control 7979\``. Only the bridged mode adds `screenshot`,
 `ui_inspect` and `ui_click` (15 tools). `screenshot` saves the app window to a PNG and returns its `path`
-(not an image); read that file to look.
+(not an image); read that file to look. `--connect` without `HOST:PORT` is an error, never a headless session.
+Settings flags work in both modes (and on `run`, `convert`, `sample`): `--config-dir DIR` (plotter configurations;
+env `CADCRAFT_CONFIG_DIR`), `--fontalt FONT`, `--fontfallback FONTS`.
 
 ## Mental Model
 
@@ -63,7 +68,7 @@ user to watch live, they run `cadcraft --control 7979` and the server is
 - **Entities** have a **handle** (hex string such as `"10A"`), a layer, and geometry. Every create command
   returns the handle(s); modify commands take `handle`/`handles`. Keep the handles.
 - **Layers** carry colour, linetype and lineweight (`ByLayer`). Set the current layer before drawing.
-- **Two ways to run commands** (426 commands):
+- **Two ways to run commands** (457 commands):
   - `command_line {text}` types AutoCAD syntax: `line 0,0 @100,0 @0,50 c`, `circle 50,25 10`, `rectang 0,0 @80,40`.
     Coordinates: absolute `x,y`, relative `@dx,dy`, polar `@dist<angle`. Spaces act as Enter, and a trailing
     space ends an open-ended command.
@@ -79,7 +84,7 @@ user to watch live, they run `cadcraft --control 7979` and the server is
 | `command_line {text}` | Type at the prompt; returns `prompt`, `keywords`, `running`, `output` (and `error`) |
 | `script {text}` | Several command lines at once (like a `.scr` file); a blank line = Enter |
 | `inspect_drawing {entities?, limit?}` | Counts by type, extents, layers, styles, blocks, layouts, undo history, entities |
-| `query_entities {type?, layer?, window?, crossing?, limit?, offset?}` | Entities with handles and geometry, e.g. `{type:"Circle"}`, `{window:[[0,0],[100,100]], crossing:false}`. `count` = all matches; pages of 500 |
+| `query_entities {type?, layer?, selected?, window?, crossing?, limit?, offset?}` | Entities with handles and geometry, e.g. `{type:"Circle"}`, `{window:[[0,0],[100,100]], crossing:false}`, `{selected:true}` (the current selection). `count` = all matches; pages of 500 |
 | `render {width?, height?, fit?, path?, window?}` | PNG of the active space, fitted to extents (`path` also writes it). `window:[[x0,y0],[x1,y1]]` shows just that area (1600 px wide, the window's shape, if no size). **Look at it** |
 | `find_text {contains?, layer?, window?, limit?, offset?}` | TEXT, MTEXT (plain), attributes and multileaders with `text`, `at`, `height`, `style`, `layer`, `handle`. `contains` ignores case. Finds room names and titles without reading geometry |
 | `new_drawing {metric?}` / `open {path}` / `save {path?}` | `open` takes .dxf/.dwg/.svg; `save` writes .dxf/.dwg by extension, or exports .svg/.png/.pdf |
@@ -116,6 +121,11 @@ arguments (missing `text`, wrong type, `render {width:10}` below the 16 px minim
   `block`'s default `keep` is `"convert"` (the originals become an insert).
 - **Measure:** `dist {p1, p2}`, `area {handle}` (numeric `area`, `perimeter`), `list`, `properties {handles}`,
   `massprop`, `count` / `countlist` (blocks), `compare {path}` (diff against another drawing), `texts` (= `find_text`).
+- **Check outlines** (read-only): `shapes {layer?, type?, window?}` → each closed polyline / circle / ellipse /
+  spline with `area`, `perimeter`, `centroid`, `winding`, `selfIntersection`, `duplicateVertices` (open ones are
+  counted under `skipped`). `loops {tolerance?}` → closed loops found in loose LINE/ARC chains (members, area) and
+  `openChains` with the `gap` and where it is. `usage {type?}` → which layers, blocks, text styles and linetypes
+  are used where, and what PURGE would remove (`unused`).
 
 ## Procedure
 
@@ -187,9 +197,25 @@ execute publish {path:"/abs/set.pdf", layouts:["Model","Sheet"]}   → set-Model
 
 Without `layouts` it publishes Model plus **every** layout, including the empty Layout1/Layout2.
 
+### Recipe: check a laser/CNC outline before export (tested)
+
+```text
+execute line {points:[[0,0],[100,0],[100,50]]} · arc {center:[100,60], radius:10, start:270, end:90}
+execute line {points:[[100,70],[0,70],[0,0]]}
+execute line {points:[[200,0],[300,0],[300,50],[200,49.5]]}          (does not close)
+execute loops {}   → loops:[{members:["100",…,"104"], area:7157.08, perimeter:351.42, winding:"ccw"}],
+                     openChains:{chains:[{gap:49.5, at:[200,24.75], ends:[[200,0],[200,49.5]], members:[…]}]}
+execute pline {vertices:[[0,100],[50,100],[50,150],[0,150]], closed:true} · circle {center:[25,125], radius:5}
+execute shapes {}  → [{handle:"108", area:2500, perimeter:200, selfIntersection:null}, {type:"Circle", area:78.54}]
+```
+
+Close the gaps (`fillet` radius 0, `extend`, or redraw), `join` the chain into a polyline, and check again.
+
 Also tested: `trim` (→ `{handles}`), `fillet` (→ `{arc}`), `script` with `pline … c` / `circle` / polar
 `line 300,0 @50<30`, `command_line` `rectang 0,300 @80,40`, `circle 2p …`, `offset 5 <pick> <side>`,
-attribute blocks, `open` of a DWG and an SVG, `import` of a DWG into the current drawing, `compare`, `pdfbook`.
+attribute blocks (`attdef` + `block` + `insert {attribs}`, found by `find_text`), `open` of a DWG, `info` of an
+SVG, `import` of a DXF into the current drawing, `compare`, `pdfbook` (two A3 frames → one 2-page PDF), `usage`,
+`query_entities {selected:true}`.
 
 ## Formats
 
@@ -197,9 +223,10 @@ attribute blocks, `open` of a DWG and an SVG, `import` of a DWG into the current
   becomes negative y). `open` returns `{index, entities, warnings}`: `warnings` lists what a damaged file lost;
   `inspect_drawing`/`info` report unread DXF records in `skipped`. `import {path, at?, scale?}` merges a
   DXF/DWG/SVG into the current drawing.
-- **Save:** `save {path}` → .dxf/.dwg by extension (2018 by default). `saveas {path, version?: 2000…2018,
-  binary?}` for an older version or binary DXF; the format comes from the extension. `save {}` with no path
-  fails on a new drawing (`drawing has no file name yet; use saveas {path}`).
+- **Save:** `save {path}` → .dxf/.dwg by extension (2018 by default); CLI `convert`/`--save` also write .dwt
+  templates. `saveas {path, version?: 2000…2018, binary?}` for an older version or binary DXF; the format comes
+  from the extension. `save {}` with no path fails on a new drawing (``invalid parameters for `qsave`: drawing has
+  no file name yet; use saveas {path}``).
 - **Export:** `save` or `export {path}` to .svg/.png/.pdf exports without renaming the drawing.
 - **PDF:** `exportpdf {path, layout?, paper?, landscape?, fit?, scale?, plotArea?, window?}` or `plot {…}`; uses
   the layout's page setup. Layers become PDF layers; TrueType text stays real text.
@@ -212,27 +239,32 @@ attribute blocks, `open` of a DWG and an SVG, `import` of a DWG into the current
 ## CLI (no MCP needed)
 
 ```bash
-cadcraft-cli info plan.dwg                               # JSON: counts, extents, layers, blocks, layouts
-cadcraft-cli convert plan.dxf plan.svg                   # also .png, .pdf, .dxf, .dwg
+cadcraft-cli info plan.dwg [--compact]                   # JSON: counts, extents, layers, blocks, layouts
+cadcraft-cli convert plan.dxf plan.svg                   # also .png, .pdf, .dxf, .dwg, .dwt
 cadcraft-cli convert plan.dxf room.png --window 0,0,5000,3000   # frame a rectangle (drawing units)
 cadcraft-cli run --metric --script 'rectang 0,0 100,50
 circle 50,25 10
-' --cmd 'dimlinear {"p1":[0,0],"p2":[100,0],"at":[50,-10]}' --save part.dxf --export part.png
-cadcraft-cli run plan.dxf --script-file edits.scr --save plan2.dxf
+' --cmd 'dimlinear {"p1":[0,0],"p2":[100,0],"at":[50,-10]}' \
+  --cmd 'move {"handles":["{last}"],"delta":[0,-5]}' --save part.dxf --export part.png
+cadcraft-cli run plan.dxf --script-file edits.scr --save plan2.dxf   # --in-place to overwrite an input
 cadcraft-cli sample bracket|floorplan out.dxf            # reference drawings to study (.dxf/.dwg/.svg/.png)
-cadcraft-cli commands dimlin                             # catalog as JSON, filtered
+cadcraft-cli commands dimlin [--compact]                 # catalog as JSON, filtered by id or label
+cadcraft-cli roundtrip FILE|FOLDER [--out DIR]           # save as DXF and DWG, reopen, compare (report/report.md)
 ```
 
-Image exports are 2400×1600 and always model space. `--view extents|current` picks the framing; `run --export`
-uses the current view if the commands zoomed or panned. `run` exits 1 on the first error
-(`unknown command \`bogus\``) and on unknown options (`unknown option --bogusflag`).
+Each `--cmd` prints its JSON result on one line. A parameter value of exactly `"{last}"` (at any depth) is the last
+handle an earlier `--cmd` returned; with none, the run fails (``--cmd move: `{last}` needs an earlier --cmd in this
+run to have returned a handle``). Image exports are 2400×1600 and always model space. `--view extents|current`
+picks the framing; `run --export` uses the current view if the commands zoomed or panned. `run` exits 1 on the
+first failing step (``error: unknown command `bogus` ``) and 2 on an unknown option
+(`error: unexpected argument '--bogusflag' found`).
 
 ## Pitfalls
 
 - **Dimensions vanish at real-world scale.** A new metric drawing has DIMSCALE 1: ISO-25 text and arrows are
   2.5 units, invisible on an 8000 mm plan. Set `dimstyle {name:"ISO-25", DIMSCALE:<plot scale>}`; it also fixes
   dimensions already drawn. `setvar DIMSCALE` only affects new dimensions, and `dimstyle.update` does not carry
-  that override to old ones (they stay invisible).
+  that override to old ones (`{updated: 0}`; they stay invisible).
 - **Modify commands replace handles.** `trim` and `break` return new handles and the old one is gone. `break`,
   `trim` on it fail with `no such object`, `offset` with `invalid parameters for \`offset\`: no such object`, but
   `erase`, `move`, `list`, `properties` quietly do nothing (`{erased: 0}`, `{moved: 0}`). Always continue
@@ -247,13 +279,14 @@ uses the current view if the commands zoomed or panned. `run` exits 1 on the fir
   or you send `command_line {text:""}`. The next line is then fed to the old prompt: `circle 10,10 5` becomes
   `Point or option keyword required.` plus an extra line segment. Check `running` is `null`.
 - **In `script`, a blank line repeats the last command** if it already finished (`circle x,y r` + blank → a new
-  CIRCLE prompt eats the next line). Only put a blank line after open-ended commands (and to end MTEXT).
+  CIRCLE prompt eats the next line: `Point or option keyword required.`). Only put a blank line after open-ended commands (and to end MTEXT).
 - Command-line picks must land **on** the object (on a circle's edge, not its centre); a miss selects nothing,
   silently.
 - PDF plots keep layer colours: yellow/cyan on white are unreadable. Use dark colours or `monochrome.ctb`.
 - Layout1/Layout2 in a new drawing are empty (no viewport). `publish` without `layouts` still prints them.
 - Use absolute paths for `open`/`save`/`exportpdf`: relative paths resolve against the server's working
   directory, not yours.
+- `open` reads only drawings: an image is refused (``invalid parameters for `open`: unsupported file type `png` ``).
 
 ## Verification
 
@@ -267,7 +300,7 @@ uses the current view if the commands zoomed or panned. `run` exits 1 on the fir
 
 ## References
 
-- `references/commands.md`: all 426 commands with aliases and JSON params, grouped by menu. Grep it rather than
+- `references/commands.md`: all 457 commands with aliases and JSON params, grouped by menu. Grep it rather than
   reading it whole (e.g. `grep -n "^- \`dim" ${HERMES_SKILL_DIR}/references/commands.md`).
-- Upstream docs: https://github.com/storytold/cadcraft/tree/main/docs (`mcp.md`, `control-protocol.md`). They
-  track `main` and may list features newer than 0.8.0.
+- Upstream docs: https://github.com/storytold/cadcraft/tree/main/docs (`mcp.md`, `cli.md`, `control-protocol.md`,
+  `autolisp.md`, `plot-styles.md`, `plotters.md`). They track `main` and may list features newer than 0.17.1.
